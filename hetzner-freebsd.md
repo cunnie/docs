@@ -1,15 +1,16 @@
 ## How I set up a FreeBSD Server on Hetzner
 
-I'm switching to Hetzner because it's $20/mo cheaper than ARP
-Networks.  My new machine is named **shay.nono.com** and its
+I'm switching to Hetzner because at the time it was cheaper than my current provider.  My new machine is named **shay.nono.com** and its
 IP address is **78.47.249.19**
 
 For initial set-up, these instructions are decent:
 
-[http://wiki.hetzner.de/index.php/FreeBSD_installieren/en](http://wiki.hetzner.de/index.php/FreeBSD_installieren/en) except for the IPv6 portion, which didn't appear to work for me, so I configured the IPv6 differently.
+[http://wiki.hetzner.de/index.php/FreeBSD_installieren/en](http://wiki.hetzner.de/index.php/FreeBSD_installieren/en) except for the IPv6 portion, which didn't appear to work for me, so I configured the IPv6 differently (see below for details).
 
 ```
 ssh root@78.47.249.19
+mkdir ~/.ssh
+chmod 700 ~/.ssh
 pkg_add -r git sudo bash vim rsync
 bash
 cd /etc
@@ -71,6 +72,39 @@ sudo -e /etc/rc.conf # append the following
 	ifconfig_re0_ipv6="inet6 2a01:4f8:d12:148e::2/64"
 	# Set a static route using the xxx::1 address
 	ipv6_defaultrouter="2a01:4f8:d12:148e::1"
+mkdir ~/.ssh
+chmod 700 ~/.ssh
 sudo shutdown -r now
 ```
-* copy ssh keys in place
+* copy ssh keys in place:
+
+```
+ # from non-Hetzner machine
+for ID in cunnie root; do
+  scp ~/.ssh/id_nono.pub $ID@shay.nono.com:.ssh/authorized_keys
+  ssh $ID@shay.nono.com "id; echo does not require password"
+done
+```
+* lock down so it requires ssh-key to log in:
+
+```
+ssh cunnie@shay.nono.com
+ # prevent root from logging in
+ # require keys to log in
+sudo vim /etc/ssh/sshd_config
+  :%s/^PermitRootLogin yes/PermitRootLogin no/g
+  :%s/.*#ChallengeResponseAuthentication yes/ChallengeResponseAuthentication no/
+  :wq!
+sudo /etc/rc.d/sshd restart
+ # test your changes from another window
+ # whatever you do, don't close your existing ssh connection
+ # the following should fail with `Permission denied (publickey).`
+ssh not_a_real_user@shay.nono.com
+ # the following should succeed because you have a key
+ssh cunnie@shay.nono.com
+ # check in the changes
+cd /etc
+sudo git add -u
+sudo -E git commit -m"sshd is locked down"
+```
+* Publish my /etc/ repo to a public repo on github. If you decide to publish to a github repo, use a private repo.  There are security concerns relating to publishing publicly the details of a machine's configuration.
