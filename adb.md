@@ -5,4 +5,5 @@ cp -i ~/Downloads/adt-bundle-mac-x86_64-20131030/sdk/platform-tools/adb /usr/loc
 adb devices -l
  # query the Intents for the HTC One
 adb -s HT36JW912632 shell dumpsys package > /tmp/junk.pkg
+adb -s emulator-5554 shell pm list permissions
 ```
