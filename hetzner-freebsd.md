@@ -1,6 +1,6 @@
 ## How I set up a FreeBSD Server on Hetzner
 
-I'm switching to Hetzner because at the time it was cheaper than my current provider.  My new machine is named **shay.nono.com** and its
+I'm switching to Hetzner because it's cheaper than my current provider.  My new machine is named **shay.nono.com** and its
 IP address is **78.47.249.19**
 
 For initial set-up, these instructions are decent:
@@ -107,4 +107,61 @@ cd /etc
 sudo git add -u
 sudo -E git commit -m"sshd is locked down"
 ```
-* Publish my /etc/ repo to a public repo on github. If you decide to publish to a github repo, use a private repo.  There are security concerns relating to publishing publicly the details of a machine's configuration.
+* Publish my /etc/ repo to a public repo on github. If you decide to publish to a github repo, use a private repo (unless you are confident that nothing you publish will compromise the security of your server):
+
+```
+sudo git remote add origin git@github.com:cunnie/shay.nono.com-etc.git
+sudo -E git push -u origin master
+```
+* If you see a message saying `Permission denied (publickey)` when you try to push to github, you need to enable ssh agent forwarding.  This is what my ~/.ssh/config file looks like on my home machine:
+
+```
+Host shay shay.nono.com
+        User cunnie
+        IdentityFile ~/.ssh/id_nono
+        ForwardAgent yes
+```
+* Now let's make it a slave DNS server.  Although I will use git for revision control, I won't bother publishing it to github because the configuration of a DNS slave server is not terribly complicated or interesting:
+
+```
+cd /etc/namedb
+ # alternative to using a heredoc when root privilege to write is needed
+printf "slave/\nrndc.key\n" | sudo tee .gitignore
+sudo git init
+sudo git add .
+sudo -E git commit -m"Initial checkin"
+```
+* Append the zone information to the end of named.conf.  I use the IPv6 address of the primary nameserver because I want to test the IPv6 transport layer:
+
+```
+zone "nono.com" {
+        type slave;
+        masters {
+                2601:9:8480:bad:200:24ff:fece:7bf8;
+        };
+};
+```
+* You'll need to make sure the primary nameserver will allow zone transfers (AXFR) from the secondary.  Here's the security ACLs of the named.conf file on my primary nameserver:
+
+```
+acl ns-he { 2a01:4f8:d12:148e::2; };
+
+// the glorious nono.com
+zone "nono.com" in {
+        type master; file "/etc/namedb/master/nono.com";
+        allow-transfer { ns-he; };
+        check-names warn;  // lots of people have underscores in hostnames
+};
+```
+* Restart named on the primary nameserver to pick up the new ACLs (i.e. `sudo /etc/rc.d/named restart`).
+* Back on the Hetzner machine: configure the nameserver daemon to start on boot, and the bring it up manually:
+
+```
+printf "# enable BIND\nnamed_enable=\"YES\"\n" | sudo tee -a /etc/rc.conf
+sudo /etc/rc.d/named start
+```
+* Test to make sure it's resolving properly (from an external IP):
+
+```
+nslookup shay.nono.com shay.nono.com
+```
