@@ -1,14 +1,27 @@
 ## How I set up a FreeBSD Server on Hetzner
 
-I'm switching to Hetzner because it's cheaper than my current provider.  My new machine is named **shay.nono.com** and its
-IP address is **78.47.249.19**
+### Part 1: Base Install
+
+This blog post covers the procedure to configure the following on a [FreeBSD](http://www.freebsd.org/) virtual machine located in a [Hetzner](http://www.hetzner.de/en/) (a German ISP) datacenter:
+
+* install a baseline of packages (git sudo bash vim rsync)
+* place /etc under revision control (git)
+* create a non-root user
+* lock down ssh (keys only)
+
+This blog post does not cover the initial FreeBSD installation; that's covered quite adequately here: [http://wiki.hetzner.de/index.php/FreeBSD_installieren/en](http://wiki.hetzner.de/index.php/FreeBSD_installieren/en) ()except for the IPv6 portion, which didn't appear to work properly, so I configured the IPv6 differently (see below for details)).
+
+Hetzner is a cost-effective alternative to Amazon AWS. In addition, it offers native IPv6, which Amazon only offers on its ELBs (Elastic Load Balancers).
+
+Basic information on my Hetzner FreeBSD virtual machine:
+
+* virtual server hostname: **shay.nono.com** (A records already created)
+* IPv4 address: **78.47.249.19**
 
 For initial set-up, these instructions are decent:
 
-[http://wiki.hetzner.de/index.php/FreeBSD_installieren/en](http://wiki.hetzner.de/index.php/FreeBSD_installieren/en) except for the IPv6 portion, which didn't appear to work for me, so I configured the IPv6 differently (see below for details).
-
 ```
-ssh root@78.47.249.19
+ssh root@shay.nono.com
 mkdir ~/.ssh
 chmod 700 ~/.ssh
 pkg_add -r git sudo bash vim rsync
