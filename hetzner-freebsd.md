@@ -1,15 +1,15 @@
-## How I set up a FreeBSD Server on Hetzner
+## How to Set Up a FreeBSD Server on Hetzner
 
-### Part 1: Base Install
+### Base Install
 
 This blog post covers the procedure to configure the following on a [FreeBSD](http://www.freebsd.org/) virtual machine located in a [Hetzner](http://www.hetzner.de/en/) (a German ISP) datacenter:
 
 * install a baseline of packages (git sudo bash vim rsync)
 * place /etc under revision control (git)
 * create a non-root user
-* lock down ssh (keys only)
+* lock down ssh (requires ssh-keys to login; no passwords accepts)
 
-This blog post does not cover the initial FreeBSD installation; that's covered quite adequately here: [http://wiki.hetzner.de/index.php/FreeBSD_installieren/en](http://wiki.hetzner.de/index.php/FreeBSD_installieren/en) ()except for the IPv6 portion, which didn't appear to work properly, so I configured the IPv6 differently (see below for details)).
+This blog post does not cover the initial FreeBSD installation; that's covered quite adequately here: [http://wiki.hetzner.de/index.php/FreeBSD_installieren/en](http://wiki.hetzner.de/index.php/FreeBSD_installieren/en) (except for the IPv6 portion, which didn't appear to work properly, so I configured the IPv6 differently (see below for details)).
 
 Hetzner is a cost-effective alternative to Amazon AWS. In addition, it offers native IPv6, which Amazon only offers on its ELBs (Elastic Load Balancers).
 
@@ -18,7 +18,9 @@ Basic information on my Hetzner FreeBSD virtual machine:
 * virtual server hostname: **shay.nono.com** (A records already created)
 * IPv4 address: **78.47.249.19**
 
-For initial set-up, these instructions are decent:
+### Initial SCM Check In
+
+These are the instructions for the initial setup:
 
 ```
 ssh root@shay.nono.com
@@ -46,7 +48,17 @@ git config --global user.name "Brian Cunnie"
 git config --global user.email brian.cunnie@gmail.com
 git commit -m"Initial Commit"
 ```
-Now let's create a user with appropriate privileges:
+
+#### .gitignore
+
+The .gitignore step is optional.  If you are comfortable with the security of your git repo, then you don't need a .gitignore file.  If you plan on making your repo public (which you probably shouldn't do), then you should exclude certain files:
+
+* **/etc/master.passwd** and **/etc/spwd.db** contain the encrypted password hashes.
+* **/etc/ssh/\*key\*** contain the ssh keys used to encrypt traffic to and from the machine.
+
+### Create Initial User
+
+Now let's create the initial user.  The user will have sudo privileges, will not be prompted for a password when invoking sudo, and will be a member of the *wheel* group:
 
 * `sysinstall`
 *  **Configure &rarr; User Management &rarr; Group**
@@ -65,6 +77,8 @@ Now let's create a user with appropriate privileges:
 	* uncomment this line: `%wheel ALL=(ALL) NOPASSWD: ALL`
 
 * `exit`
+
+### Configure the IPv6 Address
 
 Now let's log in as the new user and set the IPv6 address based on the information in the *IPs* tab of the Hetzner web interface.  Note that we set the **::2** address of our /64 to be our server's IP address, and the **::1** address to be our default route.
 
@@ -89,6 +103,8 @@ mkdir ~/.ssh
 chmod 700 ~/.ssh
 sudo shutdown -r now
 ```
+### Lock Down ssh
+
 * copy ssh keys in place:
 
 ```
@@ -134,7 +150,15 @@ Host shay shay.nono.com
         IdentityFile ~/.ssh/id_nono
         ForwardAgent yes
 ```
-* Now let's make it a slave DNS server.  Although I will use git for revision control, I won't bother publishing it to github because the configuration of a DNS slave server is not terribly complicated or interesting:
+### Configure a Secondary DNS (NS) Server
+
+Before we begin, ask yourself, "Do I really need to configure my own nameserver, or can I use a paid service to do our DNS for us?"
+
+We will now configure the DNS server as a secondary NS (nameserver) for the domain nono.com.  We will use git for revision control, and we will publish it to github.
+
+*[Alert readers may ask, "If the DNS information is under /etc/namedb, and /etc is under revision control, then isn't DNS also under revision control?".  The answer is that /etc/namedb is a symbolic link to /var/named/etc/namedb, which is outside the /etc directory, and thus is not under /etc's revision control]*
+
+#### Edit named.conf on shay.nono.com
 
 ```
 cd /etc/namedb
@@ -143,38 +167,133 @@ printf "slave/\nrndc.key\n" | sudo tee .gitignore
 sudo git init
 sudo git add .
 sudo -E git commit -m"Initial checkin"
+sudo -E git remote add origin git@github.com:cunnie/shay.nono.com-etc-namedb.git
+sudo -E git push -u origin master
 ```
-* Append the zone information to the end of named.conf.  I use the IPv6 address of the primary nameserver because I want to test the IPv6 transport layer:
+We're going to make several changes to *named.conf*:
+
+
+* allow queries to shay.nono.com's IPv4 address
+* allow queries to shay.nono.com's IPv6 address
+* configure shay.nono.com to be a secondary NS for the domain nono.com
+
+*[Editor's note: prior to [BIND 9.4](http://www.zytrax.com/books/dns/ch7/queries.html), we needed to explicitly disallow recursive queries <sup>[1](#recursion)</sup> from everywhere except localhost. With BIND 9.4 the behavior is changed, and the default behavior is a sensible one (i.e. no recursive queries except for localhost/localnets).]* 
+
+Let's edit the file:
+
+```
+sudo vim named.conf
+```
+Let's disallow recursive queries and enable the external interfaces to accept queries:
+
+```
+options {
+    ...
+//      listen-on       { 127.0.0.1; };
+    ...
+        listen-on-v6    { any; };
+```
+Now we append the zone information to the end of named.conf.  We will use the IPv6 address of the primary nameserver (SOA) to test the IPv6 transport layer:
 
 ```
 zone "nono.com" {
         type slave;
         masters {
-                2601:9:8480:bad:200:24ff:fece:7bf8;
+                2001:558:6045:109:15c7:4a76:5824:6c51;
         };
 };
 ```
-* You'll need to make sure the primary nameserver will allow zone transfers (AXFR) from the secondary.  Here's the security ACLs of the named.conf file on my primary nameserver:
+Now let's check in and push:
+
+```
+sudo git add -u
+sudo -E git commit -m"nono.com secondary NS"
+sudo -E git push origin master
+```
+
+The resulting named.conf file can be viewed [here](https://github.com/cunnie/shay.nono.com-etc-namedb/blob/master/named.conf)
+
+#### Edit named.conf on nono.com's Primary DNS Server
+
+You'll need to make sure the primary (master) nameserver will allow zone transfers (AXFR) <sup>[1](#axfr)</sup> from the secondary (i.e. shay.nono.com).  Here's the security ACLs of the named.conf file on my primary nameserver (*ns-he* is a mnemonic for *nameserver-Hetzner*):
 
 ```
 acl ns-he { 2a01:4f8:d12:148e::2; };
 
-// the glorious nono.com
 zone "nono.com" in {
         type master; file "/etc/namedb/master/nono.com";
         allow-transfer { ns-he; };
-        check-names warn;  // lots of people have underscores in hostnames
-};
 ```
 * Restart named on the primary nameserver to pick up the new ACLs (i.e. `sudo /etc/rc.d/named restart`).
-* Back on the Hetzner machine: configure the nameserver daemon to start on boot, and the bring it up manually:
+
+#### Start the Nameserver Daemon on Hetzner and Test
+
+Back on the Hetzner machine: configure the nameserver daemon to start on boot, and the bring it up manually:
 
 ```
 printf "# enable BIND\nnamed_enable=\"YES\"\n" | sudo tee -a /etc/rc.conf
 sudo /etc/rc.d/named start
 ```
-* Test to make sure it's resolving properly (from an external IP):
+Test to make sure it's resolving properly from shay.nono.com:
 
 ```
-nslookup shay.nono.com shay.nono.com
+nslookup shay.nono.com 127.0.0.1
+nslookup shay.nono.com ::1
+nslookup google.com 127.0.0.1
+nslookup google.com ::1
 ```
+Now we test from a third-party machine (to make sure that recursion has been disabled). Note that we explicitly specify shay.nono.com's IPv4 and IPv6 addresses in order to test on both protocols:
+
+```
+nslookup shay.nono.com 78.47.249.19
+nslookup shay.nono.com 2a01:4f8:d12:148e::2
+nslookup google.com 78.47.249.19  # should fail, "REFUSED/NXDOMAIN"
+nslookup google.com 2a01:4f8:d12:148e::2  # should fail "REFUSED/NXDOMAIN"
+```
+#### Update the Domain Registrar with the New Nameserver
+
+FIXME:  this needs to be written
+
+```
+ whois nono.com | grep "Name Server:"
+   Name Server: NS-AWS.NONO.COM
+   Name Server: NS-HE.NONO.COM
+Name Server: ns-aws.nono.com 54.235.96.196
+Name Server: ns-he.nono.com 78.47.249.19 2a01:4f8:d12:148e::2
+```
+
+#### Update the NS Records on the Primary Nameserver
+
+```
+sudo vim /etc/namedb/master/nono.com
+	nono.com                IN SOA  ns-an.nono.com. cunnie.nono.com. (
+	                                1395637545 ; serial
+	                                10800      ; refresh (3 hours)
+	                                3600       ; retry (1 hour)
+	                                604800     ; expire (1 week)
+	                                21600      ; minimum (6 hours)
+	                                )
+	                        NS      ns-he.nono.com.
+	                        NS      ns-aws.nono.com.
+sudo /etc/rc.d/named restart
+```
+
+```
+nslookup -query=ns nono.com
+Server:		10.9.9.1
+Address:	10.9.9.1#53
+
+nono.com	nameserver = ns-aws.nono.com.
+nono.com	nameserver = ns-he.nono.com.
+```
+
+
+
+----
+<a name="recursion"><sup>[1]</sup></a>  DNS nameservers that allow recursive queries can be used for malicious purposes. In fact, Godaddy reserves the right to [suspend your account](http://support.godaddy.com/help/article/1184/what-risks-are-associated-with-recursive-dns-queries) if you configure a recursive nameserver.
+
+A recursive query is one that asks the nameserver to resolve a record for a domain for which the nameserver is not authoritative; for example, shay.nono.com is authoritative only for the nono.com domain (not quite true, it's authoritative for other domains as well (e.g. 127.in-addr.arpa) but let's not get lost in the details), so a query directed to it for home.nono.com's A (address) record would be an *iterative*, not *recursive*, query, and would be allowed; however, a query for google.com's A record would be a *recursive* query (it's not within the nono.com domain), and would not be honored by shay.nono.com's nameserver.
+
+<a name="axfr"><sup>[2]</sup></a> Note that unlike other DNS queries, AXFR requests take place over TCP connections, not UDP.  In other words, you must make sure that your firewall on your primary nameserver allows inbound TCP connections on port 53 from your secondary nameservers in order for the zone transfer to succeed.
+
+Daniel J. Bernstein has written an [excellent piece](http://cr.yp.to/djbdns/axfr-notes.html) on how AXFR works.  He is the author of a popular nameserver daemon (djb-dns).
