@@ -152,11 +152,9 @@ Host shay shay.nono.com
 ```
 ### Configure a Secondary DNS (NS) Server
 
-Before we begin, ask yourself, "Do I really need to configure my own nameserver, or can I use a paid service to do our DNS for us?"
-
 We will now configure the DNS server as a secondary NS (nameserver) for the domain nono.com.  We will use git for revision control, and we will publish it to github.
 
-*[Alert readers may ask, "If the DNS information is under /etc/namedb, and /etc is under revision control, then isn't DNS also under revision control?".  The answer is that /etc/namedb is a symbolic link to /var/named/etc/namedb, which is outside the /etc directory, and thus is not under /etc's revision control]*
+*[Alert readers may ask, "If the DNS information is under /etc/namedb, and /etc is under revision control, then isn't DNS also under revision control?".  The answer is that /etc/namedb is a symbolic link to /var/named/etc/namedb <sup>[1](#var_named)</sup>, which is outside the /etc directory, and thus is not under /etc's revision control]*
 
 #### Edit named.conf on shay.nono.com
 
@@ -177,14 +175,14 @@ We're going to make several changes to *named.conf*:
 * allow queries to shay.nono.com's IPv6 address
 * configure shay.nono.com to be a secondary NS for the domain nono.com
 
-*[Editor's note: prior to [BIND 9.4](http://www.zytrax.com/books/dns/ch7/queries.html), we needed to explicitly disallow recursive queries <sup>[1](#recursion)</sup> from everywhere except localhost. With BIND 9.4 the behavior is changed, and the default behavior is a sensible one (i.e. no recursive queries except for localhost/localnets).]* 
+*[Editor's note: prior to [BIND 9.4](http://www.zytrax.com/books/dns/ch7/queries.html), we needed to explicitly disallow recursive queries <sup>[2](#recursion)</sup> from everywhere except localhost. With BIND 9.4 the behavior is changed, and the default behavior is a sensible one (i.e. no recursive queries except for localhost/localnets).]*
 
 Let's edit the file:
 
 ```
 sudo vim named.conf
 ```
-Let's disallow recursive queries and enable the external interfaces to accept queries:
+Let's enable the external interfaces to accept queries.  Note that there is an inconsistency between IPv4 and IPv6: to enable IPv4 on the external interface we *comment-out* the corresponding line, but to enable IPv6 we *uncomment* the corresponding line and write "any;" between the curly braces.
 
 ```
 options {
@@ -215,7 +213,7 @@ The resulting named.conf file can be viewed [here](https://github.com/cunnie/sha
 
 #### Edit named.conf on nono.com's Primary DNS Server
 
-You'll need to make sure the primary (master) nameserver will allow zone transfers (AXFR) <sup>[1](#axfr)</sup> from the secondary (i.e. shay.nono.com).  Here's the security ACLs of the named.conf file on my primary nameserver (*ns-he* is a mnemonic for *nameserver-Hetzner*):
+We need to make sure the primary (master) nameserver will allow zone transfers (AXFR) <sup>[3](#axfr)</sup> from the secondary (i.e. shay.nono.com).  Here's the security ACLs of the named.conf file on our primary nameserver (*ns-he* is a mnemonic for *nameserver-Hetzner*):
 
 ```
 acl ns-he { 2a01:4f8:d12:148e::2; };
@@ -252,7 +250,13 @@ nslookup google.com 2a01:4f8:d12:148e::2  # should fail "REFUSED/NXDOMAIN"
 ```
 #### Update the Domain Registrar with the New Nameserver
 
-FIXME:  this needs to be written
+This procedure depends upon the registrar with whom you've registered your domain.  In this case, the registrar is [joker.com](http://joker.com/) (coincidentally another German establishment), and updating the nameservers is accomplished by logging in and clicking on the **Service Zone** link.  Other popular registrars include [GoDaddy](http://www.godaddy.com/) and [easyDNS](https://web.easydns.com/).
+
+#### Check that the whois Information Has Propagated
+
+Once we've submitted the new nameserver information to our registrar, we use the *whois* command to verify that the changes have rippled through.  We grep for the nameservers because we are not interested in the other information.  Do not be concerned if your nameservers are capitalized: [DNS is a case-insensitve protocol](http://tools.ietf.org/html/rfc4343), at least as far as our purposes are concerned.
+
+We look for the Hetzner nameserver (*ns-he*).  We make sure that we see both its IPv4 address and its iPv6 address:
 
 ```
  whois nono.com | grep "Name Server:"
@@ -263,6 +267,11 @@ Name Server: ns-he.nono.com 78.47.249.19 2a01:4f8:d12:148e::2
 ```
 
 #### Update the NS Records on the Primary Nameserver
+
+We're still not finished: even though the Internet knows that ns-he.nono.com is a nameserver for the nono.com domain, the nono.com nameservers do *not* yet know that ns-he.nono.com is a nameserver.  In other words, we need to update the nono.com zone file.  We need to add an NS record for the new ns-he.nono.com nameserver.
+
+We log into the Master/Primary nameserver, and edit the zone file (in this case, /etc/namedb/master/nono.com).  We **make sure to increment the *serial* number** otherwise the change won't propagate to the secondary nameservers (the secondaries use the serial number as a mechanism to determine if there has been a change to the zone file.  If there has been a change, then they download, via AXFR, a new copy of the zone file).  Once we've finished editing the zone file we restart the nameserver so that the changes take effect.
+
 
 ```
 sudo vim /etc/namedb/master/nono.com
@@ -275,8 +284,12 @@ sudo vim /etc/namedb/master/nono.com
 	                                )
 	                        NS      ns-he.nono.com.
 	                        NS      ns-aws.nono.com.
+	 ...
 sudo /etc/rc.d/named restart
 ```
+#### Check that the DNS NS Information Has Propagated
+
+DNS information can take 30 minutes or more to propagate (it depends upon the [TTL](http://en.wikipedia.org/wiki/Time_to_live) value for the DNS records and whether the records have been cached).  In this example, we use the *nslookup* command to return the NS (nameserver) records for the nono.com domain.
 
 ```
 nslookup -query=ns nono.com
@@ -286,14 +299,15 @@ Address:	10.9.9.1#53
 nono.com	nameserver = ns-aws.nono.com.
 nono.com	nameserver = ns-he.nono.com.
 ```
-
-
+Notice *ns-he.nono.com* in the output; we have successfully configured a secondary nameserver and now feel the warm glow of accomplishment of a job well done.
 
 ----
-<a name="recursion"><sup>[1]</sup></a>  DNS nameservers that allow recursive queries can be used for malicious purposes. In fact, Godaddy reserves the right to [suspend your account](http://support.godaddy.com/help/article/1184/what-risks-are-associated-with-recursive-dns-queries) if you configure a recursive nameserver.
+<a name="var_named"><sup>[1]</sup></a> Until the early 2000's /etc/namedb was *not* a symbolic link to /var/named/etc/namedb but a normal directory.  With the advent of security concerns and at least one BIND exploit (of which this author was a victim), the FreeBSD security team decided to add an additional layer of security by running the BIND daemon in a chroot environment; however, given that the BIND daemon would, on occasion, write to disk in its chrooted environment, a better home would be the /var filesystem.  To make the transition easier for systems administrators who were habituated to configuring BIND in /etc/namedb, a symbolic link was created.
+
+<a name="recursion"><sup>[2]</sup></a>  DNS nameservers that allow recursive queries can be used for malicious purposes. In fact, Godaddy reserves the right to [suspend your account](http://support.godaddy.com/help/article/1184/what-risks-are-associated-with-recursive-dns-queries) if you configure a recursive nameserver.
 
 A recursive query is one that asks the nameserver to resolve a record for a domain for which the nameserver is not authoritative; for example, shay.nono.com is authoritative only for the nono.com domain (not quite true, it's authoritative for other domains as well (e.g. 127.in-addr.arpa) but let's not get lost in the details), so a query directed to it for home.nono.com's A (address) record would be an *iterative*, not *recursive*, query, and would be allowed; however, a query for google.com's A record would be a *recursive* query (it's not within the nono.com domain), and would not be honored by shay.nono.com's nameserver.
 
-<a name="axfr"><sup>[2]</sup></a> Note that unlike other DNS queries, AXFR requests take place over TCP connections, not UDP.  In other words, you must make sure that your firewall on your primary nameserver allows inbound TCP connections on port 53 from your secondary nameservers in order for the zone transfer to succeed.
+<a name="axfr"><sup>[3]</sup></a> Note that unlike other DNS queries, AXFR requests take place over TCP connections, not UDP.  In other words, you must make sure that your firewall on your primary nameserver allows inbound TCP connections on port 53 from your secondary nameservers in order for the zone transfer to succeed.
 
-Daniel J. Bernstein has written an [excellent piece](http://cr.yp.to/djbdns/axfr-notes.html) on how AXFR works.  He is the author of a popular nameserver daemon (djb-dns).
+Daniel J. Bernstein has written an [excellent piece](http://cr.yp.to/djbdns/axfr-notes.html) on how AXFR works.  He is the author of a popular nameserver daemon (djb-dns).  Daniel J. Bernstein was called the [the greatest programmer in the history of the world](http://www.aaronsw.com/weblog/djb) by [Aaron Swartz](http://en.wikipedia.org/wiki/Aaron_Swartz), who was no mean programmer himself, having helped develop the format of RSS (web feed), the Creative Commons organization, and Reddit.  Aaron unfortunately took his own life in January 2013.
