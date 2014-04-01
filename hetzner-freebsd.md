@@ -150,7 +150,7 @@ Host shay shay.nono.com
         IdentityFile ~/.ssh/id_nono
         ForwardAgent yes
 ```
-### Configure a Secondary DNS (NS) Server
+## Part 2: Configure a Secondary DNS (NS) Server
 
 We will now configure the DNS server as a secondary NS (nameserver) for the domain nono.com.  We will use git for revision control, and we will publish it to github.
 
@@ -311,3 +311,35 @@ A recursive query is one that asks the nameserver to resolve a record for a doma
 <a name="axfr"><sup>[3]</sup></a> Note that unlike other DNS queries, AXFR requests take place over TCP connections, not UDP.  In other words, you must make sure that your firewall on your primary nameserver allows inbound TCP connections on port 53 from your secondary nameservers in order for the zone transfer to succeed.
 
 Daniel J. Bernstein has written an [excellent piece](http://cr.yp.to/djbdns/axfr-notes.html) on how AXFR works.  He is the author of a popular nameserver daemon (djb-dns).  Daniel J. Bernstein was called the [the greatest programmer in the history of the world](http://www.aaronsw.com/weblog/djb) by [Aaron Swartz](http://en.wikipedia.org/wiki/Aaron_Swartz), who was no mean programmer himself, having helped develop the format of RSS (web feed), the Creative Commons organization, and Reddit.  Aaron unfortunately took his own life in January 2013.
+
+## Part 3: Configuring NTP and nginx
+
+In this blog post we discuss configuring an NTP (network time protocol) server and nginx (http server) on a FreeBSD-based Hetzner virtual machine.
+
+### What happens if you configure NTP insecurely?
+
+Setting up an NTP server in an insecure manner will result in receiving an email similar to the following:
+
+<blockquote>
+Subject: Abuse Message [AbuseID:0EE497:1B]: AbuseNormal: Exploitable NTP server used for an attack: 78.47.249.19<br />
+<br />
+Dear Brian Cunnie,<br />
+...<br />
+A public NTP server on your network, running on IP address 78.47.249.19 and
+UDP port 123, <span style="background-color: yellow">participated in a very large-scale attack against a customer</span> of ours today, generating UDP responses to spoofed "monlist" requests that claimed to be from the attack target.<br />
+...
+</blockquote>
+[highlights mine] I had accidentally enabled ntpd without first securing it.  Lesson learned: don't enable an ntpd server unless it has been secured (note: enabling an ntpd *client* should not pose a security risk).
+
+### Can we run NTP in a virtual machine?
+
+Can I run ntp in a virtual machine?  The short answer is yes, but the [official answer](http://support.ntp.org/bin/view/Support/KnownOsIssues#Section_9.2.2.) from the ntp.org website discourages it:
+
+<blockquote>NTP server was not designed to run inside of a virtual machine. It requires a high resolution system clock, with response times to clock interrupts that are serviced with a high level of accuracy. NTP client is ok to run in some virtualization solutions</blockquote>
+
+Experience shows that NTP server can be run on a virtual machine, scoring a perfect 20 according to the [NTP Pool Project](http://www.pool.ntp.org/scores/208.79.93.34), with typical offset within 2 milliseconds of absolute time.
+
+FIXME: insert graph here
+
+### Determine Upstream NTP servers
+
