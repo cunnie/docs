@@ -1,6 +1,4 @@
-## How to Set Up a FreeBSD Server on Hetzner
-
-### Base Install
+## Setting up a FreeBSD Server on Hetzner, Part 1: Base Install and sshr
 
 This blog post covers the procedure to configure the following on a [FreeBSD](http://www.freebsd.org/) virtual machine located in a [Hetzner](http://www.hetzner.de/en/) (a German ISP) datacenter:
 
@@ -150,7 +148,7 @@ Host shay shay.nono.com
         IdentityFile ~/.ssh/id_nono
         ForwardAgent yes
 ```
-## Part 2: Configure a Secondary DNS (NS) Server
+## Setting up a FreeBSD Server on Hetzner, Part 2: DNS Nameserver
 
 We will now configure the DNS server as a secondary NS (nameserver) for the domain nono.com.  We will use git for revision control, and we will publish it to github.
 
@@ -302,21 +300,21 @@ nono.com	nameserver = ns-he.nono.com.
 Notice *ns-he.nono.com* in the output; we have successfully configured a secondary nameserver and now feel the warm glow of accomplishment of a job well done.
 
 ----
-<a name="var_named"><sup>[1]</sup></a> Until the early 2000's /etc/namedb was *not* a symbolic link to /var/named/etc/namedb but a normal directory.  With the advent of security concerns and at least one BIND exploit (of which this author was a victim), the FreeBSD security team decided to add an additional layer of security by running the BIND daemon in a chroot environment; however, given that the BIND daemon would, on occasion, write to disk in its chrooted environment, a better home would be the /var filesystem.  To make the transition easier for systems administrators who were habituated to configuring BIND in /etc/namedb, a symbolic link was created.
+<a name="var_named"><sup>1</sup></a> Until the early 2000's /etc/namedb was *not* a symbolic link to /var/named/etc/namedb but a normal directory.  With the advent of security concerns and at least one BIND exploit (of which this author was a victim), the FreeBSD security team decided to add an additional layer of security by running the BIND daemon in a chroot environment; however, given that the BIND daemon would, on occasion, write to disk in its chrooted environment, a better home would be the /var filesystem.  To make the transition easier for systems administrators who were habituated to configuring BIND in /etc/namedb, a symbolic link was created.
 
-<a name="recursion"><sup>[2]</sup></a>  DNS nameservers that allow recursive queries can be used for malicious purposes. In fact, Godaddy reserves the right to [suspend your account](http://support.godaddy.com/help/article/1184/what-risks-are-associated-with-recursive-dns-queries) if you configure a recursive nameserver.
+<a name="recursion"><sup>2</sup></a>  DNS nameservers that allow recursive queries can be used for malicious purposes. In fact, Godaddy reserves the right to [suspend your account](http://support.godaddy.com/help/article/1184/what-risks-are-associated-with-recursive-dns-queries) if you configure a recursive nameserver.
 
-A recursive query is one that asks the nameserver to resolve a record for a domain for which the nameserver is not authoritative; for example, shay.nono.com is authoritative only for the nono.com domain (not quite true, it's authoritative for other domains as well (e.g. 127.in-addr.arpa) but let's not get lost in the details), so a query directed to it for home.nono.com's A (address) record would be an *iterative*, not *recursive*, query, and would be allowed; however, a query for google.com's A record would be a *recursive* query (it's not within the nono.com domain), and would not be honored by shay.nono.com's nameserver.
+A recursive query is one that asks the nameserver to resolve a record for a domain for which the nameserver is not authoritative; for example, shay.nono.com is authoritative only for the nono.com domain (not quite true, it's authoritative for other domains as well, e.g. 127.in-addr.arpa, but let's not get lost in the details), so a query directed to it for home.nono.com's A (address) record would be an *iterative*, not *recursive*, query, and would be allowed; however, a query for google.com's A record would be a *recursive* query (it's not within the nono.com domain), and would not be honored by shay.nono.com's nameserver.
 
-<a name="axfr"><sup>[3]</sup></a> Note that unlike other DNS queries, AXFR requests take place over TCP connections, not UDP.  In other words, you must make sure that your firewall on your primary nameserver allows inbound TCP connections on port 53 from your secondary nameservers in order for the zone transfer to succeed.
+<a name="axfr"><sup>3</sup></a> Note that unlike other DNS queries, AXFR requests take place over TCP connections, not UDP.  In other words, you must make sure that your firewall on your primary nameserver allows inbound TCP connections on port 53 from your secondary nameservers in order for the zone transfer to succeed.
 
 Daniel J. Bernstein has written an [excellent piece](http://cr.yp.to/djbdns/axfr-notes.html) on how AXFR works.  He is the author of a popular nameserver daemon (djb-dns).  Daniel J. Bernstein was called the [the greatest programmer in the history of the world](http://www.aaronsw.com/weblog/djb) by [Aaron Swartz](http://en.wikipedia.org/wiki/Aaron_Swartz), who was no mean programmer himself, having helped develop the format of RSS (web feed), the Creative Commons organization, and Reddit.  Aaron unfortunately took his own life in January 2013.
 
-## Part 3: Configuring NTP and nginx
+## Part 3: Configuring NTP
 
-In this blog post we discuss configuring an NTP (network time protocol) server and nginx (http server) on a FreeBSD-based Hetzner virtual machine.
+In this blog post we discuss configuring an NTP (network time protocol) server  on a FreeBSD-based Hetzner virtual machine.
 
-### What happens if you configure NTP insecurely?
+### What happens if we configure NTP insecurely?
 
 Setting up an NTP server in an insecure manner will result in receiving an email similar to the following:
 
@@ -331,15 +329,51 @@ UDP port 123, <span style="background-color: yellow">participated in a very larg
 </blockquote>
 [highlights mine] I had accidentally enabled ntpd without first securing it.  Lesson learned: don't enable an ntpd server unless it has been secured (note: enabling an ntpd *client* should not pose a security risk).
 
+### Are there NTP exploits?
+
+
+
 ### Can we run NTP in a virtual machine?
 
-Can I run ntp in a virtual machine?  The short answer is yes, but the [official answer](http://support.ntp.org/bin/view/Support/KnownOsIssues#Section_9.2.2.) from the ntp.org website discourages it:
+Can I run ntp in a virtual machine?  The short answer is yes, but the [official answer](http://support.ntp.org/bin/view/Support/KnownOsIssues#Section_9.2.2.) from the ntp.org website is ambivalent:
 
 <blockquote>NTP server was not designed to run inside of a virtual machine. It requires a high resolution system clock, with response times to clock interrupts that are serviced with a high level of accuracy. NTP client is ok to run in some virtualization solutions</blockquote>
 
-Experience shows that NTP server can be run on a virtual machine, scoring a perfect 20 according to the [NTP Pool Project](http://www.pool.ntp.org/scores/208.79.93.34), with typical offset within 2 milliseconds of absolute time.
+Experience shows that NTP server can be run on a virtual machine, scoring a perfect 20 according to the [NTP Pool Project](http://www.pool.ntp.org/scores/208.79.93.34), with typical offset within 2 milliseconds of absolute time.  In fact, in a statistically-insignificant comparison of 2 virtual NTP servers and 1 bare-iron server, the virtual servers fared better:
 
-FIXME: insert graph here
+<table>
+<tr>
+<th>Provider / Network</th><th>Type (Virtual or Bare Iron)</th><th>NTP Pool Score (higher is better; 20 is maximum)</th><th>Typical Jitter</th>
+</tr>
+<tr>
+<td>Hetzner</td><td>Virtual</td><td>20</td><td>+2ms to +10ms</td>
+</tr>
+<tr>
+<td>Amazon AWS</td><td>Virtual (t1.micro)</td><td>20</td><td>+/- 5ms</td>
+</tr>
+<tr>
+<td>Comcast</td><td>Bare Iron</td><td>18.5</td><td>+/- 4ms</td>
+</tr>
+</table>
+
+FIXME: insert graphs here
+
+Analysis:
+
+* **AWS t1.micro**: the jitter is within +/- 5ms.  Given the close geographic proximity (the monitoring station is in LA and the AWS instance is in Northern California), one would hope it would be better.
+
+* **Hetzner**: the jitter is +2ms to +10ms.  The jitter is a tighter band than Amazon's (8ms spread vs. Amazon's 10mx spread), but red-shifted (to unapologetically borrow an astronomy term), most likely due to cross-Atlantic lag.
+
+* **Comcast**: the jitter is is typically +/- 4ms. My home machine, which is in Northern California (can't blame the distance) and a bare iron machine (can't blame the hypervisor) is typically +/- 4ms.  It should be better than the others, but it isn't.  Perhaps the Comcast network is at fault.
 
 ### Determine Upstream NTP servers
 
+We need to pick four upstream NTP servers (ntp.org [recommends](http://www.pool.ntp.org/join/configuration.html#management-queries) "configuring no less than 4 and no more than 7 servers").  We choose [Stratum 2](http://en.wikipedia.org/wiki/NTP_server#Clock_strata) servers because there are plenty of them and they're not as overwhelmed as Stratum 1 servers (also we don't need the &micro;-second accuracy of a Stratum 1 server).
+
+Here are the ones we picked:
+* ntp1v6.theremailer.net
+* time6.ostseehaie.de
+* ntp6.berlin-provider.de
+
+----
+<a name="several"><sup>1</sup></a> Choosing merely one time source is inadvisable: if its time is off, your time is off.  Choosing two is similarly inadvisable:  you will know, based on their difference, that one source is wrong, but you won't know which.  Three or more time sources will give you a clear indication which time sources are correct, assuming at most one time source is wrong.
