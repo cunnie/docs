@@ -1,4 +1,4 @@
-## Setting up a FreeBSD Server on Hetzner, Part 1: Base Install and sshr
+## Setting up a FreeBSD Server on Hetzner, Part 1: Base Install and ssh
 
 This blog post covers the procedure to configure the following on a [FreeBSD](http://www.freebsd.org/) virtual machine located in a [Hetzner](http://www.hetzner.de/en/) (a German ISP) datacenter:
 
@@ -310,7 +310,7 @@ A recursive query is one that asks the nameserver to resolve a record for a doma
 
 Daniel J. Bernstein has written an [excellent piece](http://cr.yp.to/djbdns/axfr-notes.html) on how AXFR works.  He is the author of a popular nameserver daemon (djb-dns).  Daniel J. Bernstein was called the [the greatest programmer in the history of the world](http://www.aaronsw.com/weblog/djb) by [Aaron Swartz](http://en.wikipedia.org/wiki/Aaron_Swartz), who was no mean programmer himself, having helped develop the format of RSS (web feed), the Creative Commons organization, and Reddit.  Aaron unfortunately took his own life in January 2013.
 
-## Part 3: Configuring NTP
+## Your Server has "participated in a very large-scale attack"
 
 In this blog post we discuss configuring an NTP (network time protocol) server  on a FreeBSD-based Hetzner virtual machine.
 
@@ -371,9 +371,24 @@ Analysis:
 We need to pick four upstream NTP servers (ntp.org [recommends](http://www.pool.ntp.org/join/configuration.html#management-queries) "configuring no less than 4 and no more than 7 servers").  We choose [Stratum 2](http://en.wikipedia.org/wiki/NTP_server#Clock_strata) servers because there are plenty of them and they're not as overwhelmed as Stratum 1 servers (also we don't need the &micro;-second accuracy of a Stratum 1 server).
 
 Here are the ones we picked:
+
 * ntp1v6.theremailer.net
 * time6.ostseehaie.de
 * ntp6.berlin-provider.de
+
+### Configure and Enable ntpd
+
+### Are the Upstream Servers Functioning?
+
+```
+[cunnie@shay /etc/defaults]$ ntpq -p
+     remote           refid      st t when poll reach   delay   offset  jitter
+==============================================================================
+ 2a01:4f8:141:28 192.53.103.104   2 u   43   64  177    0.553   -0.021   0.301
++time6.ostseehai 143.93.117.16    2 u   42   64  177    0.556   -0.029   0.304
+ www.berlin-prov .STEP.          16 u    -   64    0    0.000    0.000   0.000
+*stratum2-3.NTP. 129.70.130.71    2 u   60   64  177   20.698    5.492   0.187
+```
 
 ----
 <a name="several"><sup>1</sup></a> Choosing merely one time source is inadvisable: if its time is off, your time is off.  Choosing two is similarly inadvisable:  you will know, based on their difference, that one source is wrong, but you won't know which.  Three or more time sources will give you a clear indication which time sources are correct, assuming at most one time source is wrong.
