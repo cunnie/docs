@@ -312,11 +312,12 @@ Daniel J. Bernstein has written an [excellent piece](http://cr.yp.to/djbdns/axfr
 
 ## Your Server has "participated in a very large-scale attack"
 
-In this blog post we discuss configuring an NTP (network time protocol) server  on a FreeBSD-based Hetzner virtual machine.
+In this blog post we discuss configuring an NTP (network time protocol) server  on a FreeBSD-based Hetzner virtual machine.  This is the third installment of a series of blog posts.
 
-### What happens if we configure NTP insecurely?
+### The "very large-scale attack"
 
-Setting up an NTP server in an insecure manner will result in receiving an email similar to the following:
+
+On Thursday, Feb 20, 2014 I received the following email from Hetzner, my ISP:
 
 <blockquote>
 Subject: Abuse Message [AbuseID:0EE497:1B]: AbuseNormal: Exploitable NTP server used for an attack: 78.47.249.19<br />
@@ -327,58 +328,96 @@ A public NTP server on your network, running on IP address 78.47.249.19 and
 UDP port 123, <span style="background-color: yellow">participated in a very large-scale attack against a customer</span> of ours today, generating UDP responses to spoofed "monlist" requests that claimed to be from the attack target.<br />
 ...
 </blockquote>
-[highlights mine] I had accidentally enabled ntpd without first securing it.  Lesson learned: don't enable an ntpd server unless it has been secured (note: enabling an ntpd *client* should not pose a security risk).
+*[highlights mine]* What had happened? I had enabled ntpd without first securing it, inadvertently allowing a hacker to use my machine to amplify an attack on his target.  Lesson learned: don't enable an ntpd server unless it has been secured (note: enabling an ntpd *client* <sup>[[1]](#ntp_client)</sup> should not pose a security risk).
 
-### Are there NTP exploits?
+We'll discuss how to set up an ntp server in a secure manner.  We'll cover the following:
 
-
-
-### Can we run NTP in a virtual machine?
-
-Can I run ntp in a virtual machine?  The short answer is yes, but the [official answer](http://support.ntp.org/bin/view/Support/KnownOsIssues#Section_9.2.2.) from the ntp.org website is ambivalent:
-
-<blockquote>NTP server was not designed to run inside of a virtual machine. It requires a high resolution system clock, with response times to clock interrupts that are serviced with a high level of accuracy. NTP client is ok to run in some virtualization solutions</blockquote>
-
-Experience shows that NTP server can be run on a virtual machine, scoring a perfect 20 according to the [NTP Pool Project](http://www.pool.ntp.org/scores/208.79.93.34), with typical offset within 2 milliseconds of absolute time.  In fact, in a statistically-insignificant comparison of 2 virtual NTP servers and 1 bare-iron server, the virtual servers fared better:
-
-<table>
-<tr>
-<th>Provider / Network</th><th>Type (Virtual or Bare Iron)</th><th>NTP Pool Score (higher is better; 20 is maximum)</th><th>Typical Jitter</th>
-</tr>
-<tr>
-<td>Hetzner</td><td>Virtual</td><td>20</td><td>+2ms to +10ms</td>
-</tr>
-<tr>
-<td>Amazon AWS</td><td>Virtual (t1.micro)</td><td>20</td><td>+/- 5ms</td>
-</tr>
-<tr>
-<td>Comcast</td><td>Bare Iron</td><td>18.5</td><td>+/- 4ms</td>
-</tr>
-</table>
-
-FIXME: insert graphs here
-
-Analysis:
-
-* **AWS t1.micro**: the jitter is within +/- 5ms.  Given the close geographic proximity (the monitoring station is in LA and the AWS instance is in Northern California), one would hope it would be better.
-
-* **Hetzner**: the jitter is +2ms to +10ms.  The jitter is a tighter band than Amazon's (8ms spread vs. Amazon's 10mx spread), but red-shifted (to unapologetically borrow an astronomy term), most likely due to cross-Atlantic lag.
-
-* **Comcast**: the jitter is is typically +/- 4ms. My home machine, which is in Northern California (can't blame the distance) and a bare iron machine (can't blame the hypervisor) is typically +/- 4ms.  It should be better than the others, but it isn't.  Perhaps the Comcast network is at fault.
+1. Determine the upstream servers
+2. Configure, enable, and start ntpd
+3. Check: are all upstream servers functioning?
+4. Register with the [NTP Pool Project](http://www.pool.ntp.org/en/)
+5. How much bandwidth will it cost? 154 kbps, $2.99 / month
+6. Can we run NTP in a virtual machine?
+7. What are the NTP Vulnerabilities?
 
 ### Determine Upstream NTP servers
 
-We need to pick four upstream NTP servers (ntp.org [recommends](http://www.pool.ntp.org/join/configuration.html#management-queries) "configuring no less than 4 and no more than 7 servers").  We choose [Stratum 2](http://en.wikipedia.org/wiki/NTP_server#Clock_strata) servers because there are plenty of them and they're not as overwhelmed as Stratum 1 servers (also we don't need the &micro;-second accuracy of a Stratum 1 server).
+We need to do the following:
 
-Here are the ones we picked:
+* Pick four upstream NTP servers (ntp.org [recommends](http://www.pool.ntp.org/join/configuration.html#management-queries) "configuring no less than 4 and no more than 7 servers").
+* Choose [Stratum 2](http://en.wikipedia.org/wiki/NTP_server#Clock_strata) servers because there are plenty of them and they're not as overwhelmed as Stratum 1 servers (we don't need the &micro;-second accuracy of a Stratum 1 server&mdash;we're not a lab and we're not running on bare-iron).
+* Hand-pick our servers because we'll be adding our server to the NTP Pool Project, and that's what [they recommend](http://www.pool.ntp.org/join/configuration.html) (i.e., "Don't use *.pool.ntp.org servers").
+
+[This page](http://support.ntp.org/bin/view/Servers/StratumTwoTimeServers) lists open stratum 2 servers.  We choose four German servers (ISO code "DE") because our server is located in Germany.
+
+Here are the ones we pick:
 
 * ntp1v6.theremailer.net
 * time6.ostseehaie.de
 * ntp6.berlin-provider.de
+* stratum2-3.NTP.TechFak.Uni-Bielefeld.DE
 
-### Configure and Enable ntpd
+### Configure, Enable, and Start ntpd
+
+We edit the ntpd configuration file, */etc/ntp.conf*.  We make the following changes:
+
+* comment-out the default servers
+* add our hand-picked servers
+* comment-out the [appropriately restrictive] default permissions
+* add permissions that allow other machines to use our server as a time source
+
+```
+sudo vim /etc/ntp.conf
+```
+Add the following lines (after commenting-out any line that begins with "server"):
+
+```
+# Hetzner-located server, IPv6
+server ntp1v6.theremailer.net iburst
+# A different Hetzner-located server, IPv6
+server time6.ostseehaie.de iburst
+# A different Hetzner server
+server ntp6.berlin-provider.de iburst
+# A University server, IPv4
+server stratum2-3.NTP.TechFak.Uni-Bielefeld.DE iburst
+```
+
+Note:  the *iburst* directive allows our clock to synchronize more quickly with the upstream clocks.
+
+We also restrict who can access our server.  In general, we allow access to the clock but little else *unless* the query is coming from ourselves (i.e. from localhost), in which case we allow everything (we need to be able to diagnose our own ntp server).
+
+We continue to edit */etc/rc.conf* (after commenting out any line that begins with "restrict").  We add the following lines (the first two lines are the default permissions and are very restrictive; the last two lines are the permissions for queries originating from ourself and are very permissive):
+
+```
+restrict default kod nomodify notrap nopeer noquery
+restrict -6 default kod nomodify notrap nopeer noquery
+restrict 127.0.0.0 mask 255.0.0.0
+restrict -6 ::1
+```
+
+Note: the *noquery* directive is the directive that prevents rogue packets from leveraging our ntp server to attack other machines.  Had we configured this initially, we would not have received the email from Hetzner.
+
+Click [here](https://github.com/cunnie/shay.nono.com-etc/blob/master/ntp.conf) to see our current ntp.conf file. 
+
+Now that we have configured ntpd in a secure manner, we can configure our server to start ntpd on boot.
+
+```
+sudo vim /etc/rc.conf
+```
+We append the following line:
+
+```
+ntpd_enable="YES"
+```
+We can start ntpd by rebooting the server, but it is quicker to run its rc script:
+
+```
+sudo /etc/rc.d/ntpd start
+```
 
 ### Are the Upstream Servers Functioning?
+
+We make sure our upstream servers are functioning.  We use the `ntpq -p` command:
 
 ```
 [cunnie@shay /etc/defaults]$ ntpq -p
@@ -389,6 +428,141 @@ Here are the ones we picked:
  www.berlin-prov .STEP.          16 u    -   64    0    0.000    0.000   0.000
 *stratum2-3.NTP. 129.70.130.71    2 u   60   64  177   20.698    5.492   0.187
 ```
+We see that one of our upstream servers, *ntp6.berlin-provider.de*, is not responding to NTP queries.  We choose to replace it with *time.ostseehaie.de* (the IPv4 address of one of our IPv6 servers).  Our updated ntp.conf's server section now looks like this:
+
+```
+# Hetzner-located server, IPv6
+server ntp1v6.theremailer.net iburst
+# A different Hetzner-located server, IPv6
+server time6.ostseehaie.de iburst
+# A different Hetzner server, IPv4
+server time.ostseehaie.de iburst
+# A University server, IPv4
+server stratum2-3.NTP.TechFak.Uni-Bielefeld.DE iburst
+```
+We restart our ntpd server:
+
+```
+sudo /etc/rc.d/ntpd restart
+```
+And we check our upstream servers again:
+
+```
+[cunnie@shay /etc]$ ntpq -p
+     remote           refid      st t when poll reach   delay   offset  jitter
+==============================================================================
+ 2a01:4f8:141:28 192.53.103.104   2 u    1   64    1    1.685   -0.929   0.529
+ time6.ostseehai 143.93.117.16    2 u    -   64    1    0.725   -0.388   0.025
+ time.ostseehaie 143.93.117.16    2 u    1   64    1    0.651   -0.364   0.032
+ stratum2-3.NTP. 129.70.130.70    2 u    -   64    1   20.933    5.215   0.116
+```
+We test our server from a third-party machine to make sure that it responds to ntp queries.  We run our query from an OS X machine that has the `sntp` command.  We run the `date` command immediately after to compare the timestamps and make sure that the clock is accurate:
+
+```
+$ sntp shay.nono.com; date
+2014 Apr 19 12:58:45.709957 -1.26928 +/- 0.035004 secs
+Sat Apr 19 12:58:45 PDT 2014
+```
+
+Our server, shay.nono.com, is accepting NTP queries and its clock appears to be set correctly.
+
+### [Optional] Register Our Server with the NTP Pool Project
+
+This step is optional:  we register our server with the [NTP Pool Project](http://www.pool.ntp.org/en/) in order to give back to the community (i.e. in order to provide a free time server for people who need one).
+
+1. Click [here](http://www.pool.ntp.org/en/join.html).  We read to make sure we qualify (e.g. we have a static IP).
+2. When you're ready, click on the link at the bottom of the page
+3. Create a bitcard account
+4. Login
+5. Go [here](https://manage.ntppool.org/manage/servers) to manage your servers
+6. Click **Add a server**
+7. We enter our server's hostname, i.e. **shay.nono.com**
+
+That's it!  We have given back to the community
+
+#### How much bandwidth will it cost?  154 kbps, $2.99 / month
+
+The total bandwidth cost of putting a server into the NTP Pool Project is minimal:  NTP uses the low-overhead UDP protocol, and clients typically space their queries minutes apart.  We measure the bandwidth on one of our servers, and come up with 154 kbps total bandwidth utilization.
+
+To put that into perspective, my home Internet connection has 50 Mbps download and 10 Mbps upload, for a total bandwidth of 60 Mbps.  154 kbps is approximately one quarter of one percent of the total bandwidth (i.e. **0.26%**).
+
+We also take that number (154 kbps) and measure it against Amazon's most expensive [Data Transfer Pricing](http://aws.amazon.com/s3/pricing/) tier ($0.120 / GB) for a worst-case cost analysis. *(Note that Amazon only charges for outbound traffic&mdash;inbound traffic is free)*.  We find that the incremental cost of providing an NTP server is **$2.99** per month.
+
+##### Methodology
+
+Our technique to measure the bandwidth was to run *tcpdump* to capture the NTP traffic to a file, and then measure the size of the file and the amount of time that *tcpdump* was running:
+
+```
+[cunnie@lana ~]$ sudo time tcpdump -ni em3 -w /tmp/junk.tcp port 123
+tcpdump: listening on em3, link-type EN10MB (Ethernet), capture size 65535 bytes
+^C10893487 packets captured
+18222794 packets received by filter
+0 packets dropped by kernel
+    60099.26 real         6.25 user         5.23 sys
+[cunnie@lana ~]$ ls -l /tmp/junk.tcp
+-rw-r--r--  1 root  wheel  1154718900 Apr 20 09:41 /tmp/junk.tcp
+```
+Over the course of 60099.26 seconds, 1154718900 bytes of NTP traffic passed through the ethernet port (a combination of both inbound and outbound traffic).  The math follows:
+
+* kbps &rarr; kilo*bits* per second
+* kBps &rarr; kilo*bytes* per second
+* 1154718900 B (bytes)
+* 60099.26 s (seconds)
+* ( 1154718900 B / 60099.26 s ) = 19213 Bps
+* 19213 Bps &times; ( 1 kB / 1000 B ) = 19.2 kBps
+* 19.2 kBps &times; ( 8 b / 1 B ) = 153.6 kbps
+* ($0.120 / GB)<br />&times; (1 GB / 1,000,000 kB)<br />&times; (1 kB / 8 kb)<br />&times; (153.6 kb / 1 s)<br />&times; (3600 s / 1 hr)<br />&times; (24 hr / 1 day)<br />&times; (30 day / 1 month)<br />&times; (1 / 2) = $2.985
+
+We want to bring to attention the final operand, "1 / 2".  That represents Amazon's policy of charging solely for outbound traffic (inbound is free), for   approximately 1/2 the NTP traffic is outbound (the other half is inbound).
+
+And the number of NTP clients (as defined by unique IP address) served? **341,981**.  The actual number is much more, since many of those IP addresses are firewalls behind which are several computers.  Here is the command line to pull those statistics:
+
+```
+sudo tcpdump -n -r /tmp/junk.tcp | awk '{print $3}' | grep -v 24.23.190.188.123 | sed 's=\.[0-9]*$==' | sort | uniq | wc -l
+```
+
+### Can we run NTP in a virtual machine?
+
+Can we run ntp in a virtual machine?  The short answer is yes, but the [official answer](http://support.ntp.org/bin/view/Support/KnownOsIssues#Section_9.2.2.) from the ntp.org website is ambivalent:
+
+<blockquote>NTP server was not designed to run inside of a virtual machine. It requires a high resolution system clock, with response times to clock interrupts that are serviced with a high level of accuracy. NTP client is ok to run in some virtualization solutions</blockquote>
+
+Experience shows that NTP server can be run on a virtual machine, scoring a perfect 20 according to the [NTP Pool Project](http://www.pool.ntp.org/scores/208.79.93.34), with typical offset within 2 milliseconds of absolute time.  In fact, in a statistically-insignificant comparison of 2 virtual NTP servers and 1 bare-iron server, a virtual server achieved the perfect score (i.e. 20.0):
+
+<table>
+<tr>
+<th>Provider / Network</th><th>Type (Virtual or Bare Iron)</th><th>NTP Pool Score (higher is better; 20 is maximum, < 10 warrants removal)</th><th>Typical Jitter</th>
+</tr>
+<tr>
+<td>Hetzner</td><td>Virtual</td><td>20.0</td><td>+2ms to +10ms</td>
+</tr>
+<tr>
+<td>Amazon AWS</td><td>Virtual (t1.micro)</td><td>13.9</td><td>+/- 5ms</td>
+</tr>
+<tr>
+<td>Comcast</td><td>Bare Iron</td><td>19.1</td><td>+/- 4ms</td>
+</tr>
+</table>
+
+#####Analysis:
+
+* **Hetzner**: the jitter is +2ms to +10ms.  The jitter is a tighter band than Amazon's (8ms spread vs. Amazon's 10ms spread), but red-shifted (to unapologetically borrow an astronomy term), most likely due to cross-Atlantic lag. Surprisingly, the Hetzner server is more available than the Amazon server in spite of its much greater geographic distance from the LA monitoring station.
+
+* **AWS t1.micro**: the jitter is within +/- 5ms.  Given the close geographic proximity (the monitoring station is in LA and the AWS instance is in Northern California), one would hope it would be better and that there would be few dropped packets (red dots).
+
+* **Comcast**: the jitter is is typically +/- 4ms. My home machine, which is in Northern California (can't blame the distance) and a bare iron machine (can't blame the hypervisor) is typically +/- 4ms.  It should be better than the others, but it isn't.  Perhaps the Comcast network is at fault.
+
+### What are the NTP Vulnerabilities?
+
+For the security-minded, here is [a list](https://support.ntp.org/bin/view/Main/SecurityNotice#Resolved_Vulnerabilities) of ntpd's vulnerabilities.  As of this writing, all six of them have been resolved.
 
 ----
-<a name="several"><sup>1</sup></a> Choosing merely one time source is inadvisable: if its time is off, your time is off.  Choosing two is similarly inadvisable:  you will know, based on their difference, that one source is wrong, but you won't know which.  Three or more time sources will give you a clear indication which time sources are correct, assuming at most one time source is wrong.
+<a name="several"><sup>1</sup></a> Enabling an ntpd *server* should be done with security implications in mind; however, IMHO, enabling an ntpd *client* does not demand the same level of scrutiny. Attacking an NTP client is much harder:
+
+1. The damage is often limited to changing the client's system time (though this may have implications for time-based security protocols (e.g. Kerberos, TOTP)).
+2. Attacking an NTP client requires knowledge of the client's upstream NTP providers (in order to spoof the packets)
+3. Typical NTP configurations allow for only minor adjustments in the clock (via the [adjtime()](http://www.freebsd.org/cgi/man.cgi?query=adjtime&sektion=2) (most UNIXes) [adjtimex()](http://linux.die.net/man/2/adjtimex) (linux) system calls).  In other words, it's a very small lever that the attacker is trying to access.
+4. Although an attacker can slow down the target's clock, it cannot set the clock backwards (per the man() page: "Thus, the time is always a monotonically increasing function.").  This makes a [replay attack](http://en.wikipedia.org/wiki/Replay_attack) more difficult.
+3. Attacking an NTP client requires access to a second-stage attack vector (in other words, you might adjust its clock by a few seconds, but you still won't have shell access to the machine.)
+
+Note:  There are "pathological" NTP clients.  For example, rather than running ntpd, a user may decide to run [ntpdate](http://en.wikipedia.org/wiki/Ntpdate) periodically as a cron job.  This is ill-advised, for it opens the possibility for drastic adjustments (including time-reversal) to the system's clock.  The only time I have used an ntpdate-cron combination was a particular machine whose system's clock was so bad that ntpd's small adjustments were not enough to keep the clock synchronized.
