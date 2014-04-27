@@ -566,3 +566,36 @@ For the security-minded, here is [a list](https://support.ntp.org/bin/view/Main/
 3. Attacking an NTP client requires access to a second-stage attack vector (in other words, you might adjust its clock by a few seconds, but you still won't have shell access to the machine.)
 
 Note:  There are "pathological" NTP clients.  For example, rather than running ntpd, a user may decide to run [ntpdate](http://en.wikipedia.org/wiki/Ntpdate) periodically as a cron job.  This is ill-advised, for it opens the possibility for drastic adjustments (including time-reversal) to the system's clock.  The only time I have used an ntpdate-cron combination was a particular machine whose system's clock was so bad that ntpd's small adjustments were not enough to keep the clock synchronized.
+
+## Setting up a FreeBSD Server on Hetzner, Part 3: nginx
+
+In this blog post we describe the procedure to install nginx on a FreeBSD VM.
+
+These are the steps we'll follow:
+
+1. install nginx
+
+### Install nginx
+
+Let's ssh into the machine and install nginx:
+
+```
+ssh -A cunnie@shay.nono.com
+sudo pkg_add -r nginx
+```
+
+Like [homebrew](http://brew.sh/), FreeBSD typically installs optional applications under /usr/local.
+
+### Place /usr/local/etc under Revision Control and [Optional] Publish
+
+We place /usr/local/etc under revision control &amp; publish it to a public repo on github.  We generally do not recomment publishing configuration directories to public repos; in this particular case we're doing it for instructive purposes.
+
+```
+cd /usr/local/etc
+sudo -E git init
+sudo -E git add .
+sudo -E git commit -m"Initial commit"
+sudo -E git remote add origin git@github.com:cunnie/shay.nono.com-usr-local-etc.git
+sudo -E git push -u origin master
+```
+
