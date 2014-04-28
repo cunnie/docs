@@ -567,7 +567,7 @@ For the security-minded, here is [a list](https://support.ntp.org/bin/view/Main/
 
 Note:  There are "pathological" NTP clients.  For example, rather than running ntpd, a user may decide to run [ntpdate](http://en.wikipedia.org/wiki/Ntpdate) periodically as a cron job.  This is ill-advised, for it opens the possibility for drastic adjustments (including time-reversal) to the system's clock.  The only time I have used an ntpdate-cron combination was a particular machine whose system's clock was so bad that ntpd's small adjustments were not enough to keep the clock synchronized.
 
-## Setting up a FreeBSD Server on Hetzner, Part 3: nginx
+## Setting up a FreeBSD Server on Hetzner, Part 4: nginx
 
 In this blog post we describe the procedure to install nginx on a FreeBSD VM.
 
@@ -584,11 +584,11 @@ ssh -A cunnie@shay.nono.com
 sudo pkg_add -r nginx
 ```
 
-Like [homebrew](http://brew.sh/), FreeBSD typically installs optional applications under /usr/local.
+Like [homebrew](http://brew.sh/), FreeBSD typically installs optional applications under /usr/local. For example, nginx's configuration file is located at */usr/local/etc/nginx/nginx.conf*.
 
 ### Place /usr/local/etc under Revision Control and [Optional] Publish
 
-We place /usr/local/etc under revision control &amp; publish it to a public repo on github.  We generally do not recomment publishing configuration directories to public repos; in this particular case we're doing it for instructive purposes.
+We place /usr/local/etc under revision control &amp; publish it to a public repo on github.  We generally do not recommend publishing configuration directories to public repos; in this particular case we're doing it for instructive purposes.
 
 ```
 cd /usr/local/etc
@@ -598,4 +598,116 @@ sudo -E git commit -m"Initial commit"
 sudo -E git remote add origin git@github.com:cunnie/shay.nono.com-usr-local-etc.git
 sudo -E git push -u origin master
 ```
+
+We can browse the new repo [here](https://github.com/cunnie/shay.nono.com-usr-local-etc).
+
+### Start nginx and check
+
+We configure our FreeBSD machine to start nginx on boot.  Additionally, we start nginx manually to begin our tests:
+
+```
+echo 'nginx_enable="YES"' | sudo tee -a /etc/rc.conf
+sudo /usr/local/etc/rc.d/nginx start
+```
+We browse [http://shay.nono.com](http://shay.nono.com) to ensure we see the "Welcome to nginx!" page.
+
+### Configure the nginx Server Blocks
+
+[Server Blocks are the nginx's term for what an Apache webserver administrator would term "VirtualHosts"]
+
+We will configure the following virtual hosts:
+
+* nono.com
+* www.nono.com (301 permanent redirect to nono.com)
+* cunnie.com
+* www.cunnie.com (301 permanent redirect to cunnie.com)
+* brian.cunnie.com
+
+We make our user, cunnie, a member of the www group:
+
+```
+sudo vim /etc/group
+```
+We add our userid, cunnie, to the www group:
+
+```
+www:*:80:cunnie
+```
+
+We make sure we didn't make any typos using `chkgrp`.  If no errors, we check in our changes and push:
+
+```
+chkgrp &&
+	pushd /etc &&
+	sudo git add /etc/group &&
+	sudo -E git commit -m"cunnie a member of www" &&
+	sudo -E git push origin master &&
+	popd 
+```
+Although we've added ourselves to the *www* group, the change does not take effect retroactively&mdash;we need to login out and log back in again <sup>[[1]](#newgrp)</sup> 
+
+```
+exit
+ssh -A cunnie@shay.nono.com
+```
+We use the `id` command to ensure that we're really a member of the www group:
+
+```
+id
+uid=2000(cunnie) gid=2000(cunnie) groups=2000(cunnie),0(wheel),80(www)
+```
+We create a directory to host the content of our websites. We make the owner *www*, and we allow anyone in the *www* group to write to it:
+
+```
+sudo mkdir /www
+sudo chown www:www /www
+sudo chmod 775 /www
+```
+We copy the content from our original webserver using *rsync*:
+
+```
+rsync -aH --progress --stats --exclude Attic --exclude .git nono.com:/www/ /www/
+```
+We create a log directory to hold the webserver logs.  We also copy the logs from our original server (which date back to 9/8/2001):
+
+```
+sudo mkdir /var/www
+sudo chgrp www /var/www
+sudo chmod 775 /var/www
+rsync -aH --progress --stats --exclude Attic --exclude .git nono.com:/var/www/*log /var/www/
+```
+
+We edit the nginx.conf:
+
+```
+sudo -E vim /usr/local/etc/nginx/nginx.conf
+```
+We add the following stanzas:
+
+```
+  server {
+    server_name nono.com;
+    access_log logs/nono.com.access.log;
+    root /www/nono.com;
+  }
+```
+We restart the nginx server for the new configuration to take effect:
+
+```
+
+```
+
+---
+
+### Bibliography
+
+The [nginx wiki](http://wiki.nginx.org/ServerBlockExample) has an excellent description of setting up Server Blocks
+
+Digital Ocean has a [post](https://www.digitalocean.com/community/articles/how-to-set-up-nginx-virtual-hosts-server-blocks-on-ubuntu-12-04-lts--3) describing setting up Server Blocks on Ubuntu
+
+### Footnotes
+
+<a name="newgrp"><sup>1</sup></a> There is a FreeBSD command, [newgrp](http://www.freebsd.org/cgi/man.cgi?query=newgrp&apropos=0&sektion=1&manpath=FreeBSD+9.2-RELEASE&arch=default&format=html), which allows one to obtain newly-issued group credentials; *however*, the command requires additional configuration to work properly, (i.e. `chmod u+s /usr/bin/newgrp`), and the author decided that, in the interest of brevity, it was simpler to recommend logging out and in again.
+
+
 
