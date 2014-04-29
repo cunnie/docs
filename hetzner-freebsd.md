@@ -611,7 +611,7 @@ sudo /usr/local/etc/rc.d/nginx start
 ```
 We browse [http://shay.nono.com](http://shay.nono.com) to ensure we see the "Welcome to nginx!" page.
 
-### Configure the nginx Server Blocks
+### Configure the default nginx Server Block
 
 [Server Blocks are the nginx's term for what an Apache webserver administrator would term "VirtualHosts"]
 
@@ -644,7 +644,7 @@ chkgrp &&
 	sudo -E git push origin master &&
 	popd 
 ```
-Although we've added ourselves to the *www* group, the change does not take effect retroactively&mdash;we need to login out and log back in again <sup>[[1]](#newgrp)</sup> 
+Although we've added ourselves to the *www* group, the change does not take effect retroactively&mdash;we need to login out and log back in again <sup>[[1]](#newgrp)</sup> .
 
 ```
 exit
@@ -668,7 +668,7 @@ We copy the content from our original webserver using *rsync*:
 ```
 rsync -aH --progress --stats --exclude Attic --exclude .git nono.com:/www/ /www/
 ```
-We create a log directory to hold the webserver logs.  We also copy the logs from our original server (which date back to 9/8/2001):
+We create a log directory  <sup>[[2]](#log_dir)</sup> to hold the webserver logs.  We also copy the logs from our original server (which date back to 9/8/2001):
 
 ```
 sudo mkdir /var/www
@@ -682,7 +682,7 @@ We edit the nginx.conf:
 ```
 sudo -E vim /usr/local/etc/nginx/nginx.conf
 ```
-We add the following stanzas:
+We update the following stanzas:
 
 ```
   server {
@@ -694,7 +694,7 @@ We add the following stanzas:
 We restart the nginx server for the new configuration to take effect:
 
 ```
-
+sudo /usr/local/etc/rc.d/nginx restart
 ```
 
 ---
@@ -707,7 +707,8 @@ Digital Ocean has a [post](https://www.digitalocean.com/community/articles/how-t
 
 ### Footnotes
 
-<a name="newgrp"><sup>1</sup></a> There is a FreeBSD command, [newgrp](http://www.freebsd.org/cgi/man.cgi?query=newgrp&apropos=0&sektion=1&manpath=FreeBSD+9.2-RELEASE&arch=default&format=html), which allows one to obtain newly-issued group credentials; *however*, the command requires additional configuration to work properly, (i.e. `chmod u+s /usr/bin/newgrp`), and the author decided that, in the interest of brevity, it was simpler to recommend logging out and in again.
+<a name="newgrp"><sup>1</sup></a> There is a FreeBSD command, [newgrp](http://www.freebsd.org/cgi/man.cgi?query=newgrp&apropos=0&sektion=1&manpath=FreeBSD+9.2-RELEASE&arch=default&format=html), which allows one to obtain newly-issued group credentials; *however*, the command requires additional configuration to work properly, (i.e. `chmod u+s /usr/bin/newgrp`), and the author decided that, in the interest of brevity, it is simpler to recommend logging out and in again.
 
+<a name="log_dir"><sup>2</sup></a> We choose to place our logs under /var/www; admittedly, this is a somewhat arbitrary decision:  FreeBSD conventionally places logs under /var/log; FreeBSD's nginx's compiled-in defaults (as seen by `nginx -V`) also place its access and error logs under /var/log.  But we prefer our log files in their own directory to keep them separate from the other logs (e.g. syslog, cron). Even though we have decided to keep the log files in a special directory, we keep them under the */var* directory where FreeBSD recommends that "multi-purpose log" ([hier(7)](http://www.freebsd.org/cgi/man.cgi?hier%287%29)) files be kept.
 
 
