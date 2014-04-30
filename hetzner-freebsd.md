@@ -615,13 +615,9 @@ We browse [http://shay.nono.com](http://shay.nono.com) to ensure we see the "Wel
 
 [Server Blocks are the nginx's term for what an Apache webserver administrator would term "VirtualHosts"]
 
-We will configure the following virtual hosts:
+We will configure the following server block:
 
 * nono.com
-* www.nono.com (301 permanent redirect to nono.com)
-* cunnie.com
-* www.cunnie.com (301 permanent redirect to cunnie.com)
-* brian.cunnie.com
 
 We make our user, cunnie, a member of the www group:
 
@@ -682,20 +678,26 @@ We edit the nginx.conf:
 ```
 sudo -E vim /usr/local/etc/nginx/nginx.conf
 ```
-We update the following stanzas:
+We create a catch-all stanzas:
 
 ```
   server {
-    server_name nono.com;
-    access_log logs/nono.com.access.log;
+    server_name _; # invalid value which will never trigger on a real hostname.
+    access_log /var/www/nono.com-access.log;
     root /www/nono.com;
   }
 ```
+[Note: the current nginx.conf can be viewed [here](https://github.com/cunnie/shay.nono.com-usr-local-etc/blob/master/nginx/nginx.conf)]
+
 We restart the nginx server for the new configuration to take effect:
 
 ```
 sudo /usr/local/etc/rc.d/nginx restart
 ```
+
+We browse to our machine to ensure it shows our content instead of the nginx splash screen:  [http://shay.nono.com](http://shay.nono.com).
+
+We have successfully configured nginx under FreeBSD!
 
 ---
 
