@@ -713,4 +713,21 @@ Digital Ocean has a [post](https://www.digitalocean.com/community/articles/how-t
 
 <a name="log_dir"><sup>2</sup></a> We choose to place our logs under /var/www; admittedly, this is a somewhat arbitrary decision:  FreeBSD conventionally places logs under /var/log; FreeBSD's nginx's compiled-in defaults (as seen by `nginx -V`) also place its access and error logs under /var/log.  But we prefer our log files in their own directory to keep them separate from the other logs (e.g. syslog, cron). Even though we have decided to keep the log files in a special directory, we keep them under the */var* directory where FreeBSD recommends that "multi-purpose log" ([hier(7)](http://www.freebsd.org/cgi/man.cgi?hier%287%29)) files be kept.
 
+## Setting up a FreeBSD Server on Hetzner, Part 4: php, SSI, SSL
+
+In this blog post we describe the procedure to install nginx on a FreeBSD VM.
+
+These are the steps we'll follow:
+
+1. install nginx
+
+```
+sudo portsnap fetch
+sudo portsnap extract
+cd /usr/ports/www/nginx
+sudo make config
+```
+
+
+
 
