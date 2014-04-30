@@ -713,21 +713,100 @@ Digital Ocean has a [post](https://www.digitalocean.com/community/articles/how-t
 
 <a name="log_dir"><sup>2</sup></a> We choose to place our logs under /var/www; admittedly, this is a somewhat arbitrary decision:  FreeBSD conventionally places logs under /var/log; FreeBSD's nginx's compiled-in defaults (as seen by `nginx -V`) also place its access and error logs under /var/log.  But we prefer our log files in their own directory to keep them separate from the other logs (e.g. syslog, cron). Even though we have decided to keep the log files in a special directory, we keep them under the */var* directory where FreeBSD recommends that "multi-purpose log" ([hier(7)](http://www.freebsd.org/cgi/man.cgi?hier%287%29)) files be kept.
 
-## Setting up a FreeBSD Server on Hetzner, Part 4: php, SSI, SSL
+## Setting up a FreeBSD Server on Hetzner, Part 4: PHP, SSI, SSL, Redirects
 
-In this blog post we describe the procedure to install nginx on a FreeBSD VM.
+In this blog post we describe the procedure to additionally configure nginx on a FreeBSD VM to use [PHP](http://www.php.net/), [SSI](http://en.wikipedia.org/wiki/Server_Side_Includes) (Server Side Includes), SSL, and redirects.
 
-These are the steps we'll follow:
+We will configure the following server blocks:
 
-1. install nginx
+* nono.com
+* nono.com (SSL)
+* www.nono.com (301 permanent redirect to nono.com)
+* cunnie.com
+* www.cunnie.com (301 permanent redirect to cunnie.com)
+* brian.cunnie.com
+
+### Server Side Includes
+
+We edit nginx.conf (see final version [here](https://github.com/cunnie/shay.nono.com-usr-local-etc/blob/master/nginx/nginx.conf)):
+
+```
+sudo -E /usr/local/etc/nginx/nginx.conf
+```
+We add the following line to the *http* stanza:
+
+```
+ssi on;
+```
+We save the file and restart nginx:
+
+```
+sudo /usr/local/etc/rc.d/nginx restart
+```
+We view the [website](http://shay.nono.com/) in our browser to make sure that the SSIs have been honored (in this case, a navbar at the top with *home* and *about* links).
+
+Make sure we have flushed our browser's cache (otherwise we may end up looking at a cached version of the website and falsely assume that our changes failed).  The [Firefox keyboard shortcut](https://support.mozilla.org/en-US/kb/keyboard-shortcuts-perform-firefox-tasks-quickly) to override the cache and refresh a page on OS X is &#8679;&#8984;R (Shift-Command-R)
+
+### PHP
+
+Installing PHP under nginx is a bit of a slog compared to installing it under Apache (uncomment the appropriate loadmodule, add the .php extension, and restart):
+
+#### Install [PHP-FPM](http://php-fpm.org/)
+
+First, we need to install FreeBSD's [ports collection](https://www.freebsd.org/ports/), which is FreeBSD's counterpart to OS X's [homebrew](http://brew.sh/). We only need to do this step if ports isn't installed (i.e. if the directory */usr/ports* doesn't exist).
 
 ```
 sudo portsnap fetch
 sudo portsnap extract
-cd /usr/ports/www/nginx
-sudo make config
+```
+Next, we install PHP via the ports collection:
+
+```
+cd /usr/ports/lang/php5
+sudo make install
+```
+
+When prompted, go with the defaults (the important option is FPM).  There will be a chain of dependencies, some of which (e.g. m4, gmake) will prompt you to select options.  Again, go with the defaults.
+
+Let's configure PHP FPM to start on boot and then start it up:
+
+```
+echo 'php_fpm_enable="YES"' | sudo tee -a /etc/rc.conf
+sudo /usr/local/etc/rc.d/php-fpm start
+```
+Let's make sure it's running
+
+```
+netstat -an | grep 9000
+```
+You should see a line similar to this:
+
+```
+tcp4       0      0 127.0.0.1.9000         *.*                    LISTEN
+```
+#### Configure nginx to use PHP-FPM
+
+Let's edit nginx.conf:
+
+```
+sudo -E /usr/local/etc/nginx/nginx.conf
+```
+We add the following line to the *server* stanza:
+
+```
+    location ~ \.php$ {
+      fastcgi_pass 127.0.0.1:9000;
+    }
+```
+We save the file and restart nginx:
+
+```
+sudo /usr/local/etc/rc.d/nginx restart
 ```
 
 
+---
 
+### Acknowledgements
 
+Stan and Moe have a good [post](http://bin63.com/how-to-install-nginx-and-php-fpm-on-freebsd) on configure PHP on nginx under FreeBSD.
