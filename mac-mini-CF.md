@@ -38,7 +38,7 @@ Which means this range is our available IPs:
 
 * 10.9.8.51 - 10.9.8.254
 
-We appreciate that it's not always easy to allocate a /24 subnet, that in certain organizations allocation of more than a few IP addresses requires flexing of interdepartmental muscle.  We contemplate a future blog post describing a set-up requiring but a few IP address.
+We appreciate that it's not always easy to allocate a /24 subnet, that in certain organizations allocation of more than a few IP addresses requires flexing of interdepartmental muscle.  We are contemplating a future blog post describing a set-up requiring but a few IP address.
 
 
 #### 2. Prevent Mission Control from Hijacking F11 and F12
@@ -270,7 +270,7 @@ Click **Log in to vSphere Web Client**.  You may have to re-confirm [with our br
 
 Log in with user name **root** and the password we set earlier.
 
-##### License
+##### Assign License
 
 We see a yellow band on the top of the page with the words, "There are vCenter Server systems with expiring license keys...".  
 
@@ -285,37 +285,40 @@ We see a yellow band on the top of the page with the words, "There are vCenter S
 8. Select the key we previously typed in; click **OK**
 9. Click the **&times;** on the yellow band at the top of the page to dismiss
 
-##### Datacenter
+##### Create Datacenter
 
 
 1. Click the home icon (top of the page, towards the left) to return to the main screen
 2. Click the **vCenter** icon (we can choose the icon from the navbar on the left or the icon in the middle of the screen&mdash;they both take us to the same place)
-ick **Create a datacenter**
-1. Click the
+1. Click **Datacenters** on the lefthand side navbar
+1. Click the icon to add a datacenter (buildings with a green "+").  A *New Datacenter* window will pop up.
+2. (we are naming our datacenter with the unimaginative default name, "Datacenter"). Select the vCenter and Click **OK**
 
-##### Create Cluster & Add ESXi Server
+##### Create Cluster
 
-1. Click on the newly created datacenter, **dc**
-1. **Getting Started &rarr; Add a host**
-1. Host:  **esxi.cf.nono.com**<br />
-Username: **root**<br />
-Password:
-1. Click **Next**; click **Yes** to verify authenticity; click **Next** many times,
-then click **Finish**
-1. **Ctrl-Shift-H** to navigate to Hosts and Clusters (if that doesn't work, try navigating **View &rarr; Inventory &rarr; Hosts &amp; Clusters**)
-1. Click on the datacenter in the left navbar, e.g. ***dc***
-1. Click on the ESXi host, i.e. esxi.cf.nono.com
-1. Click on the datacenter again (m *we switch to ESXi and back in order to reveal the option to create a cluster which was previously hidden by a "host added" message*)
-1. Click **Create a Cluster**
-1. Type the name of the cluster, e.g. ***cl***; check **Turn on vSphere DRS**; Click **Next**
-2. Keep default of **Fully Automated**; whatever you do, do NOT choose "Manual" in the Automation level settings, because Pivotal CF needs this setting for creating VMs.
-1. Click **Next** until **Finish**
-2. Wait until cluster is created
-1. Drag the Host (i.e. "esxi.cf.nono.com") in the left panel and drop it into the
-new cluster (i.e. "cl").
-1. It will ask you to choose a destination resource pool.  Select **Create a new resource
-pool...** and give it the name **rp**; click **Next**, click **Finish**
+1. Click on the *Create a New Cluster* icon (several computers with a green "+").  A *New Cluster* window will pop up:
+  * Name:  **Cluster**
+  * Checked:  **DRS**
+  * click **OK**
 
+##### Add ESXi Server
+
+Click the *Add a Host* icon (a computer with a green "+").  An *Add Host* window will pop up.
+
+1. Name and Location
+   * Host name or IP address: **esxi.cf.nono.com**
+   * click **Next**
+1. Connection settings
+   * User name: **root**
+   * Password:  *whatever-we-set-the-password-to*
+1. Click **Yes** to verify the authenticity of the host
+1. (Host summary) click **Next**
+2. (Assign license) click **Next**
+1. (Lockdown mode) click **Next**
+2. (VM location) click **Next**
+3. (Ready to complete) click **Finish**
+
+Congratulations, we have created an IAAS.
 
 ---
 
