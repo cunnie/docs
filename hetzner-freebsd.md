@@ -804,6 +804,10 @@ We save the file and restart nginx:
 sudo /usr/local/etc/rc.d/nginx restart
 ```
 
+#### Debug PHP-FPM
+
+PHP-FPM is not working (I'm not seeing the PHP-generated images when I browse to http://shay.nono.com.com).  Furthermore, our Server Side Includes are not working either (I'm not seeing the navbar at the top)
+
 
 ---
 
