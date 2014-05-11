@@ -722,9 +722,20 @@ We will configure the following server blocks:
 * nono.com
 * nono.com (SSL)
 * www.nono.com (301 permanent redirect to nono.com)
+
+<!--
 * cunnie.com
 * www.cunnie.com (301 permanent redirect to cunnie.com)
 * brian.cunnie.com
+-->
+
+### What we *want* our website to look like
+
+[caption id="attachment_28569" align="alignnone" width="300"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/nginx_final.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/nginx_final-300x143.png" alt="what our website should look like (redirect, SSI, SSL, " width="300" height="143" class="size-medium wp-image-28569" /></a>Our final website should look like this:  notice the valid SSL cert, the PHP-supplied image and IP address, and the Server Side Includes (the black boxes)[/caption]
+
+### What our website actually looks like
+
+[caption id="attachment_28570" align="alignnone" width="300"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/nginx_basic.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/nginx_basic-300x72.png" alt="our website without redirects, SSL, SSI, PHP" width="300" height="72" class="size-medium wp-image-28570" /></a> No redirects, no SSL, no SSI, no PHP[/caption]
 
 ### Server Side Includes
 
@@ -746,6 +757,10 @@ sudo /usr/local/etc/rc.d/nginx restart
 We view the [website](http://shay.nono.com/) in our browser to make sure that the SSIs have been honored (in this case, a navbar at the top with *home* and *about* links).
 
 Make sure we have flushed our browser's cache (otherwise we may end up looking at a cached version of the website and falsely assume that our changes failed).  The [Firefox keyboard shortcut](https://support.mozilla.org/en-US/kb/keyboard-shortcuts-perform-firefox-tasks-quickly) to override the cache and refresh a page on OS X is &#8679;&#8984;R (Shift-Command-R)
+
+Our website now properly inlines the included files; however, the PHP portions are still broken (no picture in the middle from on top, no IP Address listed on the top left next to "Your IP")
+
+[caption id="attachment_28571" align="alignnone" width="300"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/nginx_ssi.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/nginx_ssi-300x97.png" alt="website with SSI" width="300" height="97" class="size-medium wp-image-28571" /></a> nginx with SSI configured.  Although the black boxes appear, the PHP-supplied content is still missing (e.g. image, IP address)[/caption]
 
 ### PHP
 
@@ -803,14 +818,166 @@ We save the file and restart nginx:
 ```
 sudo /usr/local/etc/rc.d/nginx restart
 ```
+We create a test PHP file to make sure that PHP is running properly:
 
-#### Debug PHP-FPM
+```
+echo "<?php phpinfo(); ?>" > /www/nono.com/phpinfo.php
+```
 
-PHP-FPM is not working (I'm not seeing the PHP-generated images when I browse to http://shay.nono.com.com).  Furthermore, our Server Side Includes are not working either (I'm not seeing the navbar at the top)
+We browse to our test URI [http://shay.nono.com/phpinfo.php](http://shay.nono.com/phpinfo.php). We notice that instead of seeing the PHP configuration information, we see a blank page.  PHP is broken.  We check the nginx log files in /var/www, but don't see anything useful.  We need to discover where PHP-FPM is logging.  To do that, we install and run `lsof` (a utility which prints out the open filehandles of the processes on a system, a useful technique to discover where a process's output is going):
 
+```
+sudo pkg_add -r lsof
+lsof | grep php-fpm
+```
+In the output, we discover the location of the log files (/var/log/php-fpm.log), which, in retrospect, is an obvious location to look for a log file:
+
+```
+php-fpm 81062   root    2w    VREG               0,73                116 1205900 /var/log/php-fpm.log
+php-fpm 81062   root    3w    VREG               0,73                116 1205900 /var/log/php-fpm.log
+```
+
+We look at the log file (`sudo less /var/log/php-fpm.log`).  We see nothing but the usual startup messages.
+
+Let's make sure PHP is configured correctly by running a snippet of PHP code:  `php -r "phpinfo();"`.  Sure enough, it gives the expected output (i.e. a description of the PHP environment information).
+
+PHP seems to be working properly, so let's turn our attention to PHP-FPM.  First, the basics: `man php-fpm`.
+
+We notice it has a configuration file; let's examine it: `less /usr/local/etc/php-fpm.conf`.
+
+After reviewing the log file, we see it has two directives that we can use to our advantage to troubleshoot the problem:  
+
+```
+sudo vim /usr/local/etc/php-fpm.conf # change log_level and run in foreground
+  log_level = debug
+  ...
+  daemonize = no
+sudo /usr/local/etc/rc.d/php-fpm restart
+```
+We browse to our site ([http://shay.nono.com/phpinfo.php](http://shay.nono.com/phpinfo.php)), still a blank page.  And the output from our terminal session tells us nothing.  We revert our changes.
+
+In a fit of desperation, we sniff the traffic on port 9000 to see what's being passed to the PHP-FPM daemon.  We start our tcpdump session:
+
+```
+sudo tcpdump -A -ni lo0 port 9000
+```
+Then we browse again to our site ([http://shay.nono.com/phpinfo.php](http://shay.nono.com/phpinfo.php)).  We see from the output of tcpdump that nginx is not passing the name of the .php file it needs to execute.
+
+Let's modify our nginx.conf, add the line to pass the CGI script, and restart the nginx daemon (our current version of our nginx.conf can be seen [here](https://github.com/cunnie/shay.nono.com-usr-local-etc/blob/master/nginx/nginx.conf))
+
+```
+sudo -E vim /usr/local/etc/nginx.conf # add the following line
+  fastcgi_param SCRIPT_FILENAME /www/nono.com$fastcgi_script_name;
+  include fastcgi_params;
+sudo /usr/local/etc/rc.d/nginx restart
+```
+We browse again to our site ([http://shay.nono.com/](http://shay.nono.com/)).  It works!  Our output is beautiful:
+
+[caption id="attachment_28574" align="alignnone" width="300"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/nginx_ssi_php.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/nginx_ssi_php-300x112.png" alt="web page with working PHP" width="300" height="112" class="size-medium wp-image-28574" /></a> nginx now properly executes PHP (note the image and the IP address)[/caption]
+
+### Redirects
+
+Adding a redirect is simple&mdash;we add the following line to [nginx.conf](https://github.com/cunnie/shay.nono.com-usr-local-etc/blob/master/nginx/nginx.conf):
+
+```
+  rewrite ^ https://nono.com$request_uri?;
+```
+
+We restart the nginx daemon, and again browse to our site ([http://shay.nono.com/](http://shay.nono.com/)).  And we are redirected, but to our old site, our original site, which works fine.
+
+This is not helpful.  Rather than being redirected to our old site (i.e. the ARP Networks site), we would rather be redirected to the *new* site, in Germany (i.e. the Hetzner site). But how can we accomplish this?  We want nono.com to resolve to shay.nono.com's IP address (i.e. 78.47.249.19), *but only for our local machine*, only until we have finished the migration and are satisfied with the results.
+
+#### The /etc/hosts override
+
+We are going to use that much-maligned hack, the /etc/hosts override  <sup>[[1]](#gethostbyname)</sup> ("universally used, universally despised" is how we characterize it).  We edit our /etc/hosts file on our *local machine* (in this particular case, a 2012 Mac Mini) and add the following line:
+
+```
+78.47.249.19    nono.com
+```
+This line has the effect of saying, "I don't care what the Internet at large thinks the IP address of nono.com, as far as I'm concerned it's 78.47.249.19".
+
+We refresh our browser, and we see this message, "Unable to connect. Firefox can't establish a connection to the server at nono.com." Our override is working properly because we have never configured the SSL portion of nginx.
+
+### SSL
+
+We edit our [nginx.conf](https://github.com/cunnie/shay.nono.com-usr-local-etc/blob/master/nginx/nginx.conf) file, and add the following lines:
+
+```
+    server {
+      server_name nono.com;
+      listen              443 ssl;
+      ssl_certificate     nono.com.chained.crt;
+      ssl_certificate_key nono.com.key;
+      access_log /var/www/nono.com-access.log;
+      error_log /var/www/nono.com-error.log;
+      root /www/nono.com;
+      index index.shtml index.html index.htm;
+      ssi on;
+      location ~ \.php$ {
+        ssi on;
+        fastcgi_pass 127.0.0.1:9000;
+        fastcgi_param SCRIPT_FILENAME /www/nono.com$fastcgi_script_name;
+        include fastcgi_params;
+      }
+    }
+```
+We also copy our keys into place:
+
+```
+sudo cp nono.com.key nono.com.chained.crt /usr/local/etc/nginx
+sudo chown root:wheel /usr/local/etc/nginx/{nono.com.key,nono.com.chained.crt}
+```
+We go to extra lengths to protect our .key file, ensuring that only the owner can read it and protect us from accidentally checking it into our public repo.
+
+```
+sudo chmod 400 /usr/local/etc/nginx/nono.com.key
+echo '*.key' | sudo tee -a /usr/local/etc/.gitignore
+```
+
+We restart our server:
+
+```
+sudo /usr/local/etc/rc.d/nginx restart
+```
+And see the following error message:
+
+```
+nginx: [emerg] the "ssl" parameter requires ngx_http_ssl_module in /usr/local/etc/nginx/nginx.conf:56
+```
+
+We have made a mistake.  We installed the stock version of nginx, but it lacks the ngx_http_ssl module, which "[is not built by default](http://nginx.org/en/docs/http/ngx_http_ssl_module.html)".  We need to install a custom version, we need to install via ports.
+
+First we uninstall the stock nginx:
+
+```
+sudo pkg_info | grep nginx # look for the exact nginx package name
+sudo pkg_delete nginx-1.4.2,1
+```
+Let's install nginx from the ports collection.  When presented with the configuration screen, remember to make sure `HTTP_SSL` is checked.  It should be; it's the default.
+
+```
+cd /usr/ports/www/nginx
+sudo make install
+```
+
+When it has finished installing, we can attempt to start it up again:
+
+```
+sudo /usr/local/etc/rc.d/nginx restart
+```
+
+And browse again to [http://shay.nono.com](http://shay.nono.com).  Success!  Our website looks the way we want it to look:
+
+[caption id="attachment_28569" align="alignnone" width="300"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/nginx_final.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/nginx_final-300x143.png" alt="what our website should look like (redirect, SSI, SSL, " width="300" height="143" class="size-medium wp-image-28569" /></a>Our final website should look like this:  notice the valid SSL cert, the PHP-supplied image and IP address, and the Server Side Includes (the black boxes)[/caption]
 
 ---
 
 ### Acknowledgements
 
 Stan and Moe have a good [post](http://bin63.com/how-to-install-nginx-and-php-fpm-on-freebsd) on configure PHP on nginx under FreeBSD.
+
+The [nginx site](http://nginx.org/en/docs/http/configuring_https_servers.html) has the canonical instructions for configuring SSL under nginx.
+
+### Footnotes
+
+<a name="gethostbyname"><sup>1</sup></a> Given a hostname, the typical UNIX (Linux, OS X, *BSD) operating system will use the [gethostbyname(3)](http://linux.die.net/man/3/gethostbyname) library call to determine the address, (e.g. gethostbyname("nono.com") will return a struct which has the IP address 78.47.249.19) (actually it will probably use the [getaddrinfo(3)](http://linux.die.net/man/3/getaddrinfo) library call, but that's a topic for another day).  There are many levers/overrides to this library call (e.g. there's the previously mentioned /etc/hosts override, but there is also an acknowledgement that DNS is not always the source of a host's IP address; other alternative sources include the now-venerable Sun Microsystems's NIS (a.k.a. "Yellow Pages") and LDAP).  The levers (often configured in a file named either "/etc/nsswitch.conf" or "/etc/hosts.conf") can specify precedence of various sources of information, e.g. "Check the /etc/hosts file first for the IP address.  If not found, check LDAP next, and if you still don't find the host, check DNS".
