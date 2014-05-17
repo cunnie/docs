@@ -1,6 +1,6 @@
 ### ShiftIt Unbound <sup>[[1]](#prometheus)</sup>
 
-#### Or, *How to grant Accessibility Privileges to Applications on OS X Mavericks via the Command Line*
+#### Or, *Use the CLI to grant Accessibility Privileges to Mavericks Applications*
 
 [ShiftIt](https://github.com/onsi/ShiftIt) <sup>[[2]](#shiftit)</sup> is a utility we use at Pivotal Labs.  It has special security requirements that make it difficult to install without user intervention. This blog post describes the techniques we used to determine what we needed to do in order to satisfy those security requirements without requiring user intervention during the install process.
 
