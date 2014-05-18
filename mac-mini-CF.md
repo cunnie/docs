@@ -313,7 +313,7 @@ Click the *Add a Host* icon (a computer with a green "+").  An *Add Host* window
    * Password:  *whatever-we-set-the-password-to*
 1. Click **Yes** to verify the authenticity of the host
 1. (Host summary) click **Next**
-2. (Assign license) click **Next**
+2. (FIXME Assign license) click **Next**
 1. (Lockdown mode) click **Next**
 2. (VM location) click **Next**
 3. (Ready to complete) click **Finish**
@@ -325,3 +325,76 @@ Congratulations, we have created an IAAS.
 #### Acknowledgements
 
 Some of the ESXi and vCenter configuration was drawn from internal CloudFoundry documents.
+
+# World's Smallest IAAS, Part 2
+
+In this blog post, we describe the procedure to deploy [Pivotal CF Operations Manager](http://docs.gopivotal.com/pivotalcf/customizing/) (a web-based tool for deploying CloudFoundry) and [BOSH](https://github.com/cloudfoundry/bosh) (a VM that creates other VMs) to a VMware vCenter.
+
+### Pre-requisites
+
+#### 1. VMware ESXi and vCenter
+
+In *[World's Smallest IAAS, Part 1](http://pivotallabs.com/worlds-smallest-iaas-part-1/), we deployed VMware ESXi and vCenter on an Apple Mac Mini.  ESXi must be up and running, and vCenter must be up and running, too.  And network accessible.
+
+#### 2. A Different Machine
+
+To minimize memory pressure on the Mac Mini, we do all our work (e.g. downloading Pivotal CF via browser) on a different machine, in our case a MacBook Pro.
+
+#### 3. Download Pivotal CF
+
+* Browse to [https://network.gopivotal.com/products](https://network.gopivotal.com/products).
+* Log in (if you don't have a userid, create one; they're free)
+* Click the **Pivotal CF** tile
+* Click **Download**; it should be a .tgz file; it should be approximately 5.6GB
+
+[caption id="attachment_28762" align="alignnone" width="300"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/click_download.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/click_download-300x115.png" alt="click_download" width="300" height="115" class="size-medium wp-image-28762" /></a> Download Pivotal CF Version 1.2.0.0, a 5.6GB .tgz file[/caption]
+
+* double-click the downloaded file to untar it (using a Windows box may require the installation of an application to untar the file).
+
+### Deploy Ops Manager
+
+* browse to https://vcenter.cf.nono.com
+* click on [Log in to vSphere Web Client](https://vcenter.cf.nono.com/vsphere-client/)
+* log in as **root** with *whatever-we-set-the-password-to*
+* click **VMs and Templates**
+
+[caption id="attachment_28770" align="alignnone" width="300"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/vms_and_templates.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/vms_and_templates-300x192.png" alt="screenshot of vCenter homepage" width="300" height="192" class="size-medium wp-image-28770" /></a> Click "VMs and Templates" on the Home Page[/caption]
+
+* Click **Actions &rarr; Deploy OVF Template...**
+
+[caption id="attachment_28772" align="alignnone" width="300"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/deploy_ovf.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/deploy_ovf-300x211.png" alt="menubar showing &quot;Deploy OVF Template...&quot;" width="300" height="211" class="size-medium wp-image-28772" /></a> Click "Deploy OVF Template..." from the Actions drop-down[/caption]
+
+* if prompted to download and install the plugin, install the plugin; we'll need this to deploy Ops Manager
+
+[caption id="attachment_28771" align="alignnone" width="300"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/download_plugin.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/download_plugin-300x165.png" alt="prompt to download and install plugin" width="300" height="165" class="size-medium wp-image-28771" /></a> Install the vCenter Client Integration Plugin[/caption]
+
+* Install the plugin.  It will close our browsers; we'll re-open them after installation is complete.
+* Click **Actions &rarr; Deploy OVF Template...**
+* Click **Allow** to when prompted by the **Client Integration Access Control**
+  * Select **Local File**; click **Browse...**
+  * Select the **pcf-1.2.0.0.ova** file that we untarred from the Pivotal CF file we downloaded (it should be under the *pcf-1.2.0.0_allinone* directory); click **Open**
+  * Click **Next**
+* (Review details) click **Next**
+* (Accept EULAs) click **Accept**; click **Next**
+* (Select Name and Folder) click **Next**
+* (Select a resource)
+  * select **Cluster**
+  * click **Next**
+* (Select storage) click **Next**
+* (Setup networks) click **Next**
+* (Customize template)
+  * IP Address: **10.9.8.30** *(this is the IP address for opsmgr.cf.nono.com)*
+  * Netmask: **255.255.255.0**
+  * Default Gateway: **10.9.8.1**
+  * DNS: **8.8.8.8** *([Google's DNS Server](http://xkcd.com/1361/))*
+  * NTP: **time.apple.com** *(Apple's NTP Server)*
+  * Admin password: *whatever-you-want-to-set-the-password-to*
+  * click **Next**
+* (Ready to complete)
+  * review settings one last time
+  * check **Power on after deployment**
+  * click **Finish**
+
+Wait two minutes for the machine to boot
+
+### Use Ops Manager to Deploy BOSH
