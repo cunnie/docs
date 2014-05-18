@@ -398,3 +398,66 @@ To minimize memory pressure on the Mac Mini, we do all our work (e.g. downloadin
 Wait two minutes for the machine to boot
 
 ### Use Ops Manager to Deploy BOSH
+
+We are now ready to use Ops Manager to Deploy BOSH
+
+* browse to [https://opsmgr.cf.nono.com](https://opsmgr.cf.nono.com)
+* create an account, **pivotalcf**. Assign a password. Click **Create Admin User**
+
+[caption id="attachment_28773" align="alignnone" width="253"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/ops_mgr_initial.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/ops_mgr_initial-253x300.png" alt="Ops Manager&#039;s splash screen used to create initial admin user" width="253" height="300" class="size-medium wp-image-28773" /></a> Ops Manager's initial screen.  Create the administrative user.  We typically use 'pivotalcf' as the administrator account[/caption]
+
+* click on **Operations Manager Director for vmware vSphere** tile (although the description doesn't have the word 'BOSH' in it, this tile deploys BOSH)
+
+[caption id="attachment_28774" align="alignnone" width="300"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/ops_manager_main.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/ops_manager_main-300x247.png" alt="Operations Manager home page.  Unconfigured BOSH tile." width="300" height="247" class="size-medium wp-image-28774" /></a> Click the "Operations Manager" tile to configure the BOSH VM.  Note the orange band at the bottom of the tile&mdash;it indicates that the product is available but has not yet been configured.[/caption]
+
+We see the configuration screen. There are several panels. We fill them out
+
+* vCenter Credentials
+  * IP address: **10.9.8.20** (this must be an IP address, e.g. '10.9.8.20'; hostnames (e.g. 'vcenter.cf.nono.com') aren't accepted)
+  * Login credentials: **root**, *whatever-we-set-the-password-to*
+  * Click **Save**
+
+[caption id="attachment_28776" align="alignnone" width="232"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/Ops_Manager_bosh.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/Ops_Manager_bosh-232x300.png" alt="Initial BOSH configuration screen" width="232" height="300" class="size-medium wp-image-28776" /></a> Initial configuration for BOSH.  The vCenter must be reachable from the Ops Manager VM to validate settings.[/caption]
+
+* click **vSphere configuration** on the left navbar
+  * Datacenter name: **Datacenter**
+  * Cluster name: **Cluster**
+  * Datastore names: **datastore1**
+  * Resource pool name: leave blank <sup>[[1]](#resource_pool)</sup>
+  * click **Save**
+* click **Network Configuration** on the left navbar
+  * vSphere Network name: **VM Network**
+  * Subnet: **10.9.8.0/24**
+  * Excluded IP Ranges: **10.9.8.1-10.9.8.30**  <sup>[[2]](#ip_exclude)</sup>
+  * DNS: **8.8.8.8**
+  * Gateway: **10.9.8.1**
+  * click **Save**
+* click **NTP servers** on the left navbar
+  * NTP servers: **time.apple.com**
+  * click **Save**
+* click the white-on-blue **Install** button on the right hand side
+
+#### Monitoring BOSH Install Progress
+
+Once you have clicked **Install**, you will see the install screen. Click **Show verbose output** to see detailed description of the progress of the installation.
+
+[caption id="attachment_28777" align="alignnone" width="300"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/bosh_progress.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/bosh_progress-300x221.png" alt="BOSH Installation Progress page" width="300" height="221" class="size-medium wp-image-28777" /></a> Click the "Show verbose output" link to see detailed description of the installation progress[/caption]
+
+When installation has completed, you'll see a notification, "Changes Applied"
+
+Click **Return to Installation Dashboard**
+
+Congratulations, we have deployed CloudFoundry's Ops Manager and BOSH.
+
+---
+
+<a name="resource_pool"><sup>1</sup></a> The installation described in this blog post is wonderfully small, so we're dispensing with Resource Pools; however, on much larger vCenter enviroments (e.g. CloudFoundry Engineering's internal vCenter servers), we have found it useful to use Resource Pools to maintain separate Ops Manager/CloudFoundry deployments. We use a 1:1 mapping of Resource Pools to deployments (e.g. the hypothetical ESXi server *esxi.dance.example.com* may have several Resource Pools (e.g. *tango*, *waltz*, *jig*), each of which correspond to an Ops Manager/CloudFoundry deployment (e.g. *opsmgr.tango.example.com*, *opsmgr.waltz.example.com*)).
+
+The advantage of using Resource Pools comes into play when we need to destroy and rebuild a CloudFoundry deployment: we can safely destroy every single VM in a given Resource Pool without worry of accidentally deleting a VM belonging to a different deployment.
+
+<a name="ip_exclude"><sup>2</sup></a> We exclude a range that includes the gateway, the ESXi server, the vCenter server, and the Ops Manager server.
+
+Readers who choose to colocate their IAAS deployment on their existing network (i.e. who choose not to create a new subnet) should take care to assign IP addresses outside the range allocated by their DHCP server.
+
+For example, a network's DHCP server and gateway is an [Apple Airport Time Capsule](https://www.apple.com/airport-time-capsule/) whose address is 10.0.1.1, whose subnet is 10.0.1.0/24, and whose DHCP range is 10.0.1.10 - 10.0.1.200.  In such a case, the range to exclude would be 10.0.1.1-10.0.1.200.  If the ESXi, vCenter, and Ops Manager servers' IP addresses lay outside that range, those IP addresses would need to be excluded as well (e.g. if ESXi's IP address was 10.0.1.201, vCenter's IP address was 10.0.1.202, and Ops Manager's IP address was 10.0.1.203, then the excluded IOP range would need to be 10.0.1.1-10.0.1.203)
+
