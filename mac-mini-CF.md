@@ -1,4 +1,4 @@
-# World's Smallest IAAS, Part 1
+# World's Smallest IaaS, Part 1
 
 In this blog post, we describe the procedure to deploy VMware ESXi and VMware vCenter on an Apple Mac Mini running VMware Fusion.
 
@@ -318,7 +318,7 @@ Click the *Add a Host* icon (a computer with a green "+").  An *Add Host* window
 2. (VM location) click **Next**
 3. (Ready to complete) click **Finish**
 
-Congratulations, we have created an IAAS.
+Congratulations, we have created an IaaS.
 
 ---
 
@@ -326,7 +326,7 @@ Congratulations, we have created an IAAS.
 
 Some of the ESXi and vCenter configuration was drawn from internal CloudFoundry documents.
 
-# World's Smallest IAAS, Part 2
+# World's Smallest IaaS, Part 2
 
 In this blog post, we describe the procedure to deploy [Pivotal CF Operations Manager](http://docs.gopivotal.com/pivotalcf/customizing/) (a web-based tool for deploying CloudFoundry) and [BOSH](https://github.com/cloudfoundry/bosh) (a VM that creates other VMs) to a VMware vCenter.
 
@@ -334,7 +334,7 @@ In this blog post, we describe the procedure to deploy [Pivotal CF Operations Ma
 
 #### 1. VMware ESXi and vCenter
 
-In *[World's Smallest IAAS, Part 1](http://pivotallabs.com/worlds-smallest-iaas-part-1/), we deployed VMware ESXi and vCenter on an Apple Mac Mini.  ESXi must be up and running, and vCenter must be up and running, too.  And network accessible.
+In *[World's Smallest IaaS, Part 1](http://pivotallabs.com/worlds-smallest-iaas-part-1/), we deployed VMware ESXi and vCenter on an Apple Mac Mini.  ESXi must be up and running, and vCenter must be up and running, too.  And network accessible.
 
 #### 2. A Different Machine
 
@@ -457,7 +457,108 @@ The advantage of using Resource Pools comes into play when we need to destroy an
 
 <a name="ip_exclude"><sup>2</sup></a> We exclude a range that includes the gateway, the ESXi server, the vCenter server, and the Ops Manager server.
 
-Readers who choose to colocate their IAAS deployment on their existing network (i.e. who choose not to create a new subnet) should take care to assign IP addresses outside the range allocated by their DHCP server.
+Readers who choose to colocate their IaaS deployment on their existing network (i.e. who choose not to create a new subnet) should take care to assign IP addresses outside the range allocated by their DHCP server.
 
 For example, a network's DHCP server and gateway is an [Apple Airport Time Capsule](https://www.apple.com/airport-time-capsule/) whose address is 10.0.1.1, whose subnet is 10.0.1.0/24, and whose DHCP range is 10.0.1.10 - 10.0.1.200.  In such a case, the range to exclude would be 10.0.1.1-10.0.1.200.  If the ESXi, vCenter, and Ops Manager servers' IP addresses lay outside that range, those IP addresses would need to be excluded as well (e.g. if ESXi's IP address was 10.0.1.201, vCenter's IP address was 10.0.1.202, and Ops Manager's IP address was 10.0.1.203, then the excluded IOP range would need to be 10.0.1.1-10.0.1.203)
+
+# World's Smallest IaaS, Part 3: the PaaS
+
+## a.k.a. The World's Smallest PaaS
+
+In this blog post, we describe deploying CloudFoundry/Elastic Runtime to our VMware/vCenter setup (i.e. the world's smallest [IaaS](http://en.wikipedia.org/wiki/Cloud_computing#Infrastructure_as_a_service_.28IaaS.29)) in order to create the World's Smallest ([Paas](http://en.wikipedia.org/wiki/Platform_as_a_service), Platform as a Service).
+
+Previous blog posts have covered setting up the necessary environment:
+
+* [World’s Smallest IaaS, Part 1](http://pivotallabs.com/worlds-smallest-iaas-part-1/) describes installing VMware ESXi and VMware vCenter on an Apple Mac Mini
+* [World’s Smallest IaaS, Part 2](http://pivotallabs.com/worlds-smallest-iaas-part-2/) describes installing CloudFoundry's Ops Manager and deploying BOSH to the ESXi/vCenter
+
+### Uploading and Adding Elastic Runtime
+
+* Browse to our Ops Manager: [https://opsmgr.cf.nono.com/](https://opsmgr.cf.nono.com/).  You may need to re-authenticate (account: **pivotalcf**, password is whatever we set the password to when we deployed Ops Manager in [Part 2](http://pivotallabs.com/worlds-smallest-iaas-part-2/))
+* Click on **Import a Product** (see image)
+
+[caption id="attachment_28936" align="alignnone" width="300"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/import_a_product.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/import_a_product-300x278.png" alt="screenshot of Ops Manager to import a product" width="300" height="278" class="size-medium wp-image-28936" /></a> Click "Import a Product" and browse to the Elastic Runtime file we downloaded and unzipped earlier[/caption]
+
+* Browse to the directory that contains the files that we untarred from the 5.6GB file we downloaded from network.gopivotal.com in [Part 2](http://pivotallabs.com/worlds-smallest-iaas-part-2/) (the directory name should be **pcf-1.2.0.0_allinone**)
+* select the file named **cf-1.2.0.0.pivotal** and upload it
+* When it has finished uploading, we see green band at the top of the screen confirming that we've "**Successfully added product**".
+*  We see a new option in the left hand navbar:  **Pivotal Elastic Runtime**.  Hover our mouse over that option to make the blue *Add* button appear.  Click the blue **Add** button.
+
+[caption id="attachment_28937" align="alignnone" width="291"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/click_add.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/click_add-291x300.png" alt="Screenshot showing how to add Elastic Runtime" width="291" height="300" class="size-medium wp-image-28937" /></a> Click "Add" to begin configuring Elastic Runtime.  Note: we need to hover over "Pivotal Elastic Runtime" for the "Add" button to appear[/caption]
+
+### Configuring Elastic Runtime
+
+* Click the **Pivotal Elastic Runtime** tile to begin configuration
+
+[caption id="attachment_28938" align="alignnone" width="300"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/click_to_configure.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/click_to_configure-300x228.png" alt="Screenshot of the Elastic Runtime product tile on the Installation Dashboard" width="300" height="228" class="size-medium wp-image-28938" /></a> Click the "Elastic Runtime" tile to begin configuration[/caption]
+
+### Appendix A. Wildcard Certs
+
+We knew we could take the easier path and use a self-signed cert, but that is  not as cool as getting a valid SSL Wildcard Cert.
+
+We decided to purchase ours at [CheapSSLSecurity](https://cheapsslsecurity.com/), and at $72.95 for a one-year wildcard SSL certificate, they seem to be, if not the cheapest, certainly among the less expensive ones.
+
+We ordered the **Comodo PositiveSSL Wildcard Certificate**, the absolute cheapest one that CheapSSLSecurity sold. Did we mention we were cheap?
+
+Note: before you decided to purchase your own wildcard cert, you must be sure that you are the hostmaster of your own domain. Really. If you're not sure what a hostmaster is, then you're probably not the hostmaster.
+
+#### CheapSSLSecurity Ordering Process:
+
+1. Select the type of cert (*Comodo PositiveSSL Wildcard Certificate*) and the terms (1 year)
+2. Fill in the billing information and submit
+3. You will receive an email with instructions.  Here are their instructions:
+
+	1. Login to cheapsslsecurity.com with your e-mail as your username. You will receive a ‘Password Reset’ link in the next e-mail. ***[After waiting several minutes for the "next e-mail" to arrive (it didn't), we logged in with our email address, but rather than enter a password we clicked "forgot password".  Still no email.  The email finally arrived ten minutes later]***
+	2. After logging in, click on ‘My Account>>’Incomplete Order’
+	3. Click on ‘Generate Cert Now’ after checking for your order [ORDER NUMBER] ***[We were sent to a page that had automated Domain Validation Authentication Options; we chose email authentication.]***
+	4. Process your Certificate Signing Request (CSR). For this you can contact you Host Provider or System Administrator or Click here to follow the steps to generate a CSR for yourself.***[These are the commands we used to generate our CSR:]***
+
+```
+$ openssl req -out wildcard.cf.nono.com.csr -new -newkey rsa:2048 -nodes -keyout wildcard.cf.nono.com.key
+  US
+Generating a 2048 bit RSA private key
+.............................+++
+......................................+++
+writing new private key to 'wildcard.cf.nono.com.key'
+-----
+You are about to be asked to enter information that will be incorporated
+into your certificate request.
+What you are about to enter is what is called a Distinguished Name or a DN.
+There are quite a few fields but you can leave some blank
+For some fields there will be a default value,
+If you enter '.', the field will be left blank.
+-----
+Country Name (2 letter code) [AU]:US
+State or Province Name (full name) [Some-State]:California
+Locality Name (eg, city) []:San Francisco
+Organization Name (eg, company) [Internet Widgits Pty Ltd]:nono.com
+Organizational Unit Name (eg, section) []:
+Common Name (e.g. server FQDN or YOUR name) []:*.cf.nono.com
+Email Address []:brian.cunnie@gmail.com
+
+Please enter the following 'extra' attributes
+to be sent with your certificate request
+A challenge password []:
+An optional company name []:
+```
+* ***[The above command generates two files: wildcard.cf.nono.com.key and  and wildcard.cf.nono.com.csr.  Paste the .csr into the webpage where they ask. We leave the "Server Type" field with the default value (Apache ModSSL), click continue, and are presented with a list of emails <sup>[[1]](#valid_emails)</sup> that are "allowed" to verify the cert. The email continues:]***
+
+	1. Fill up the rest of the information on the website. ***[Mostly names, emails, phone numbers, and job titles]***
+	2. Wait till the verification process is finished. ***[After filling out the form, we were unceremoniously dumped to the home screen.  6:10pm]***
+	7. After that you will receive your SSL certificate which you can give to your Host Provider or System Administrator to get it installed or you can Follow this link for an illustrated guide on SSL Installation Process.
+
+---
+
+<a name="valid_emails"><sup>1</sup></a> This is the list of email addresses that cheapsslsecurity.com would allow to approve the SSL certificates. If one is considering purchasing an SSL certificate for a domain, one should first make sure that one has access to at leas one of the mailboxes of the following emails (obviously the domain in the email would not be "nono.com" but instead would be the domain for which one was purchasing the SSL certificate):
+
+* brian.cunnie@gmail.com
+* admin@cf.nono.com
+* administrator@cf.nono.com
+* hostmaster@cf.nono.com
+* postmaster@cf.nono.com
+* webmaster@cf.nono.com
+* admin@nono.com
+* administrator@nono.com
+* hostmaster@nono.com
+* webmaster@nono.com
 
