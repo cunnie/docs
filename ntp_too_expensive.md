@@ -2,6 +2,9 @@
 
 Our recent monthly Amazon AWS bills were much higher than normal&mdash;$40 dollars higher than normal. What happened?
 
+We investigated and discovered our public NTP server was heavily loaded.  Over a typical 45-minute period, our instance provided time service to 248,777 unique clients (possibly more, given that a firewall may "mask" several clients), with an aggregate outbound data of 247,581,892 bytes (247 MB). Over the course of a month this traffic ballooned to 332GB outbound traffic, which costs ~$40.
+
+This blog post discusses how we investigated the problem and what steps we took to reduce our AWS traffic costs.
 
 ### Clue #1: The Amazon Bill
 
@@ -39,7 +42,7 @@ We graphed the spreadsheet to get a closer look at the data:
 
 We used a logarithmic scale when creating the graph. A logarithmic scale has two advantages over a linear scale:
 
-1. it smooths bumps
+1. it smoothes bumps
 2. it does a better job of displaying data that spans multiple orders of magnitude
 
 We noticed the following:
@@ -65,13 +68,13 @@ We had enabled NTP on 3/29&mdash;could that possibly be the reason?
 
 ### ["Et tu, NTP?"](http://en.wikipedia.org/wiki/Et_tu,_Brute%3F)
 
-Could NTP be the culprit?  Had our good friend NTP stabbed us in the back?  It doesn't seem possible. Furthermore, the [documentation](http://www.pool.ntp.org/en/join.html) on the www.pool.ntp.org website states that typical traffic is "...roughly equivalent to 10-15Kbit/sec *(sic)*  <sup>[[2]](#k_is_lowercase)</sup> with spikes of 50-120Kbit/sec". 
+Could NTP be the culprit?  Had our good friend NTP stabbed us in the back?  It didn't seem possible. Furthermore, the [documentation](http://www.pool.ntp.org/en/join.html) on the www.pool.ntp.org website states that typical traffic is "...roughly equivalent to 10-15Kbit/sec *(sic)*  <sup>[[2]](#k_is_lowercase)</sup> with spikes of 50-120Kbit/sec". 
 
 But we're seeing 740-1000kbit/sec <sup>[[3]](#kbit_sec)</sup>: *seventy times more* than what we should be seeing. And note that we're being generous&mdash;we assume that they are referring to outbound traffic only when they suggest it should be 10-15kbit/sec; if they meant inbound and outbound combined, then our NTP traffic is *one hundred forty times* more than what we should be seeing.
 
 ### Clue #4: tcpdump
 
-We need to examine packets.  We decide to do a packet trace on our instance for a 20-minute period:
+We need to examine packets.  We decide to do a packet trace on our instance for a 45-minute period:
 
 ```
 $ sudo time -f "%e seconds" tcpdump -w /tmp/aws.pcap
@@ -85,7 +88,7 @@ We don't concern ourselves with the 8665 packets that were dropped by the kernel
 
 We copy the file (/tmp/aws.pcap) to our local workstation (doing traffic analysis on a t1.micro instance is painfully slow).
 
-#### Is our packet trace representative?
+#### Is our packet trace representative? Yes.
 
 We need to make sure our packet trace is representative of typical traffic to our server, at least in terms of throughput (kbits/sec). In other words, our packet trace should have an outbound throughput on the order of 740-1000kbit/sec.
 
@@ -103,9 +106,9 @@ linktype EN10MB
 total len = 248453677, total packets = 2756609
 ```
 
-We have 248453677 bytes / 2693 seconds, which works out to <sup>[[5]](#outbound_throughput)</sup> 738 kbits / sec, which is in line with what we expected 
+We have 248453677 bytes / 2693 seconds, which works out to <sup>[[5]](#outbound_throughput)</sup> 738 kbits / sec, which is in line with our typical outbound traffic (740-1000kbits/sec)
 
-#### What percentage of our outbound traffic is NTP?
+#### What percentage of our outbound traffic is NTP? 99.6%
 
 We want to confirm that NTP is the bulk of our traffic. We want to make sure that NTP is the bad buy before we point fingers.  Once again, we use `tcpdump` in conjunction with `pcap_len` to determine how many bytes of our outbound traffic is NTP:
 
@@ -116,46 +119,13 @@ linktype EN10MB
 total len = 247581892, total packets = 2750878
 ```
 
-We don't care how many seconds passed; we merely care how many bytes we sent outbound (248453677) and how many of them were NTP (247581892).  We determine that NTP accounts for xxx%  <sup>[[6]](#ntp_outbound_percent)</sup>
+We don't care how many seconds passed; we merely care how many bytes we sent outbound (248453677) and how many of them were NTP (247581892).  We determine that NTP accounts for 99.6% <sup>[[6]](#ntp_outbound_percent)</sup> of our outbound traffic.
 
-```
-$ tcpdump -n -r ~/Downloads/aws.pcap port 123 | wc -l
-reading from file /Users/cunnie/Downloads/aws.pcap, link-type EN10MB (Ethernet)
- 5582539
+NTP is the bad guy.
 
- |1.9.3-p484| chacha in ~
-$ tcpdump -n -r ~/Downloads/aws.pcap not port 123 | wc -l
-reading from file /Users/cunnie/Downloads/aws.pcap, link-type EN10MB (Ethernet)
-   35034
-```
+#### Clue #5: Compare against a control
 
-Total packets = NTP packets + non-NTP packets
-
-5617555 == 5582539 + 35034 == 5617573
-
-Astute readers will notice that the left-hand term (5617555) is 18 packets less than the right hand term (5617573).  We confess we're not sure which answer is correct: for example, a certain invocation of tcpdump indicates the answer is the greater number:
-
-```
-$ tcpdump -n -r ~/Downloads/aws.pcap | wc -l
-reading from file /Users/cunnie/Downloads/aws.pcap, link-type EN10MB (Ethernet)
- 5617573
-```
-However, an invocation of a different program ([pcap_len](https://gist.github.com/cunnie/9117442e003e869b43db#file-pcap_len-c)) reveals the lesser number:
-
-Before we get lost in thickets trying to determine the correct number of packets, we remind ourselves that we are engineers, not mathematicians, which affords us the luxury of being "close enough". We don't need to worry about 18 packets when our total number of packets is 5.6 million.
-
-We know that NTP packets have a length of 90 bytes:
-
-* 14 bytes [Ethernet II MAC header](http://en.wikipedia.org/wiki/Ethernet_frame)
-* 20 bytes [IPv4 header](http://en.wikipedia.org/wiki/IPv4#Header)
-* 8 bytes [UDP header](http://en.wikipedia.org/wiki/User_Datagram_Protocol#Packet_structure) 
-* 48 bytes [NTP data](http://www.ietf.org/rfc/rfc5905.txt)
-
-We also know that the [pcap file format](http://www.tcpdump.org/pcap/pcap.html) adds an additional 20-byte header to the packet when it writes it to a file.
-
-We know from the output
-
-As a control, we also run tcpdump on our home FreeBSD NTP server, which is also in the ntp pool:
+We want to see if we have an excessive number of NTP clients vis-a-vis other NTP pool members.  Fortunately, we have another machine (our home network's FreeBSD firewall, also an NTP server and connected to the Comcast network) that's also in the NTP pool.  We'll pull statistics from there:
 
 ```
 $ sudo time tcpdump -i em3 -w /tmp/home.pcap port 123
@@ -165,6 +135,44 @@ tcpdump: listening on em3, link-type EN10MB (Ethernet), capture size 65535 bytes
 0 packets dropped by kernel
      2209.59 real         0.25 user         0.19 sys
 ```
+We are only concerned with outbound NTP traffic. `tcpdump` and `pcap_len` to the rescue:
+
+```
+$ tcpdump -r ~/Downloads/home.pcap -w ~/Downloads/home-outbound-ntp-only.pcap src port 123 src host 24.23.190.188
+$ pcap_len ~/Downloads/home-outbound-ntp-only.pcap
+linktype EN10MB
+total len = 17161678, total packets = 190685
+```
+Let's determine our home NTP outbound traffic: 17161678 bytes / 2209 secs = 7769 bytes / sec = 62 kbits /sec.  
+
+Let's determine our AWS NTP outbound traffic: 247581892 bytes / 2693 secs = 91935 bytes / sec = 735 kbits /sec
+
+Our AWS server is dishing out 11.8 times the NTP traffic that our home server is. But that's not quite the metric we want; the metric we want is "how much bandwidth *per unique client (unique IP address)*"
+
+We determine the number of unique NTP clients that each host (AWS and home) have:
+
+```
+tcpdump -nr ~/Downloads/aws-outbound-ntp-only.pcap  | awk ' { print $5 } ' | sed 's=\.[0-9]*:==' | sort | uniq | wc -l
+  248777
+tcpdump -nr ~/Downloads/home-outbound-ntp-only.pcap | awk ' { print $5 } ' | sed 's=\.[0-9]*:==' | sort | uniq | wc -l
+   34908
+```
+Our AWS server is handling 7.1 times the number of unique NTP clients that our home server is handling. This is troubling.  It means that certain AWS NTP clients are using up more bandwidth than they should. Furthermore, we need to remember that we ran tcpdump longer (2693.13 seconds) on our AWS server than we did (2209.59 seconds) on our home server, giving AWS more time to collect unique clients.  In other words, the ratio is probably worse (if we extrapolate based on number of seconds, the AWS server is spending twice the bandwidth for each client than the home server).
+
+#### Clue #6: Greedy (broken?) clients
+
+We suspect that broken/poorly configured clients may account for much of the traffic. The grand prize belongs to an IP address located in Puerto Rico ([162.220.96.14](http://whois.arin.net/rest/net/NET-162-220-96-0-1/pft)) managed to query our AWS server 18,287 times over the course of 2693 seconds, which works out to 6.7 queries / second.
+
+How did we obtain these numbers?  We lashed together a series of pipes to list each unique IP address and the number of packets we sent to that address.  Then we copied the data into a spreadsheet so that we could examine it visually.
+
+```
+tcpdump -nr ~/Downloads/aws-outbound-ntp-only.pcap | awk ' { print $5 } ' | sed 's=\.[0-9]*:==' | sort | uniq -c | sort -n > /tmp/ntp_clients.txt
+awk '{print $1}' < /tmp/ntp_clients.txt | uniq -c | sed 's=^ *==; s= =,=' > /tmp/clients.csv
+```
+
+[caption id="attachment_29153" align="alignnone" width="300"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/06/Screen-Shot-2014-06-11-at-8.47.30-PM.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/06/Screen-Shot-2014-06-11-at-8.47.30-PM-300x244.png" alt="Cumulative NTP Outbound by Unique IP" width="300" height="244" class="size-medium wp-image-29153" /></a> This chart is tricky: let's use an example.  The 25% on the Y-axis crosses 31 on the X-axis, which means, "25% of the NTP traffic is to machines which have made 31 or fewer queries"[/caption]
+
+
 
 ---
 
@@ -180,7 +188,7 @@ tcpdump: listening on em3, link-type EN10MB (Ethernet), capture size 65535 bytes
 &times; 1 day / 24 hours  
 &times; 1 hour / 3600 seconds  
 &times; 8 bits / 1 byte  
-&times; 1 kbit / 1000 bits  
+&times; 1 kbit / 1000 bits
 
 = 740.740740740741 kbit / sec
 
@@ -192,7 +200,10 @@ tcpdump: listening on em3, link-type EN10MB (Ethernet), capture size 65535 bytes
 
 = 92259 bytes / sec  
 &times; 8 bits / 1 byte  
-&times; 1 kbit / 1000 bits  
+&times; 1 kbit / 1000 bits
 
 = 738 kbits /sec
 
+<a name="<a name="outbound_throughput"><sup>6</sup></a> Math is as follows:
+
+( 247581892 / 248453677 ) &times; 100 = 99.6%
