@@ -1,10 +1,10 @@
-# Why Is My NTP Server Costing Me $500/Year <sup>[[1]](#yearly_cost)</sup>?
+# Why Is My NTP Server Costing Me $500/Year <sup>[[1]](#yearly_cost)</sup>? Part 1
 
 Our recent monthly Amazon AWS bills were much higher than normal&mdash;$40 dollars higher than normal. What happened?
 
-We investigated and discovered our public NTP server was heavily loaded.  Over a typical 45-minute period, our instance provided time service to 248,777 unique clients (possibly more, given that a firewall may "mask" several clients), with an aggregate outbound data of 247,581,892 bytes (247 MB). Over the course of a month this traffic ballooned to 332GB outbound traffic, which costs ~$40.
+We investigated and discovered our public NTP server was heavily loaded.  Over a typical 45-minute period, our instance provided time service to 248,777 unique clients (possibly more, given that a firewall may "mask" several clients), with an aggregate outbound data of 247,581,892 bytes (247 MB). Over the course of a month this traffic ballooned to 332GB outbound traffic, which cost ~$40.
 
-This blog post discusses how we investigated the problem and what steps we took to reduce our AWS traffic costs.
+This blog post discusses the techniques we used to investigate the problem. A future blog post (Part 2) will discuss how we fixed the problem.
 
 ### Clue #1: The Amazon Bill
 
@@ -64,7 +64,11 @@ $ git log --graph --pretty=format:'%h %ci %s'
 * d172264 2013-05-02 05:26:25 +0000 Initial Checkin
 ```
 
-We had enabled NTP on 3/29&mdash;could that possibly be the reason?
+We had enabled NTP on 3/29.
+
+That was also the day when we registered our server with the [NTP Pool](http://www.pool.ntp.org/en/), a volunteer effort where users can make their NTP servers available to the public for time services.  The project has been so successful that [it's the default "time server"](http://www.pool.ntp.org/en/) for most of the major Linux distributions.
+
+It takes about a day for the NTP Pool to satisfy itself that your newly-added server is functional and to make it available to the public&mdash;that is likely why we didn't see any traffic until a day later, 3/30.
 
 ### ["Et tu, NTP?"](http://en.wikipedia.org/wiki/Et_tu,_Brute%3F)
 
@@ -163,16 +167,37 @@ Our AWS server is handling 7.1 times the number of unique NTP clients that our h
 
 We suspect that broken/poorly configured clients may account for much of the traffic. The grand prize belongs to an IP address located in Puerto Rico ([162.220.96.14](http://whois.arin.net/rest/net/NET-162-220-96-0-1/pft)) managed to query our AWS server 18,287 times over the course of 2693 seconds, which works out to 6.7 queries / second.
 
-How did we obtain these numbers?  We lashed together a series of pipes to list each unique IP address and the number of packets we sent to that address.  Then we copied the data into a spreadsheet so that we could examine it visually.
+The runner-up was also located in Puerto Rico ([70.45.91.171](http://whois.arin.net/rest/net/NET-70-45-0-0-2/pft)), with 12,996 queries at a rate of 4.8 queries / second.  Which begs the question:  what the heck is going on in Puerto Rico?
+
+Let's take a brief moment to discuss how we generated these numbers: we lashed together a series of pipes to list each unique IP address and the number of packets our instance sent to that address, converted the output into CSV (comma-separated values), and then imported the data into a spreadsheet for visual examination.
 
 ```
 tcpdump -nr ~/Downloads/aws-outbound-ntp-only.pcap | awk ' { print $5 } ' | sed 's=\.[0-9]*:==' | sort | uniq -c | sort -n > /tmp/ntp_clients.txt
 awk '{print $1}' < /tmp/ntp_clients.txt | uniq -c | sed 's=^ *==; s= =,=' > /tmp/clients.csv
 ```
 
-[caption id="attachment_29153" align="alignnone" width="300"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/06/Screen-Shot-2014-06-11-at-8.47.30-PM.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/06/Screen-Shot-2014-06-11-at-8.47.30-PM-300x244.png" alt="Cumulative NTP Outbound by Unique IP" width="300" height="244" class="size-medium wp-image-29153" /></a> This chart is tricky: let's use an example.  The 25% on the Y-axis crosses 31 on the X-axis, which means, "25% of the NTP traffic is to machines which have made 31 or fewer queries"[/caption]
+And let's discuss the graph below. It shows the correlation between the number of unique clients, and the number of queries each one makes.  We want to see, for example, if we block any client that makes more than 289 queries in a 45-minute period, how much money would we save?  (In this example, we would save $48 over the course of the year)
 
+[caption id="attachment_29153" align="alignnone" width="300"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/06/Screen-Shot-2014-06-11-at-8.47.30-PM.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/06/Screen-Shot-2014-06-11-at-8.47.30-PM-300x244.png" alt="Cumulative NTP Outbound by Unique IP" width="300" height="244" class="size-medium wp-image-29153" /></a> This chart is tricky: let's use an example.  The 25% on the Y-axis crosses 23 on the X-axis, which means, "25% of the NTP traffic is to machines which have made 23 or fewer queries"[/caption]
 
+Now we have some tools to make decisions. As with most engineering decisions, economics has a powerful say:
+
+<table>
+<tr>
+<th>If we block IP addresses<br />that query time more than<br />(over the course<br />of 45 minutes)...</th><th>...then we cut<br />our bandwidth...</th><th>...and spend<br />this much<br />annually</th>
+</tr><td>0</td><td>100%</td><td>$0</td></tr>
+<tr><td>3</td><td>90%</td><td>$48</td></tr>
+<tr><td>23</td><td>75%</td><td>$120</td></tr>
+<tr><td>51</td><td>50%</td><td>$240</td></tr>
+<tr><td>79</td><td>25%</td><td>$360</td></tr>
+<tr><td>289</td><td>10%</td><td>$432</td></tr>
+<tr><td>864</td><td>5%</td><td>$456</td></tr>
+<tr><td>18287</td><td>0%</td><td>$480</td></tr>
+</table>
+
+But we are uncomfortable with this heavy-handed approach of blocking IPs based on nothing more than the number of queries.  Our assumption that a large number of queries is indicative of a faulty NTP client is misguided:  For example, a corporate firewall would appear as a faulty client, but merely because it's passing along hundreds of queries from many internal workstations.
+
+We'll explore finer-grained approaches to determining faulty clients in the next blog post.  Stay tuned.
 
 ---
 
@@ -194,7 +219,30 @@ awk '{print $1}' < /tmp/ntp_clients.txt | uniq -c | sed 's=^ *==; s= =,=' > /tmp
 
 <a name="pcap_len"><sup>4</sup></a> [pcap_len](https://gist.github.com/cunnie/9117442e003e869b43db#file-pcap_len-c) is a program of dubious provenance that was uploaded to a tcpdump [mailing list](http://seclists.org/tcpdump/2004/q1/266) in 2004.  Thanks Alex Medvedev wherever you are.
 
-<a name="<a name="outbound_throughput"><sup>5</sup></a> Math is as follows:
+But we are not country bumpkins who trust anyone who happens to post code to a mailing list.  We want to confirm that the `pcap_len` program works correctly.  We need to know two things:
+
+1. What is the size of an NTP packet?
+2. What is the overhead of the pcap file format?
+
+The size of the NTP packet is straightforward, 90 bytes:
+
+* 14 bytes [Ethernet II MAC header](http://en.wikipedia.org/wiki/Ethernet_frame)
+* 20 bytes [IPv4 header](http://en.wikipedia.org/wiki/IPv4#Header)
+* 8 bytes [UDP header](http://en.wikipedia.org/wiki/User_Datagram_Protocol#Packet_structure) 
+* 48 bytes [NTP data](http://www.ietf.org/rfc/rfc5905.txt)
+
+And the pcap file format overhead per packet? [16 bytes](http://wiki.wireshark.org/Development/LibpcapFileFormat#Record_.28Packet.29_Header).
+
+* Size of the AWS outbound NTP pcap file:  **291595964**
+* Size of the AWS outbound NTP packets according to `pcap_len`: **247581892**
+* Ratio of NTP packet + pcap overhead to NTP packet: (90 + 16)/90 = **1.17777**
+
+247581892 * 1.17777 = 291596450
+(within 486 bytes of 291595964, which is good enough for us).
+
+Yes, `pcap_len` passes our cross-check.
+
+<a name="outbound_throughput"><sup>5</sup></a> Math is as follows:
 
 248453677 bytes / 2693 seconds  
 
@@ -204,6 +252,6 @@ awk '{print $1}' < /tmp/ntp_clients.txt | uniq -c | sed 's=^ *==; s= =,=' > /tmp
 
 = 738 kbits /sec
 
-<a name="<a name="outbound_throughput"><sup>6</sup></a> Math is as follows:
+<a name="ntp_outbound_percent"><sup>6</sup></a> Math is as follows:
 
 ( 247581892 / 248453677 ) &times; 100 = 99.6%
