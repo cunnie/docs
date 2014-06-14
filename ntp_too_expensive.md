@@ -114,7 +114,7 @@ We have 248453677 bytes / 2693 seconds, which works out to <sup>[[5]](#outbound_
 
 #### What percentage of our outbound traffic is NTP? 99.6%
 
-We want to confirm that NTP is the bulk of our traffic. We want to make sure that NTP is the bad buy before we point fingers.  Once again, we use `tcpdump` in conjunction with `pcap_len` to determine how many bytes of our outbound traffic is NTP:
+We want to confirm that NTP is the bulk of our traffic. We want to make sure that NTP is the bad guy before we point fingers.  Once again, we use `tcpdump` in conjunction with `pcap_len` to determine how many bytes of our outbound traffic is NTP:
 
 ```
 $ tcpdump -r ~/Downloads/aws-outbound.pcap -w ~/Downloads/aws-outbound-ntp-only.pcap src port 123
@@ -238,7 +238,7 @@ And the pcap file format overhead per packet? [16 bytes](http://wiki.wireshark.o
 * Ratio of NTP packet + pcap overhead to NTP packet: (90 + 16)/90 = **1.17777**
 
 247581892 * 1.17777 = 291596450
-(within 486 bytes of 291595964, which is good enough for us).
+(within 486 bytes of 291595964, within 0.0001%, which is good enough for us. The remaining bytes are most likely due to pcap file format overhead (excluding the per-packet pcap overhead)).
 
 Yes, `pcap_len` passes our cross-check.
 
