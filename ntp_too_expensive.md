@@ -255,3 +255,14 @@ Yes, `pcap_len` passes our cross-check.
 <a name="ntp_outbound_percent"><sup>6</sup></a> Math is as follows:
 
 ( 247581892 / 248453677 ) &times; 100 = 99.6%
+
+---
+
+```
+cd ~/workspace
+mkdir vagrant_getting_started
+cd vagrant_getting_started
+vagrant init
+vagrant add box ubuntu/trusty64
+vagrant box add http://files.wunki.org/freebsd-10.0-amd64-wunki.box --name freebsd/10.0-amd64
+```
