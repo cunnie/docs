@@ -258,11 +258,39 @@ Yes, `pcap_len` passes our cross-check.
 
 ---
 
+* Set up DNS for
+  * w7.nono.com
+  * vm-ubuntu.nono.com
+  * vm-fbsd.nono.com
+* Start up windows at 17:45 PDT 6/15/2014
+
+
 ```
-cd ~/workspace
-mkdir vagrant_getting_started
-cd vagrant_getting_started
-vagrant init
+ssh lana
+tmux
+sudo tcpdump -ni em0 -w /tmp/ntp.pcap port ntp
+^bd
+exit
 vagrant add box ubuntu/trusty64
 vagrant box add http://files.wunki.org/freebsd-10.0-amd64-wunki.box --name freebsd/10.0-amd64
+cd ~/workspace
+mkdir vagrant_vms
+cd vagrant_vms
+git init
+for DIR in ubuntu_14.04 fbsd_10.0; do
+  mkdir $DIR
+  pushd $DIR
+  vagrant init
+  popd
+done
+git add .
+git commit -m"initial commit"
+cd vm-ubuntu/
+vim Vagrantfile
+vagrant up
 ```
+
+---
+
+[1] to define our own addresses without fear of colliding with an existing address, we set the [locally administered bit](http://en.wikipedia.org/wiki/MAC_address#Address_details) (the second least significant bit of the most significant byte) to 1.
+
