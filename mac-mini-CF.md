@@ -272,7 +272,7 @@ Log in with user name **root** and the password we set earlier.
 
 ##### Assign License
 
-We see a yellow band on the top of the page with the words, "There are vCenter Server systems with expiring license keys...".  
+We see a yellow band on the top of the page with the words, "There are vCenter Server systems with expiring license keys...".
 
 1. Click **Details...**
 2. Click **Add new license keys to vSphere**
@@ -472,6 +472,10 @@ Previous blog posts have covered setting up the necessary environment:
 * [World’s Smallest IaaS, Part 1](http://pivotallabs.com/worlds-smallest-iaas-part-1/) describes installing VMware ESXi and VMware vCenter on an Apple Mac Mini
 * [World’s Smallest IaaS, Part 2](http://pivotallabs.com/worlds-smallest-iaas-part-2/) describes installing CloudFoundry's Ops Manager and deploying BOSH to the ESXi/vCenter
 
+## Spoiler Alert
+
+The install failed; we ran out of RAM.  In the next blog post we'll again attempt to install Elastic Runtime, but first we'll migrate the vCenter (a particularly RAM-hungry VM) to a different bare-iron machine (i.e. a MacBook Pro running VMware Fusion). Hopefully that will free up enough RAM for Elastic Runtime to successfully deploy.
+
 ### Uploading and Adding Elastic Runtime
 
 * Browse to our Ops Manager: [https://opsmgr.cf.nono.com/](https://opsmgr.cf.nono.com/).  You may need to re-authenticate (account: **pivotalcf**, password is whatever we set the password to when we deployed Ops Manager in [Part 2](http://pivotallabs.com/worlds-smallest-iaas-part-2/))
@@ -491,6 +495,104 @@ Previous blog posts have covered setting up the necessary environment:
 * Click the **Pivotal Elastic Runtime** tile to begin configuration
 
 [caption id="attachment_28938" align="alignnone" width="300"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/click_to_configure.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/click_to_configure-300x228.png" alt="Screenshot of the Elastic Runtime product tile on the Installation Dashboard" width="300" height="228" class="size-medium wp-image-28938" /></a> Click the "Elastic Runtime" tile to begin configuration[/caption]
+
+* We are on the HAProxy tab (as indicated by the left navbar)
+   * HAProxy IPs: **10.9.8.40** (the App domain, the wildcard IP address for '*.cf.nono.com')
+   * Click **Generate Self-Signed RSA Certificate**<br />
+   When it asks for domains, type **\*.cf.nono.com**; click **Generate**
+   * Check **Trust Self-Signed Certificates**
+   * click **Save**
+
+[caption id="attachment_28962" align="alignnone" width="194"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/haproxy_configuration.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/haproxy_configuration-194x300.png" alt="Screenshot of the HAProxy Configuration page" width="194" height="300" class="size-medium wp-image-28962" /></a> Ensure the HAProxy's IP address matches the SSL certificate's hostname (e.g. *.cf.nono.com)[/caption]
+
+* Click the **Cloud Controller** tab on the left hand navbar
+  * System domain: **cf.nono.com**
+  * Apps domain: **cf.nono.com**
+  * Click **Save**
+
+### Installing Elastic Runtime
+
+* Click the white-on-blue button **Apply Changes** (on the right hand side)
+* We will see anxiety-inducing errors:
+  * *Cluster 'Cluster' has 4 CPU cores. Installation requires 36 CPU cores* <sup>[[1]](#cpu_cores)</sup>
+  * *Cluster 'Cluster' has 12GB total RAM. Installation requires 47GB total RAM* <sup>[[2]](#ram)</sup>
+* Click **Ignore errors and start the install**
+* We see the install screen. We click on **Show verbose output** because we like watching the installation messages
+
+Our install came to a screeching halt:
+
+```
+Error 100: No available resources
+
+Task 20 error
+
+For a more detailed error report, run: bosh task 20 --debug
+Try no. 4 failed. Exited with 1.
+```
+We need to free up RAM.  Tune in next week when we take another pass at installing the World's Smallest PaaS on the World's Smallest IaaS.
+
+
+---
+<a name="cpu_cores"><sup>1</sup></a> CPU core over-subscription is not something we worry about; we have heard that CloudFoundry's Engineering Team's servers are often over-subscribed by a factor of 24:1 (i.e. as many as 576 cores required, but only 24 available) (the Engineering Team would have oversubscribed it even more, 25:1 and beyond, but at that point a hard limit was reached).
+
+<a name="ram"><sup>2</sup></a> RAM oversubscription. This is the one we're worried about.
+
+# World's Smallest IaaS, Part 4: the PaaS, Take Two
+
+### The World's Smallest PaaS Just Got Bigger
+
+In the previous [blog post](http://pivotallabs.com/worlds-smallest-iaas-part-3-paas/), our attempt to shoehorn a CloudFoundry install onto a 16GB Mac was met with failure.
+
+So what did we do? In the time-honored tradition of IT, we threw more hardware at the problem.  We bought a Mac Pro:
+
+[insert picture here.  The world's smallest PaaS is now a Mac Pro]
+
+#### Mac Pro Configuration
+
+We went with the following configuration:
+
+* 4 core Xeon Processor
+* D500 Graphics Card (note: this has nothing to do with CloudFoundry; anyone purchasing a Mac Pro to run CloudFoundry should opt for the D300 Graphics Card which is much less expensive; the decision to purchase a D500 was related to gaming, which is not an appropriate topic for a blog post, even though the D500 is quite adequate to play ESO at 1920x1200 with Ultra-high settings, easily delivering over 30fps).
+* 512MB Flash (note: we regretted this decision; we wished we had opted for the more expensive 1TB)
+* 64GB RAM
+
+Why the Mac Pro?  It's the only machine that Apple sells that can accept more than 32GB of RAM (we bought 64GB (2 x [32GB kits](http://www.crucial.com/usa/en/mac-pro-%28late-2013%29/CT5019230), which consists of two sticks apiece, for a grand total of 4 x 16GB sticks)).
+
+
+
+We need to free up RAM on our IaaS.  The easiest way?  Migrate the vCenter machine off the RAM-starved Mac Mini and onto, in this case, a MacBook Pro.
+
+#### 1. Shut down vCenter
+
+```
+ssh root@vcenter.cf.nono.com
+ # use the password we set when we initially configured vCenter
+sudo shutdown -h now
+```
+
+#### 2. Enable ssh and Console on ESXi
+
+These instructions have been culled from a [VMware Knowledge Base](http://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=2004746) article:
+
+* Use the direct console user interface to enable the ESXi Shell:
+* From the Direct Console User Interface, press F2 to access the System Customization menu.
+* Select Troubleshooting Options and press Enter.
+* From the Troubleshooting Mode Options menu, select Enable ESXi Shell.
+* Press Enter to enable the service.
+* From the Troubleshooting Mode Options menu, select Enable ssh.
+* Press Enter to enable the service.
+
+#### 3. Copy vCenter
+
+In this example, we copy *from* the ESXi machine to an external 500GB drive (named, coincidentally, "500GB") on the MacBook Pro (hope.nono.com). Yes, we really do need to escape the spaces in the filename with backslashes *and* put the pathname in double-quotes:
+
+```
+scp -r root@esxi.cf.nono.com:"/vmfs/volumes/datastore1/VMware\ vCenter\ Server\ Appliance" /Volumes/500GB/vmware/
+ssh root@esxi.cf.nono.com
+ # use the password we set when we initially configured ESXi
+scp -r /vmfs/volumes/datastore1/VMware\ vCenter\ Server\ Appliance cunnie@ho
+pe.nono.com:
+```
 
 ### Appendix A. Wildcard Certs
 
@@ -541,15 +643,13 @@ to be sent with your certificate request
 A challenge password []:
 An optional company name []:
 ```
-* ***[The above command generates two files: wildcard.cf.nono.com.key and  and wildcard.cf.nono.com.csr.  Paste the .csr into the webpage where they ask. We leave the "Server Type" field with the default value (Apache ModSSL), click continue, and are presented with a list of emails <sup>[[1]](#valid_emails)</sup> that are "allowed" to verify the cert. The email continues:]***
+* ***[The above command generates two files: wildcard.cf.nono.com.key and  and wildcard.cf.nono.com.csr.  Paste the .csr into the webpage where they ask. We leave the "Server Type" field with the default value (Apache ModSSL), click continue, and are presented with a list of emails <sup>[[3]](#valid_emails)</sup> that are "allowed" to verify the cert. The email continues:]***
 
-	1. Fill up the rest of the information on the website. ***[Mostly names, emails, phone numbers, and job titles]***
-	2. Wait till the verification process is finished. ***[After filling out the form, we were unceremoniously dumped to the home screen.  6:10pm]***
+	1. Fill up the rest of the information on the website. ***[Mostly names, emails, phone numbers, and job titles. We clicked Continue.  Then we filled out the organization information on the following page and clicked Continue]***
+	2. Wait till the verification process is finished. ***[We received an email with a link and a validation code within one minute. We clicked the link, filled out the validation code]***
 	7. After that you will receive your SSL certificate which you can give to your Host Provider or System Administrator to get it installed or you can Follow this link for an illustrated guide on SSL Installation Process.
 
----
-
-<a name="valid_emails"><sup>1</sup></a> This is the list of email addresses that cheapsslsecurity.com would allow to approve the SSL certificates. If one is considering purchasing an SSL certificate for a domain, one should first make sure that one has access to at leas one of the mailboxes of the following emails (obviously the domain in the email would not be "nono.com" but instead would be the domain for which one was purchasing the SSL certificate):
+<a name="valid_emails"><sup>3</sup></a> This is the list of email addresses that cheapsslsecurity.com would allow to approve the SSL certificates. If one is considering purchasing an SSL certificate for a domain, one should first make sure that one has access to at leas one of the mailboxes of the following emails (obviously the domain in the email would not be "nono.com" but instead would be the domain for which one was purchasing the SSL certificate):
 
 * brian.cunnie@gmail.com
 * admin@cf.nono.com
