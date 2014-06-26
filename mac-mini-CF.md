@@ -541,7 +541,7 @@ We need to free up RAM.  Tune in next week when we take another pass at installi
 
 ### The World's Smallest PaaS Just Got Bigger
 
-In the previous [blog post](http://pivotallabs.com/worlds-smallest-iaas-part-3-paas/), our attempt to shoehorn a CloudFoundry install onto a 16GB Mac was met with failure.
+In the previous [blog post](http://pivotallabs.com/worlds-smallest-iaas-part-3-paas/), our attempt to shoehorn a CloudFoundry install onto a 16GB Mac was an epic fail. We ran out of RAM during the deployment.
 
 So what did we do? In the time-honored tradition of IT, we threw more hardware at the problem.  We bought a Mac Pro:
 
@@ -551,13 +551,35 @@ So what did we do? In the time-honored tradition of IT, we threw more hardware a
 
 We went with the following configuration:
 
-* 4 core Xeon Processor
-* D500 Graphics Card (note: this has nothing to do with CloudFoundry; anyone purchasing a Mac Pro to run CloudFoundry should opt for the D300 Graphics Card which is much less expensive; the decision to purchase a D500 was related to gaming, which is not an appropriate topic for a blog post, even though the D500 is quite adequate to play ESO at 1920x1200 with Ultra-high settings, easily delivering over 30fps).
-* 512MB Flash (note: we regretted this decision; we wished we had opted for the more expensive 1TB)
-* 64GB RAM
+* 3.7GHz quad-core with 10MB of L3 cache (i.e. Intel Xeon E5-1620 v2)
+* D500 Graphics Card [[1]](#d500).
+* 512MB Flash (note: we regretted this decision; we wished we had opted for the $500-more-expensive 1TB)
+* 64GiB <sup>[[1]](#crucial_ram)</sup> RAM
 
-Why the Mac Pro?  It's the only machine that Apple sells that can accept more than 32GB of RAM (we bought 64GB (2 x [32GB kits](http://www.crucial.com/usa/en/mac-pro-%28late-2013%29/CT5019230), which consists of two sticks apiece, for a grand total of 4 x 16GB sticks)).
+Why the Mac Pro?  It's the only machine that Apple sells that can accept more than 32GB of RAM, and we're going to need every byte we can muster.
 
+### The Procedure
+
+1. Follow the instructions on the earlier blog post, "[World’s Smallest IaaS, Part 1](http://pivotallabs.com/worlds-smallest-iaas-part-1/)", except with regards to RAM&mdash;we will allocate 49152 MiB of RAM to the ESXi VM.  And we don't need to quit RAM-intensive tasks, and we don't need to determine the maximum allocatable RAM&mdash;we can skip those steps.
+2. Follow the procedure on the subsequent blog post, "[World’s Smallest IaaS, Part 2](http://pivotallabs.com/worlds-smallest-iaas-part-2/)", where we install Ops Manager and deploy BOSH.
+3. [This is the magical step] Follow the procedure on the even-more-subsequent blog post, "[World’s Smallest IaaS, Part 3: the PaaS](http://pivotallabs.com/worlds-smallest-iaas-part-3-paas/)".  
+
+
+---
+
+### Notes
+
+If, rather than creating the ESXi VM from scratch, you move it from another machine, you may need to re-create the network interface (the symptoms are that the ESXi VM has *no* network connectivity).  We needed to recreate it (we believe it's a bug in the bridging code of VMware Fusion):  **VMware Fusion &rarr; Virtual Machine &rarr; Settings... &rarr; Network Adapter &rarr; Advanced Options &rarr; Remove Network Adapter**.  Then you'll need to click ** Show All &rarr; Add Device... &rarr; Network Adapter**  
+
+### Footnotes
+
+<a name="d500"><sup>1</sup></a> Note: purchasing the D500 over the less-expensive D300 has nothing to do with CloudFoundry; anyone purchasing a Mac Pro to run CloudFoundry *should opt for the D300 Graphics Card*, which is currently $400 less expensive than the D500. The decision to purchase a D500 was related to gaming, which is not an appropriate topic for a blog post, even though the D500 is quite adequate to play ESO at 1920x1200 with ultra-high settings, easily delivering over 30fps (frames per second).
+
+<a name="ram"><sup>2</sup></a> We didn't purchase Apple RAM; we purchased Crucial RAM.  Apple charges $1,300 for 64GB (over the base option of 12GB).  We purchased 2 x [32GB kits](http://www.crucial.com/usa/en/mac-pro-%28late-2013%29/CT5019230), which consists of two sticks apiece, for a grand total of 4 x 16GB sticks, at a cost of (after tax &amp; shipping) $822.12.
+
+Do **not** make the mistake that we did, thinking we could mix the Crucial RAM with the Apple RAM: Originally we had purchased only 32GiB from Crucial, with the belief that we could retain 8GiB of the 12GiB that were included with our Mac Pro, for a grand total of 40GiB.  We were doomed to disappointment.  The Crucial RAM was RDIMM; the Apple RAM was UDIMM. "[Do not mix UDIMMs and RDIMMs,](http://support.apple.com/kb/HT6064)" says Apple on its Mac Pro memory specification page. If you mix them, like we did, the Mac Pro will not boot but instead will beep plaintively.
+
+# Detour not taken: move vCenter to a Different Host
 
 
 We need to free up RAM on our IaaS.  The easiest way?  Migrate the vCenter machine off the RAM-starved Mac Mini and onto, in this case, a MacBook Pro.
