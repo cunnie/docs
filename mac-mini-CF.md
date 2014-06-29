@@ -330,7 +330,7 @@ In this blog post, we describe the procedure to deploy [Pivotal CF Operations Ma
 
 #### 1. VMware ESXi and vCenter
 
-In *[World's Smallest IaaS, Part 1](http://pivotallabs.com/worlds-smallest-iaas-part-1/), we deployed VMware ESXi and vCenter on an Apple Mac Mini.  ESXi must be up and running, and vCenter must be up and running, too.  And network accessible.
+In *[World's Smallest IaaS, Part 1](http://pivotallabs.com/worlds-smallest-iaas-part-1/), we deployed VMware ESXi and vCenter on an Apple Mac Pro.  ESXi must be up and running, and vCenter must be up and running, too.  And network accessible.
 
 #### 2. A Different Machine
 
@@ -455,7 +455,7 @@ The advantage of using Resource Pools comes into play when we need to destroy an
 
 Readers who choose to colocate their IaaS deployment on their existing network (i.e. who choose not to create a new subnet) should take care to assign IP addresses outside the range allocated by their DHCP server.
 
-For example, a network's DHCP server and gateway is an [Apple Airport Time Capsule](https://www.apple.com/airport-time-capsule/) whose address is 10.0.1.1, whose subnet is 10.0.1.0/24, and whose DHCP range is 10.0.1.10 - 10.0.1.200.  In such a case, the range to exclude would be 10.0.1.1-10.0.1.200.  If the ESXi, vCenter, and Ops Manager servers' IP addresses lay outside that range, those IP addresses would need to be excluded as well (e.g. if ESXi's IP address was 10.0.1.201, vCenter's IP address was 10.0.1.202, and Ops Manager's IP address was 10.0.1.203, then the excluded IOP range would need to be 10.0.1.1-10.0.1.203)
+For example, a network's DHCP server and gateway is an [Apple Airport Time Capsule](https://www.apple.com/airport-time-capsule/) whose address is 10.0.1.1, whose subnet is 10.0.1.0/24, and whose DHCP range is 10.0.1.10 - 10.0.1.200.  In such a case, the range to exclude would be 10.0.1.1-10.0.1.200.  If the ESXi, vCenter, and Ops Manager servers' IP addresses lay outside that range, those IP addresses would need to be excluded as well (e.g. if ESXi's IP address was 10.0.1.201, vCenter's IP address was 10.0.1.202, and Ops Manager's IP address was 10.0.1.203, then the excluded IP range would need to be 10.0.1.1-10.0.1.203)
 
 # World's Smallest IaaS, Part 3: the PaaS
 
