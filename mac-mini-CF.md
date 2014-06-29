@@ -1,6 +1,6 @@
 # World's Smallest IaaS, Part 1
 
-***[2014-06-29 this blog post has been updated to reflect installion on a 64GiB Mac Pro (not a 16GiB Mac Mini, which didn't have enough RAM to deploy CloudFoundry)]***
+***[2014-06-29 this blog post has been updated to reflect installation on a 64GiB Mac Pro (not a 16GiB Mac Mini, which didn't have enough RAM to deploy CloudFoundry)]***
 
 In this blog post, we describe the procedure to deploy VMware ESXi and VMware vCenter on an Apple Mac Mini running VMware Fusion.
 
@@ -324,6 +324,8 @@ Do **not** make the mistake that we did, thinking we could mix the Crucial RAM w
 
 # World's Smallest IaaS, Part 2
 
+***[2014-06-29 this blog post has been updated to reflect installation on a 64GiB Mac Pro (not a 16GiB Mac Mini, which didn't have enough RAM to deploy CloudFoundry)]***
+
 In this blog post, we describe the procedure to deploy [Pivotal CF Operations Manager](http://docs.gopivotal.com/pivotalcf/customizing/) (a web-based tool for deploying CloudFoundry) and [BOSH](https://github.com/cloudfoundry/bosh) (a VM that creates other VMs) to a VMware vCenter.
 
 ### Pre-requisites
@@ -332,11 +334,7 @@ In this blog post, we describe the procedure to deploy [Pivotal CF Operations Ma
 
 In *[World's Smallest IaaS, Part 1](http://pivotallabs.com/worlds-smallest-iaas-part-1/), we deployed VMware ESXi and vCenter on an Apple Mac Pro.  ESXi must be up and running, and vCenter must be up and running, too.  And network accessible.
 
-#### 2. A Different Machine
-
-To minimize memory pressure on the Mac Mini, we do all our work (e.g. downloading Pivotal CF via browser) on a different machine, in our case a MacBook Pro.
-
-#### 3. Download Pivotal CF
+#### 2. Pivotal CF
 
 * Browse to [https://network.gopivotal.com/products](https://network.gopivotal.com/products).
 * Log in (if you don't have a userid, create one; they're free)
@@ -461,7 +459,7 @@ For example, a network's DHCP server and gateway is an [Apple Airport Time Capsu
 
 ## a.k.a. The World's Smallest PaaS
 
-***[2014-06-29 this blog post has been updated to reflect installion on a 64GiB Mac Pro (not a 16GiB Mac Mini <sup>[[1]](#mac_mini)</sup> ) with 48GiB allocated to the ESXi VM]***
+***[2014-06-29 this blog post has been updated to reflect installation on a 64GiB Mac Pro (not a 16GiB Mac Mini <sup>[[1]](#mac_mini)</sup> ) with 48GiB allocated to the ESXi VM]***
 
 In this blog post, we describe deploying CloudFoundry/Elastic Runtime to our VMware/vCenter setup (i.e. the world's smallest [IaaS](http://en.wikipedia.org/wiki/Cloud_computing#Infrastructure_as_a_service_.28IaaS.29)) in order to create the World's Smallest ([Paas](http://en.wikipedia.org/wiki/Platform_as_a_service), Platform as a Service).
 
