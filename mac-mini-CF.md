@@ -1,15 +1,22 @@
 # World's Smallest IaaS, Part 1
 
+***[2014-06-29 this blog post has been updated to reflect installion on a 64GiB Mac Pro (not a 16GiB Mac Mini, which didn't have enough RAM to deploy CloudFoundry)]***
+
 In this blog post, we describe the procedure to deploy VMware ESXi and VMware vCenter on an Apple Mac Mini running VMware Fusion.
 
-Mac Mini Configuration:
+[caption id="attachment_29263" align="alignnone" width="300"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/mac_pro.jpg"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/mac_pro-300x264.jpg" alt="Mac Pro and Bottle of Pellegrino" width="300" height="264" class="size-medium wp-image-29263" /></a> This 64GiB Mac Pro is the World's Smallest Installation of CloudFoundry.  The Bottle of Pellegrino is for scale.  Not pictured:  4TB External USB 3 Drive.[/caption]
 
-* Late 2012 [Mac Mini](http://en.wikipedia.org/wiki/Mac_Mini)
-* 16GB RAM
-* 1.6TB Fusion Drive
-* OS X 10.9.2
-* VMware Fusion 6.0.3
-* Quad Core Intel i7-3615QM @ 2.3GHz
+#### Mac Pro Configuration
+
+We went with the following configuration:
+
+* 3.7GHz quad-core with 10MB of L3 cache (i.e. Intel Xeon E5-1620 v2)
+* D500 Graphics Card [[1]](#d500).
+* 512MB Flash (note: we regretted this decision; we wished we had opted for the $500-more-expensive 1TB)
+* 64GiB <sup>[[2]](#crucial_ram)</sup> RAM
+* [External 4TB USB 3 Drive](http://eshop.macsales.com/item/Newer%20Technology/MSQ7S40TB64/)
+
+Why the Mac Pro?  It's the only machine that Apple sells that accepts more than 32GB of RAM.
 
 ### Pre-requisites:
 
@@ -50,7 +57,7 @@ Go to **System Preferences → Keyboard → Shortcuts → Mission Control**:
 
 #### 3. A Windows Machine
 
-For a brief portion of the install we will need a Windows machine (in order to deploy the vCenter .ovf file to the ESXi host).
+For a brief portion of the install we will need a Windows machine (in order to deploy the vCenter .ova file to the ESXi host).
 
 #### 4. Download VMware Software
 
@@ -61,32 +68,6 @@ For a brief portion of the install we will need a Windows machine (in order to d
 #### 4. Download CloudFoundry Software
 
 1. Download [Pivotal CF](https://network.gopivotal.com/products/pivotal-cf)  (you'll need to create an account and agree to the EULA). Click **Download**.  The download should be approximately 5.3GB
-
-#### 5. Exclude Virtual Machines from Time Machine Backup
-
-Virtual machine images are difficult for Time Machine to back up:  they tend be very large (in our case, hundreds of GB), and very dynamic (they change while the VMs are running, requiring them to be backed up over and over again).  If we backed up our Virtual Machine images, we would quickly exhaust our available Time Machine backup (776GB) space within hours.  Our choice is to not back them up via Time Machine.
-
-1. **System Preferences &rarr; Time Machine &rarr; Options**
-2. Click **+** to exclude an additional item from backup
-3. Browse to **Documents**
-4. Select **Virtual Machines** directory; click **Exclude**
-5. Click **Save**
-
-#### 6. Quit RAM-intensive and CPU-intensive tasks
-
-Quit any web browsers (Safari, Firefox, Chrome) that we have open; they tend to have a large memory footprint, often a large CPU footprint as well.
-
-To determine the RAM footprint of the processes on our machine, we use the `top -o rprvt` and look at the *RPRVT* column (which corresponds to the [Resident Set Size](http://en.wikipedia.org/wiki/Resident_set_size).  The column will be sorted in descending order, so the processes at the top are the biggest users of memory.
-
-We leave the non-application processes (e.g., mds_stores, kernel_task, com.apple.Ic) alone, but we close the applications that we can (on our machine, Firefox has a 415MB footprint).  Ignore any application whose footprint is smaller than 150MB; we're focusing on the heavy-hitters.  Do not close VMware Fusion; we'll need that particular application.
-
-#### 7. Determine Maximum Allocatable RAM
-
-We need to determine how much RAM our system needs to run (rounded up to the nearest GiB) so that we can allocate the remainder to our ESXi VM.
-
-We bring up `top`.  We focus on the third line down, on the section that says *resident* (e.g. on our machine, it says, "2586M resident").  We round up to the nearest GiB (i.e. 3GiB, 3072MiB).  We subtract that number from our total RAM to determine the amount we can allocate to ESXi:
-
-* 16 GiB - 3 GiB = 13 GiB = **13312** MiB
 
 ### ESXi 5.5
 
@@ -99,14 +80,14 @@ We bring up `top`.  We focus on the third line down, on the section that says *r
 5. Browse to your ESXi ISO image (e.g. *VMware-ESXi-5.5U1-Rollup_2ISO.iso*) and click **Open**
 6. Click **Continue**
 7. Click **Customize Settings**
-8. Change the name to **CF ESXi** and click **Save** (note: if you decide to change the location of the Virtual Machine, remember to exclude that location from Time Machine backups)
+8. Change the name to **CF ESXi** and click **Save** (choose a location on the 4TB External Drive, e.g. our location is "/Volumes/Big Disk/vmware/") (note: if you decide to place the Virtual Machine on the Mac Pro's flash drive, remember to exclude that location from Time Machine backups)
 9. Adjust the following Settings:
    * **Processor & Memory:**
      * **4 Processor Cores**
-     * **13312** MB RAM
+     * **49152** MB RAM
      * click **Show All**
    * **Network Adapter**
-     * Select **Bridged Networking &rarr; Ethernet** (our mac mini is using its ethernet port, not its WiFi)
+     * Select **Bridged Networking &rarr; Ethernet** (our Mac Pro is using its ethernet port, not its WiFi)
    * **Hard Disk**
      * **750.00** GB
      * click **Apply**; click **Show All**
@@ -139,8 +120,7 @@ We bring up `top`.  We focus on the third line down, on the section that says *r
   * Press **Enter**
 6. Select **DNS Configuration**
   * Select **Use the following DNS server...**
-  * Primary DNS Server: **10.9.8.1**
-  * Alternate DNS Server: **8.8.8.8**
+  * Primary DNS Server: **8.8.8.8** (unless you have a local DNS server you'd like to use)
   * Hostname: **esxi.cf.nono.com**
   * Press **Enter**
 7. Press **Y** (Apply changes and restart management network)
@@ -216,13 +196,15 @@ Retype new password: some-new-password
 
 ##### Networking
 
-In this section, we change the hostname from "localhost.localdom"  to "vcenter.cf.nono.com" for &aelig;sthetic reasons.  Also, we enable IPv6, but once again our motives are &aelig;sthetic rather than functional.
+In this section, we configure the networking for the vCenter server.  This is vital.
+
+We also change the hostname from "localhost.localdom"  to "vcenter.cf.nono.com" for &aelig;sthetic reasons.  Also, we enable IPv6, but once again our motives are &aelig;sthetic rather than functional&mdash;you may dispense with those steps.
 
 1. `/opt/vmware/share/vami/vami_config_net`
 2. **3**<br />
 **vcenter.cf.nono.com**<br />
 **6**<br />
-**y** (IPv6)<br />
+**y** (IPv6) (choose **n** if you don't have IPv6 or aren't sure)<br />
 **n** (IPv6 no DHCP)<br />
 **Enter** (IPv6 address)<br />
 **64** (IPv6 prefix)<br />
@@ -243,13 +225,13 @@ press **Enter** (IPv6)<br />
 **1** (exit)<br />
 **ping -c 2 google.com** # check net settings<br />
 
-We reboot the machine because we are superstitious; perhaps this step is not necessary:
+We reboot the vCenter VM because we are superstitious; perhaps this step is not necessary:
 
 **shutdown -r now**
 **Ctrl-D** (logout)
 1. Press **Ctrl-Alt** to liberate your mouse pointer
 
-#### 3. First Time Set-Up
+#### 3. First Time vCenter Set-Up
 
 The following can be done on any machine; it does not need to be done from the Windows machine.
 
@@ -261,6 +243,12 @@ click **Next**<br />
 Select **Configure with default settings**; click **Next**<br />
 Click **Start**<br />
 Click **Close**
+
+The next portion is important, at least it *will* be important 90 days from now when the root password expires and we're locked out of our vCenter.  To avoid lock-out, we do the following:
+
+1. Click on the **Admin** tab
+2. Administrator password expires: Select **No**
+3. Click **Submit**
 
 #### 4. vCenter License, Datacenter, and Cluster
 
@@ -313,7 +301,7 @@ Click the *Add a Host* icon (a computer with a green "+").  An *Add Host* window
    * Password:  *whatever-we-set-the-password-to*
 1. Click **Yes** to verify the authenticity of the host
 1. (Host summary) click **Next**
-2. (FIXME Assign license) click **Next**
+2. (Assign license) click **Next**
 1. (Lockdown mode) click **Next**
 2. (VM location) click **Next**
 3. (Ready to complete) click **Finish**
@@ -325,6 +313,14 @@ Congratulations, we have created an IaaS.
 #### Acknowledgements
 
 Some of the ESXi and vCenter configuration was drawn from internal CloudFoundry documents.
+
+#### Footnotes
+
+<a name="d500"><sup>1</sup></a> Note: purchasing the D500 over the less-expensive D300 has nothing to do with CloudFoundry; anyone purchasing a Mac Pro to run CloudFoundry *should opt for the D300 Graphics Card*, which is currently $400 less expensive than the D500. The decision to purchase a D500 was related to gaming, which is not an appropriate topic for a blog post, even though the D500 is quite adequate to play ESO at 1920x1200 with ultra-high settings, easily delivering over 30fps (frames per second).
+
+<a name="ram"><sup>2</sup></a> We didn't purchase Apple RAM; we purchased Crucial RAM.  Apple charges $1,300 for 64GB (over the base option of 12GB).  We purchased 2 x [32GB kits](http://www.crucial.com/usa/en/mac-pro-%28late-2013%29/CT5019230), which consists of two sticks apiece, for a grand total of 4 x 16GB sticks, at a cost of (after tax &amp; shipping) $822.12.
+
+Do **not** make the mistake that we did, thinking we could mix the Crucial RAM with the Apple RAM: Originally we had purchased only 32GiB from Crucial, with the belief that we could retain 8GiB of the 12GiB that were included with our Mac Pro, for a grand total of 40GiB.  We were doomed to disappointment.  The Crucial RAM was RDIMM; the Apple RAM was UDIMM. "[Do not mix UDIMMs and RDIMMs,](http://support.apple.com/kb/HT6064)" says Apple on its Mac Pro memory specification page. If you mix them, like we did, the Mac Pro will not boot but instead will beep plaintively.
 
 # World's Smallest IaaS, Part 2
 
