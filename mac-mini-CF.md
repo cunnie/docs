@@ -465,16 +465,14 @@ For example, a network's DHCP server and gateway is an [Apple Airport Time Capsu
 
 ## a.k.a. The World's Smallest PaaS
 
+***[2014-06-29 this blog post has been updated to reflect installion on a 64GiB Mac Pro (not a 16GiB Mac Mini <sup>[[1]](#mac_mini)</sup> ) with 48GiB allocated to the ESXi VM]***
+
 In this blog post, we describe deploying CloudFoundry/Elastic Runtime to our VMware/vCenter setup (i.e. the world's smallest [IaaS](http://en.wikipedia.org/wiki/Cloud_computing#Infrastructure_as_a_service_.28IaaS.29)) in order to create the World's Smallest ([Paas](http://en.wikipedia.org/wiki/Platform_as_a_service), Platform as a Service).
 
 Previous blog posts have covered setting up the necessary environment:
 
 * [World’s Smallest IaaS, Part 1](http://pivotallabs.com/worlds-smallest-iaas-part-1/) describes installing VMware ESXi and VMware vCenter on an Apple Mac Mini
 * [World’s Smallest IaaS, Part 2](http://pivotallabs.com/worlds-smallest-iaas-part-2/) describes installing CloudFoundry's Ops Manager and deploying BOSH to the ESXi/vCenter
-
-## Spoiler Alert
-
-The install failed; we ran out of RAM.  In the next blog post we'll again attempt to install Elastic Runtime, but first we'll migrate the vCenter (a particularly RAM-hungry VM) to a different bare-iron machine (i.e. a MacBook Pro running VMware Fusion). Hopefully that will free up enough RAM for Elastic Runtime to successfully deploy.
 
 ### Uploading and Adding Elastic Runtime
 
@@ -498,7 +496,7 @@ The install failed; we ran out of RAM.  In the next blog post we'll again attemp
 
 * We are on the HAProxy tab (as indicated by the left navbar)
    * HAProxy IPs: **10.9.8.40** (the App domain, the wildcard IP address for '*.cf.nono.com')
-   * Click **Generate Self-Signed RSA Certificate**<br />
+   * Click **Generate Self-Signed RSA Certificate** <sup>[[2]](#ssl)</sup><br />
    When it asks for domains, type **\*.cf.nono.com**; click **Generate**
    * Check **Trust Self-Signed Certificates**
    * click **Save**
@@ -513,13 +511,13 @@ The install failed; we ran out of RAM.  In the next blog post we'll again attemp
 ### Installing Elastic Runtime
 
 * Click the white-on-blue button **Apply Changes** (on the right hand side)
-* We will see anxiety-inducing errors:
-  * *Cluster 'Cluster' has 4 CPU cores. Installation requires 36 CPU cores* <sup>[[1]](#cpu_cores)</sup>
-  * *Cluster 'Cluster' has 12GB total RAM. Installation requires 47GB total RAM* <sup>[[2]](#ram)</sup>
+* We will see an anxiety-inducing:
+  * *Cluster 'Cluster' has 4 CPU cores. Installation requires 36 CPU cores* <sup>[[3]](#cpu_cores)</sup>
 * Click **Ignore errors and start the install**
 * We see the install screen. We click on **Show verbose output** because we like watching the installation messages
 
-Our install came to a screeching halt:
+---
+<a name="mac_mini"><sup>1</sup></a> The 16GiB Mac Mini install of Elastic Runtime came to a screeching halt:
 
 ```
 Error 100: No available resources
@@ -529,13 +527,9 @@ Task 20 error
 For a more detailed error report, run: bosh task 20 --debug
 Try no. 4 failed. Exited with 1.
 ```
-We need to free up RAM.  Tune in next week when we take another pass at installing the World's Smallest PaaS on the World's Smallest IaaS.
+<a name="ssl"><sup>2</sup></a> For those curious about installing with a *genuine* SSL cert, install this [Certificate PEM](https://gist.github.com/cunnie/ba0bc254cd6ce87cb5d3), this [Private Key PEM](https://gist.github.com/cunnie/6bba891dfd48d218fd21), and do *not* check **Trust Self-Signed Certificates**.  Only use this certificate and key if your System and App domains are **cf.nono.com** and your HA Proxy IP is *10.9.8.40**
 
-
----
-<a name="cpu_cores"><sup>1</sup></a> CPU core over-subscription is not something we worry about; we have heard that CloudFoundry's Engineering Team's servers are often over-subscribed by a factor of 24:1 (i.e. as many as 576 cores required, but only 24 available) (the Engineering Team would have oversubscribed it even more, 25:1 and beyond, but at that point a hard limit was reached).
-
-<a name="ram"><sup>2</sup></a> RAM oversubscription. This is the one we're worried about.
+<a name="cpu_cores"><sup>3</sup></a> CPU core over-subscription is not something we worry about. vSphere 5.5's Virtual CPU limit is [32 Virtual CPUs per core](http://www.vmware.com/pdf/vsphere5/r55/vsphere-55-configuration-maximums.pdf), which means that our 4-core Mac Pro could support as many as 128 Virtual CPUs. CloudFoundry's Engineering Team's servers are often over-subscribed by a factor of more than 20:1 (i.e. as many as 240 cores allocated, but only 12 physical cores available).
 
 # World's Smallest IaaS, Part 4: the PaaS, Take Two
 
@@ -564,12 +558,17 @@ Why the Mac Pro?  It's the only machine that Apple sells that can accept more th
 2. Follow the procedure on the subsequent blog post, "[World’s Smallest IaaS, Part 2](http://pivotallabs.com/worlds-smallest-iaas-part-2/)", where we install Ops Manager and deploy BOSH.
 3. [This is the magical step] Follow the procedure on the even-more-subsequent blog post, "[World’s Smallest IaaS, Part 3: the PaaS](http://pivotallabs.com/worlds-smallest-iaas-part-3-paas/)".  
 
-
 ---
 
 ### Notes
 
-If, rather than creating the ESXi VM from scratch, you move it from another machine, you may need to re-create the network interface (the symptoms are that the ESXi VM has *no* network connectivity).  We needed to recreate it (we believe it's a bug in the bridging code of VMware Fusion):  **VMware Fusion &rarr; Virtual Machine &rarr; Settings... &rarr; Network Adapter &rarr; Advanced Options &rarr; Remove Network Adapter**.  Then you'll need to click ** Show All &rarr; Add Device... &rarr; Network Adapter**  
+If, rather than creating the ESXi VM from scratch, you move it from another machine, you may need to re-create the network interface (the symptoms are that the ESXi VM has *no* network connectivity).  We needed to recreate it (we believe it's a bug in the bridging code of VMware Fusion):  **VMware Fusion &rarr; Virtual Machine &rarr; Settings... &rarr; Network Adapter &rarr; Advanced Options &rarr; Remove Network Adapter**.  Then you'll need to click ** Show All &rarr; Add Device... &rarr; Network Adapter**
+
+FIXME: Ops Manager will pick up the wrong address if a DHCP server is available
+
+FIXME: vCenter should start with ESXi host
+
+FIXME: NTP for all
 
 ### Footnotes
 
