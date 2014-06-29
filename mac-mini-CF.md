@@ -467,7 +467,7 @@ In this blog post, we describe deploying CloudFoundry/Elastic Runtime to our VMw
 
 Previous blog posts have covered setting up the necessary environment:
 
-* [World’s Smallest IaaS, Part 1](http://pivotallabs.com/worlds-smallest-iaas-part-1/) describes installing VMware ESXi and VMware vCenter on an Apple Mac Mini
+* [World’s Smallest IaaS, Part 1](http://pivotallabs.com/worlds-smallest-iaas-part-1/) describes installing VMware ESXi and VMware vCenter on an Apple Mac Pro
 * [World’s Smallest IaaS, Part 2](http://pivotallabs.com/worlds-smallest-iaas-part-2/) describes installing CloudFoundry's Ops Manager and deploying BOSH to the ESXi/vCenter
 
 ### Uploading and Adding Elastic Runtime
@@ -512,8 +512,42 @@ Previous blog posts have covered setting up the necessary environment:
 * Click **Ignore errors and start the install**
 * We see the install screen. We click on **Show verbose output** because we like watching the installation messages
 
+#### Install Issues
+
+Our initial install may end in failure; this is often  remedied by attempting the install again.
+
+[caption id="attachment_29261" align="alignnone" width="300"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/install_issues.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/install_issues-300x264.png" alt="failed Elastic Runtime Installation" width="300" height="264" class="size-medium wp-image-29261" /></a> The initial install failed during the "Running errand Push Console" step.  Many of these failures can be fixed by re-attempting the install.[/caption]
+
+1. Click **Okay**
+2. Click the blue **Apply changes** button
+3. Click **Ignore errors and start the install**
+
+#### Success
+
+This is a successful deploy:
+
+[caption id="attachment_29264" align="alignnone" width="288"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/success.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/success-288x300.png" alt="A Successful CloudFoundry Deploy" width="288" height="300" class="size-medium wp-image-29264" /></a> A Successful CloudFoundry Deploy.  This installation includes not only CloudFoundry but also the Console and the Smoke Tests.[/caption]
+
+Click **Return to Installation Dashboard**
+
+#### Logging into the Console
+
+As a final test of CloudFoundry, we log into the Console, which is CloudFoundry application that is included by default in the base CloudFoundry installation.
+
+* click on the **Pivotal Elastic Runtime** tile
+* click on the **Credentials** tab
+* browse to the **UAA** section; look for the **Admin Credentials**
+
+[caption id="attachment_29265" align="alignnone" width="300"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/console_creds.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/console_creds-300x157.png" alt="Location of the credentials to log into the Console application" width="300" height="157" class="size-medium wp-image-29265" /></a> The credentials to log into the Console from the web interface are stored in the UAA section of the credentials tab of the Elastic Runtime installation.  Note, "admin" is the login even though it's technically not an email address[/caption]
+
+* browse to the [Console application](https://console.cf.nono.com)
+* Log in using the Admin Credentials. Yes, even though "admin" is not an email address, it will work when logging into the console.
+* Pick an organization name; we chose **CF Engineering**
+
+Note: we can't send email invites because we never configured out outbound mail server. Configuring outbound email may require help from the IT department.
+
 ---
-<a name="mac_mini"><sup>1</sup></a> The 16GiB Mac Mini install of Elastic Runtime came to a screeching halt:
+<a name="mac_mini"><sup>1</sup></a> We used a 64GiB Mac Pro because we were unable to install on the 16GiB Mac Mini. We tried to install of Elastic Runtime on the Mac Mini, but the install came to a screeching halt:
 
 ```
 Error 100: No available resources
@@ -523,7 +557,7 @@ Task 20 error
 For a more detailed error report, run: bosh task 20 --debug
 Try no. 4 failed. Exited with 1.
 ```
-<a name="ssl"><sup>2</sup></a> For those curious about installing with a *genuine* SSL cert, install this [Certificate PEM](https://gist.github.com/cunnie/ba0bc254cd6ce87cb5d3), this [Private Key PEM](https://gist.github.com/cunnie/6bba891dfd48d218fd21), and do *not* check **Trust Self-Signed Certificates**.  Only use this certificate and key if your System and App domains are **cf.nono.com** and your HA Proxy IP is *10.9.8.40**
+<a name="ssl"><sup>2</sup></a> For those curious about installing with a *genuine* SSL cert, install this [Certificate PEM](https://gist.github.com/cunnie/ba0bc254cd6ce87cb5d3), this [Private Key PEM](https://gist.github.com/cunnie/6bba891dfd48d218fd21).  Only use this certificate and key if your System and App domains are **cf.nono.com** and your HA Proxy IP is **10.9.8.40**.  Note: be sure to check **Trust Self-Signed Certificates**. Really. Otherwise the install will fail.
 
 <a name="cpu_cores"><sup>3</sup></a> CPU core over-subscription is not something we worry about. vSphere 5.5's Virtual CPU limit is [32 Virtual CPUs per core](http://www.vmware.com/pdf/vsphere5/r55/vsphere-55-configuration-maximums.pdf), which means that our 4-core Mac Pro could support as many as 128 Virtual CPUs. CloudFoundry's Engineering Team's servers are often over-subscribed by a factor of more than 20:1 (i.e. as many as 240 cores allocated, but only 12 physical cores available).
 
@@ -552,7 +586,7 @@ Why the Mac Pro?  It's the only machine that Apple sells that can accept more th
 
 1. Follow the instructions on the earlier blog post, "[World’s Smallest IaaS, Part 1](http://pivotallabs.com/worlds-smallest-iaas-part-1/)", except with regards to RAM&mdash;we will allocate 49152 MiB of RAM to the ESXi VM.  And we don't need to quit RAM-intensive tasks, and we don't need to determine the maximum allocatable RAM&mdash;we can skip those steps.
 2. Follow the procedure on the subsequent blog post, "[World’s Smallest IaaS, Part 2](http://pivotallabs.com/worlds-smallest-iaas-part-2/)", where we install Ops Manager and deploy BOSH.
-3. [This is the magical step] Follow the procedure on the even-more-subsequent blog post, "[World’s Smallest IaaS, Part 3: the PaaS](http://pivotallabs.com/worlds-smallest-iaas-part-3-paas/)".  
+3. [This is the magical step] Follow the procedure on the even-more-subsequent blog post, "[World’s Smallest IaaS, Part 3: the PaaS](http://pivotallabs.com/worlds-smallest-iaas-part-3-paas/)".
 
 ---
 
@@ -560,19 +594,13 @@ Why the Mac Pro?  It's the only machine that Apple sells that can accept more th
 
 If, rather than creating the ESXi VM from scratch, you move it from another machine, you may need to re-create the network interface (the symptoms are that the ESXi VM has *no* network connectivity).  We needed to recreate it (we believe it's a bug in the bridging code of VMware Fusion):  **VMware Fusion &rarr; Virtual Machine &rarr; Settings... &rarr; Network Adapter &rarr; Advanced Options &rarr; Remove Network Adapter**.  Then you'll need to click ** Show All &rarr; Add Device... &rarr; Network Adapter**
 
-FIXME: Ops Manager will pick up the wrong address if a DHCP server is available
-
 FIXME: vCenter should start with ESXi host
 
 FIXME: NTP for all
 
 ### Footnotes
 
-<a name="d500"><sup>1</sup></a> Note: purchasing the D500 over the less-expensive D300 has nothing to do with CloudFoundry; anyone purchasing a Mac Pro to run CloudFoundry *should opt for the D300 Graphics Card*, which is currently $400 less expensive than the D500. The decision to purchase a D500 was related to gaming, which is not an appropriate topic for a blog post, even though the D500 is quite adequate to play ESO at 1920x1200 with ultra-high settings, easily delivering over 30fps (frames per second).
 
-<a name="ram"><sup>2</sup></a> We didn't purchase Apple RAM; we purchased Crucial RAM.  Apple charges $1,300 for 64GB (over the base option of 12GB).  We purchased 2 x [32GB kits](http://www.crucial.com/usa/en/mac-pro-%28late-2013%29/CT5019230), which consists of two sticks apiece, for a grand total of 4 x 16GB sticks, at a cost of (after tax &amp; shipping) $822.12.
-
-Do **not** make the mistake that we did, thinking we could mix the Crucial RAM with the Apple RAM: Originally we had purchased only 32GiB from Crucial, with the belief that we could retain 8GiB of the 12GiB that were included with our Mac Pro, for a grand total of 40GiB.  We were doomed to disappointment.  The Crucial RAM was RDIMM; the Apple RAM was UDIMM. "[Do not mix UDIMMs and RDIMMs,](http://support.apple.com/kb/HT6064)" says Apple on its Mac Pro memory specification page. If you mix them, like we did, the Mac Pro will not boot but instead will beep plaintively.
 
 # Detour not taken: move vCenter to a Different Host
 
