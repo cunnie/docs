@@ -461,7 +461,7 @@ For example, a network's DHCP server and gateway is an [Apple Airport Time Capsu
 
 ***[2014-06-29 this blog post has been updated to reflect installation on a 64GiB Mac Pro (not a 16GiB Mac Mini <sup>[[1]](#mac_mini)</sup> ) with 48GiB allocated to the ESXi VM]***
 
-In this blog post, we describe deploying CloudFoundry/Elastic Runtime to our VMware/vCenter setup (i.e. the world's smallest [IaaS](http://en.wikipedia.org/wiki/Cloud_computing#Infrastructure_as_a_service_.28IaaS.29)) in order to create the World's Smallest ([Paas](http://en.wikipedia.org/wiki/Platform_as_a_service), Platform as a Service).
+In this blog post, we describe deploying CloudFoundry/Elastic Runtime to our VMware/vCenter setup (i.e. the world's smallest [IaaS](http://en.wikipedia.org/wiki/Cloud_computing#Infrastructure_as_a_service_.28IaaS.29)) in order to create the World's Smallest [PaaS](http://en.wikipedia.org/wiki/Platform_as_a_service) (Platform as a Service).
 
 Previous blog posts have covered setting up the necessary environment:
 
@@ -528,7 +528,7 @@ This is a successful deploy:
 
 Click **Return to Installation Dashboard**
 
-#### Logging into the Console
+#### <a name="admin_creds">Logging into the Console</a>
 
 As a final test of CloudFoundry, we log into the Console, which is CloudFoundry application that is included by default in the base CloudFoundry installation.
 
@@ -559,32 +559,81 @@ Try no. 4 failed. Exited with 1.
 
 <a name="cpu_cores"><sup>3</sup></a> CPU core over-subscription is not something we worry about. vSphere 5.5's Virtual CPU limit is [32 Virtual CPUs per core](http://www.vmware.com/pdf/vsphere5/r55/vsphere-55-configuration-maximums.pdf), which means that our 4-core Mac Pro could support as many as 128 Virtual CPUs. CloudFoundry's Engineering Team's servers are often over-subscribed by a factor of more than 20:1 (i.e. as many as 240 cores allocated, but only 12 physical cores available).
 
-# World's Smallest IaaS, Part 4: the PaaS, Take Two
+# World's Smallest IaaS, Part 4: Hello World
 
-### The World's Smallest PaaS Just Got Bigger
+In this blog post we deploy a simple "hello world" app to our Cloud Foundry installation.
 
-In the previous [blog post](http://pivotallabs.com/worlds-smallest-iaas-part-3-paas/), our attempt to shoehorn a CloudFoundry install onto a 16GB Mac was an epic fail. We ran out of RAM during the deployment.
+### Pre-requisites
 
-So what did we do? In the time-honored tradition of IT, we threw more hardware at the problem.  We bought a Mac Pro:
+We have already set up Cloud Foundry:
 
-[insert picture here.  The world's smallest PaaS is now a Mac Pro]
+1. [World’s Smallest IaaS, Part 1](http://pivotallabs.com/worlds-smallest-iaas-part-1/) describes installing VMware ESXi and VMware vCenter on an Apple Mac Pro
+1. [World’s Smallest IaaS, Part 2](http://pivotallabs.com/worlds-smallest-iaas-part-2/) describes installing CloudFoundry's Ops Manager and deploying BOSH to the ESXi/vCenter
+1. [World’s Smallest IaaS, Part 3: the PaaS](http://pivotallabs.com/worlds-smallest-iaas-part-3-paas/) describes installing Elastic Runtime (i.e. Cloud Foundry)
 
-#### Mac Pro Configuration
+### Install Cloud Foundry CLI
 
-We went with the following configuration:
+Click [here](https://github.com/cloudfoundry/cli#downloads) <sup>[[1]](#brew_cask)</sup>  to browse to the Cloud Foundry CLI homepage's download section. Choose the **Mac OS X 64 bit** (Stable installer). Double-click the downloaded file to install the CLI.
 
-* 3.7GHz quad-core with 10MB of L3 cache (i.e. Intel Xeon E5-1620 v2)
-* D500 Graphics Card [[1]](#d500).
-* 512MB Flash (note: we regretted this decision; we wished we had opted for the $500-more-expensive 1TB)
-* 64GiB <sup>[[1]](#crucial_ram)</sup> RAM
+Test for a successful install by bringing up a terminal and querying the version of the CLI: <sup>[[2]](#not_found)</sup>
 
-Why the Mac Pro?  It's the only machine that Apple sells that can accept more than 32GB of RAM, and we're going to need every byte we can muster.
+```
+cf --version
+  cf version 6.2.0-c9d4aaa-2014-06-19T22:03:53+00:00
+```
 
-### The Procedure
+Let's point the CLI to our installation:
+```
+cf api --skip-ssl-validation api.cf.nono.com
+```
 
-1. Follow the instructions on the earlier blog post, "[World’s Smallest IaaS, Part 1](http://pivotallabs.com/worlds-smallest-iaas-part-1/)", except with regards to RAM&mdash;we will allocate 49152 MiB of RAM to the ESXi VM.  And we don't need to quit RAM-intensive tasks, and we don't need to determine the maximum allocatable RAM&mdash;we can skip those steps.
-2. Follow the procedure on the subsequent blog post, "[World’s Smallest IaaS, Part 2](http://pivotallabs.com/worlds-smallest-iaas-part-2/)", where we install Ops Manager and deploy BOSH.
-3. [This is the magical step] Follow the procedure on the even-more-subsequent blog post, "[World’s Smallest IaaS, Part 3: the PaaS](http://pivotallabs.com/worlds-smallest-iaas-part-3-paas/)".
+Let's log in.  We'll use the same credentials that we
+
+
+### Hello World
+
+We have installed the world's smallest IaaS and PaaS, but that's merely laying down infrastructure&mdash;we'd like to use it.  Let's deploy our first app, a simple app, a "hello world" app. Let's create a directory where we'll do our work:
+
+```
+mkdir -p ~/workspace/hello-world
+cd ~/workspace/hello-world
+```
+Create a file, `Gemfile`, with the following contents (a Gemfile is a file that describes the Ruby libraries (i.e. "gems") upon which your application depends).  The gem we're using, [Sinatra](http://www.sinatrarb.com), is a Ruby-based webserver (though its authors may argue that it's a DSL (domain specific language) for creating web applications in Ruby).
+
+```
+# Gemfile
+source "http://rubygems.org"
+gem "sinatra"
+```
+Now let's write a very simple Ruby/Sinatra program, `hello.rb`:
+
+```
+# hello.rb
+require 'sinatra'
+get '/' do
+  "Hello world!\n"
+end
+```
+Next we create `config.ru`, a file which is a configuration file for [Rack](http://rack.github.io/)-based applications (or, in this case, Sinatra, which is a Rack-based web framework):
+
+```
+# config.ru
+require './hello'
+run Sinatra::Application
+```
+
+
+---
+
+### Acknowledgements
+
+The 'hello world' example was pulled from internal Cloud Foundry documentation.
+
+### Footnotes
+
+<a name="brew_cask"><sup>1</sup></a> For those of you lucky enough to have [Homebrew-cask](https://github.com/caskroom/homebrew-cask) installed, you can use it to install  the CloudFoundry CLI: `brew cask install cloudfoundry-cli`.
+
+<a name="not_found"><sup>1</sup></a> If you see `command not found`, then /usr/local/bin is unlikely to be in your PATH.  A simple workaround is to invoke the CLI by typing `/usr/local/bin/cf` rather than `cf`.
 
 ---
 
