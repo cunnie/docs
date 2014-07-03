@@ -1,10 +1,10 @@
 # World's Smallest IaaS, Part 1
 
-***[2014-06-29 this blog post has been updated to reflect installation on a 64GiB Mac Pro (not a 16GiB Mac Mini, which didn't have enough RAM to deploy CloudFoundry)]***
+***[2014-06-29 this blog post has been updated to reflect installation on a 64GiB Mac Pro (not a 16GiB Mac Mini, which didn't have enough RAM to deploy Cloud Foundry)]***
 
 In this blog post, we describe the procedure to deploy VMware ESXi and VMware vCenter on an Apple Mac Mini running VMware Fusion.
 
-[caption id="attachment_29263" align="alignnone" width="300"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/mac_pro.jpg"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/mac_pro-300x264.jpg" alt="Mac Pro and Bottle of Pellegrino" width="300" height="264" class="size-medium wp-image-29263" /></a> This 64GiB Mac Pro is the World's Smallest Installation of CloudFoundry.  The Bottle of Pellegrino is for scale.  Not pictured:  4TB External USB 3 Drive.[/caption]
+[caption id="attachment_29263" align="alignnone" width="300"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/mac_pro.jpg"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/mac_pro-300x264.jpg" alt="Mac Pro and Bottle of Pellegrino" width="300" height="264" class="size-medium wp-image-29263" /></a> This 64GiB Mac Pro is the World's Smallest Installation of Cloud Foundry.  The Bottle of Pellegrino is for scale.  Not pictured:  4TB External USB 3 Drive.[/caption]
 
 #### Mac Pro Configuration
 
@@ -65,7 +65,7 @@ For a brief portion of the install we will need a Windows machine (in order to d
 2. **Download vCenter Server**: Again, we browse to VMware and follow this path: **My VMware &rarr; Downloads &rarr; All Downloads &rarr; VMware vSphere &rarr;  VMware vCenter Server 5.5 Update 1a Appliance**.  The download should be approximately 2GB.<br /> <br />*We download this file to our Windows machine because we will use the vSphere client on our Windows machine to install vCenter on our ESXi.*<br /><br />Make sure that the downloaded file has a *.ova* extension and not a *.ovf* extension.  Certain browsers (i.e. Chrome) append the wrong extension to the downloaded file.
 
 
-#### 4. Download CloudFoundry Software
+#### 4. Download Cloud Foundry Software
 
 1. Download [Pivotal CF](https://network.gopivotal.com/products/pivotal-cf)  (you'll need to create an account and agree to the EULA). Click **Download**.  The download should be approximately 5.3GB
 
@@ -312,11 +312,11 @@ Congratulations, we have created an IaaS.
 
 #### Acknowledgements
 
-Some of the ESXi and vCenter configuration was drawn from internal CloudFoundry documents.
+Some of the ESXi and vCenter configuration was drawn from internal Cloud Foundry documents.
 
 #### Footnotes
 
-<a name="d500"><sup>1</sup></a> Note: purchasing the D500 over the less-expensive D300 has nothing to do with CloudFoundry; anyone purchasing a Mac Pro to run CloudFoundry *should opt for the D300 Graphics Card*, which is currently $400 less expensive than the D500. The decision to purchase a D500 was related to gaming, which is not an appropriate topic for a blog post, even though the D500 is quite adequate to play ESO at 1920x1200 with ultra-high settings, easily delivering over 30fps (frames per second).
+<a name="d500"><sup>1</sup></a> Note: purchasing the D500 over the less-expensive D300 has nothing to do with Cloud Foundry; anyone purchasing a Mac Pro to run Cloud Foundry *should opt for the D300 Graphics Card*, which is currently $400 less expensive than the D500. The decision to purchase a D500 was related to gaming, which is not an appropriate topic for a blog post, even though the D500 is quite adequate to play ESO at 1920x1200 with ultra-high settings, easily delivering over 30fps (frames per second).
 
 <a name="ram"><sup>2</sup></a> We didn't purchase Apple RAM; we purchased Crucial RAM.  Apple charges $1,300 for 64GB (over the base option of 12GB).  We purchased 2 x [32GB kits](http://www.crucial.com/usa/en/mac-pro-%28late-2013%29/CT5019230), which consists of two sticks apiece, for a grand total of 4 x 16GB sticks, at a cost of (after tax &amp; shipping) $822.12.
 
@@ -324,9 +324,9 @@ Do **not** make the mistake that we did, thinking we could mix the Crucial RAM w
 
 # World's Smallest IaaS, Part 2
 
-***[2014-06-29 this blog post has been updated to reflect installation on a 64GiB Mac Pro (not a 16GiB Mac Mini, which didn't have enough RAM to deploy CloudFoundry)]***
+***[2014-06-29 this blog post has been updated to reflect installation on a 64GiB Mac Pro (not a 16GiB Mac Mini, which didn't have enough RAM to deploy Cloud Foundry)]***
 
-In this blog post, we describe the procedure to deploy [Pivotal CF Operations Manager](http://docs.gopivotal.com/pivotalcf/customizing/) (a web-based tool for deploying CloudFoundry) and [BOSH](https://github.com/cloudfoundry/bosh) (a VM that creates other VMs) to a VMware vCenter.
+In this blog post, we describe the procedure to deploy [Pivotal CF Operations Manager](http://docs.gopivotal.com/pivotalcf/customizing/) (a web-based tool for deploying Cloud Foundry) and [BOSH](https://github.com/cloudfoundry/bosh) (a VM that creates other VMs) to a VMware vCenter.
 
 ### Pre-requisites
 
@@ -441,13 +441,13 @@ When installation has completed, you'll see a notification, "Changes Applied"
 
 Click **Return to Installation Dashboard**
 
-Congratulations, we have deployed CloudFoundry's Ops Manager and BOSH.
+Congratulations, we have deployed Cloud Foundry's Ops Manager and BOSH.
 
 ---
 
-<a name="resource_pool"><sup>1</sup></a> The installation described in this blog post is wonderfully small, so we're dispensing with Resource Pools; however, on much larger vCenter enviroments (e.g. CloudFoundry Engineering's internal vCenter servers), we have found it useful to use Resource Pools to maintain separate Ops Manager/CloudFoundry deployments. We use a 1:1 mapping of Resource Pools to deployments (e.g. the hypothetical ESXi server *esxi.dance.example.com* may have several Resource Pools (e.g. *tango*, *waltz*, *jig*), each of which correspond to an Ops Manager/CloudFoundry deployment (e.g. *opsmgr.tango.example.com*, *opsmgr.waltz.example.com*)).
+<a name="resource_pool"><sup>1</sup></a> The installation described in this blog post is wonderfully small, so we're dispensing with Resource Pools; however, on much larger vCenter enviroments (e.g. Cloud Foundry Engineering's internal vCenter servers), we have found it useful to use Resource Pools to maintain separate Ops Manager/Cloud Foundry deployments. We use a 1:1 mapping of Resource Pools to deployments (e.g. the hypothetical ESXi server *esxi.dance.example.com* may have several Resource Pools (e.g. *tango*, *waltz*, *jig*), each of which correspond to an Ops Manager/Cloud Foundry deployment (e.g. *opsmgr.tango.example.com*, *opsmgr.waltz.example.com*)).
 
-The advantage of using Resource Pools comes into play when we need to destroy and rebuild a CloudFoundry deployment: we can safely destroy every single VM in a given Resource Pool without worry of accidentally deleting a VM belonging to a different deployment.
+The advantage of using Resource Pools comes into play when we need to destroy and rebuild a Cloud Foundry deployment: we can safely destroy every single VM in a given Resource Pool without worry of accidentally deleting a VM belonging to a different deployment.
 
 <a name="ip_exclude"><sup>2</sup></a> We exclude a range that includes the gateway, the ESXi server, the vCenter server, and the Ops Manager server.
 
@@ -461,12 +461,12 @@ For example, a network's DHCP server and gateway is an [Apple Airport Time Capsu
 
 ***[2014-06-29 this blog post has been updated to reflect installation on a 64GiB Mac Pro (not a 16GiB Mac Mini <sup>[[1]](#mac_mini)</sup> ) with 48GiB allocated to the ESXi VM]***
 
-In this blog post, we describe deploying CloudFoundry/Elastic Runtime to our VMware/vCenter setup (i.e. the world's smallest [IaaS](http://en.wikipedia.org/wiki/Cloud_computing#Infrastructure_as_a_service_.28IaaS.29)) in order to create the World's Smallest [PaaS](http://en.wikipedia.org/wiki/Platform_as_a_service) (Platform as a Service).
+In this blog post, we describe deploying Cloud Foundry/Elastic Runtime to our VMware/vCenter setup (i.e. the world's smallest [IaaS](http://en.wikipedia.org/wiki/Cloud_computing#Infrastructure_as_a_service_.28IaaS.29)) in order to create the World's Smallest [PaaS](http://en.wikipedia.org/wiki/Platform_as_a_service) (Platform as a Service).
 
 Previous blog posts have covered setting up the necessary environment:
 
 * [World’s Smallest IaaS, Part 1](http://pivotallabs.com/worlds-smallest-iaas-part-1/) describes installing VMware ESXi and VMware vCenter on an Apple Mac Pro
-* [World’s Smallest IaaS, Part 2](http://pivotallabs.com/worlds-smallest-iaas-part-2/) describes installing CloudFoundry's Ops Manager and deploying BOSH to the ESXi/vCenter
+* [World’s Smallest IaaS, Part 2](http://pivotallabs.com/worlds-smallest-iaas-part-2/) describes installing Cloud Foundry's Ops Manager and deploying BOSH to the ESXi/vCenter
 
 ### Uploading and Adding Elastic Runtime
 
@@ -524,13 +524,13 @@ Our initial install may end in failure; this is often  remedied by attempting th
 
 This is a successful deploy:
 
-[caption id="attachment_29264" align="alignnone" width="288"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/success.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/success-288x300.png" alt="A Successful CloudFoundry Deploy" width="288" height="300" class="size-medium wp-image-29264" /></a> A Successful CloudFoundry Deploy.  This installation includes not only CloudFoundry but also the Console and the Smoke Tests.[/caption]
+[caption id="attachment_29264" align="alignnone" width="288"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/success.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/success-288x300.png" alt="A Successful Cloud Foundry Deploy" width="288" height="300" class="size-medium wp-image-29264" /></a> A Successful Cloud Foundry Deploy.  This installation includes not only Cloud Foundry but also the Console and the Smoke Tests.[/caption]
 
 Click **Return to Installation Dashboard**
 
 #### <a name="admin_creds">Logging into the Console</a>
 
-As a final test of CloudFoundry, we log into the Console, which is CloudFoundry application that is included by default in the base CloudFoundry installation.
+As a final test of Cloud Foundry, we log into the Console, which is Cloud Foundry application that is included by default in the base Cloud Foundry installation.
 
 * click on the **Pivotal Elastic Runtime** tile
 * click on the **Credentials** tab
@@ -557,7 +557,7 @@ Try no. 4 failed. Exited with 1.
 ```
 <a name="ssl"><sup>2</sup></a> For those curious about installing with a *genuine* SSL cert, install this [Certificate PEM](https://gist.github.com/cunnie/ba0bc254cd6ce87cb5d3), this [Private Key PEM](https://gist.github.com/cunnie/6bba891dfd48d218fd21).  Only use this certificate and key if your System and App domains are **cf.nono.com** and your HA Proxy IP is **10.9.8.40**.  Note: be sure to check **Trust Self-Signed Certificates**. Really. Otherwise the install will fail.
 
-<a name="cpu_cores"><sup>3</sup></a> CPU core over-subscription is not something we worry about. vSphere 5.5's Virtual CPU limit is [32 Virtual CPUs per core](http://www.vmware.com/pdf/vsphere5/r55/vsphere-55-configuration-maximums.pdf), which means that our 4-core Mac Pro could support as many as 128 Virtual CPUs. CloudFoundry's Engineering Team's servers are often over-subscribed by a factor of more than 20:1 (i.e. as many as 240 cores allocated, but only 12 physical cores available).
+<a name="cpu_cores"><sup>3</sup></a> CPU core over-subscription is not something we worry about. vSphere 5.5's Virtual CPU limit is [32 Virtual CPUs per core](http://www.vmware.com/pdf/vsphere5/r55/vsphere-55-configuration-maximums.pdf), which means that our 4-core Mac Pro could support as many as 128 Virtual CPUs. Cloud Foundry's Engineering Team's servers are often over-subscribed by a factor of more than 20:1 (i.e. as many as 240 cores allocated, but only 12 physical cores available).
 
 # World's Smallest IaaS, Part 4: Hello World
 
@@ -568,7 +568,7 @@ In this blog post we deploy a simple "hello world" app to our Cloud Foundry inst
 We have already set up Cloud Foundry:
 
 1. [World’s Smallest IaaS, Part 1](http://pivotallabs.com/worlds-smallest-iaas-part-1/) describes installing VMware ESXi and VMware vCenter on an Apple Mac Pro
-1. [World’s Smallest IaaS, Part 2](http://pivotallabs.com/worlds-smallest-iaas-part-2/) describes installing CloudFoundry's Ops Manager and deploying BOSH to the ESXi/vCenter
+1. [World’s Smallest IaaS, Part 2](http://pivotallabs.com/worlds-smallest-iaas-part-2/) describes installing Cloud Foundry's Ops Manager and deploying BOSH to the ESXi/vCenter
 1. [World’s Smallest IaaS, Part 3: the PaaS](http://pivotallabs.com/worlds-smallest-iaas-part-3-paas/) describes installing Elastic Runtime (i.e. Cloud Foundry)
 
 ### Install Cloud Foundry CLI
@@ -710,7 +710,7 @@ Now we test: let's browse to [https://hello-world.cf.nono.com/](https://hello-wo
 
 [caption id="attachment_29322" align="alignnone" width="285"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/07/hello_world.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/07/hello_world.png" alt="screenshot of &quot;hello world&quot; application" width="285" height="142" class="size-full wp-image-29322" /></a> The output of our "hello world" application.  Plain, minimal formatting, but functional.[/caption]
 
-We have successfully tested our CloudFoundry installation by installing our first app, which is merely a hint of things to come.
+We have successfully tested our Cloud Foundry installation by installing our first app, which is merely a hint of things to come.
 
 ---
 
@@ -720,7 +720,7 @@ The 'hello world' example was pulled from internal Cloud Foundry documentation.
 
 ### Footnotes
 
-<a name="brew_cask"><sup>1</sup></a> For those of you lucky enough to have [Homebrew-cask](https://github.com/caskroom/homebrew-cask) installed, you can use it to install  the CloudFoundry CLI: `brew cask install cloudfoundry-cli`.
+<a name="brew_cask"><sup>1</sup></a> For those of you lucky enough to have [Homebrew-cask](https://github.com/caskroom/homebrew-cask) installed, you can use it to install  the Cloud Foundry CLI: `brew cask install cloudfoundry-cli`.
 
 <a name="not_found"><sup>2</sup></a> If you see `command not found`, then /usr/local/bin is unlikely to be in your PATH.  A simple workaround is to invoke the CLI by typing `/usr/local/bin/cf` rather than `cf`.
 
