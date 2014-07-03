@@ -581,18 +581,39 @@ Test for a successful install by bringing up a terminal and querying the version
 cf --version
   cf version 6.2.0-c9d4aaa-2014-06-19T22:03:53+00:00
 ```
-
 Let's point the CLI to our installation:
+
 ```
 cf api --skip-ssl-validation api.cf.nono.com
 ```
+Let's log in.  We'll use the UAA admin credentials (these credentials can be retrieved from Ops Manager; [here](http://pivotallabs.com/worlds-smallest-iaas-part-3-paas/#admin_creds) is a description of how to retrieve the credentials). We'll target the "CF Engineering" organization, which we created at the end of [Part 3](http://pivotallabs.com/worlds-smallest-iaas-part-3-paas/):
 
-Let's log in.  We'll use the same credentials that we
+```
+cf login -u admin -p f1e25xxxxxxxxxxxxxxxx # use your admin password
+  API endpoint: https://api.cf.nono.com
+  Authenticating...
+  OK
 
+  Select an org (or press enter to skip):
+  1. system
+  2. CF Engineering
+
+  Org> 2
+  Targeted org CF Engineering
+
+  Targeted space development
+
+
+
+  API endpoint:   https://api.cf.nono.com (API version: 2.2.0)
+  User:           admin
+  Org:            CF Engineering
+  Space:          development
+```
 
 ### Hello World
 
-We have installed the world's smallest IaaS and PaaS, but that's merely laying down infrastructure&mdash;we'd like to use it.  Let's deploy our first app, a simple app, a "hello world" app. Let's create a directory where we'll do our work:
+Let's create our first app, a simple app, a "hello world" app. Let's create a directory where we'll do our work:
 
 ```
 mkdir -p ~/workspace/hello-world
@@ -611,7 +632,7 @@ Now let's write a very simple Ruby/Sinatra program, `hello.rb`:
 # hello.rb
 require 'sinatra'
 get '/' do
-  "Hello world!\n"
+  "hello world\n"
 end
 ```
 Next we create `config.ru`, a file which is a configuration file for [Rack](http://rack.github.io/)-based applications (or, in this case, Sinatra, which is a Rack-based web framework):
@@ -622,6 +643,74 @@ require './hello'
 run Sinatra::Application
 ```
 
+Let's make sure we've installed Bundler (`sudo` is not necessary if you're using rvm, rbenv, or chruby) (if unsure, use `sudo`):
+
+```
+sudo gem install bundler
+bundle
+```
+Now let's push:
+
+```
+cf push hello-world
+  Creating app hello-world in org CF Engineering / space development as admin...
+  OK
+
+  Creating route hello-world.cf.nono.com...
+  OK
+
+  Binding hello-world.cf.nono.com to hello_world...
+  OK
+
+  Uploading hello_world...
+  Uploading app files from: /Users/cunnie/workspace/hello-world
+  Uploading 893, 4 files
+  OK
+
+  Starting app hello_world in org CF Engineering / space development as admin...
+  OK
+  -----> Downloaded app package (4.0K)
+  -----> Using Ruby version: ruby-1.9.3
+  -----> Installing dependencies using Bundler version 1.3.2
+	 Running: bundle install --without development:test --path vendor/bundle --binstubs vendor/bundle/bin --deployment
+	 Fetching gem metadata from http://rubygems.org/..........
+	 Fetching gem metadata from http://rubygems.org/..
+	 Installing rack (1.5.2)
+	 Installing rack-protection (1.5.3)
+	 Installing tilt (1.4.1)
+	 Installing sinatra (1.4.5)
+	 Using bundler (1.3.2)
+	 Your bundle is complete! It was installed into ./vendor/bundle
+	 Cleaning up the bundler cache.
+  -----> WARNINGS:
+	 You have not declared a Ruby version in your Gemfile.
+	 To set your Ruby version add this line to your Gemfile:"
+	 ruby '1.9.3'"
+	 # See https://devcenter.heroku.com/articles/ruby-versions for more information."
+
+  -----> Uploading droplet (23M)
+
+  1 of 1 instances running
+
+  App started
+
+  Showing health and status for app hello_world in org CF Engineering / space development as admin...
+  OK
+
+  requested state: started
+  instances: 0/1
+  usage: 1G x 1 instances
+  urls: hello-world.cf.nono.com
+
+       state     since                    cpu    memory        disk
+   #0   running   2014-07-02 09:37:55 PM   0.0%   69.8M of 1G   52.2M of 1G
+```
+
+Now we test: let's browse to [https://hello-world.cf.nono.com/](https://hello-world.cf.nono.com/):
+
+[caption id="attachment_29322" align="alignnone" width="285"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/07/hello_world.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/07/hello_world.png" alt="screenshot of &quot;hello world&quot; application" width="285" height="142" class="size-full wp-image-29322" /></a> The output of our "hello world" application.  Plain, minimal formatting, but functional.[/caption]
+
+We have successfully tested our CloudFoundry installation by installing our first app, which is merely a hint of things to come.
 
 ---
 
@@ -633,7 +722,7 @@ The 'hello world' example was pulled from internal Cloud Foundry documentation.
 
 <a name="brew_cask"><sup>1</sup></a> For those of you lucky enough to have [Homebrew-cask](https://github.com/caskroom/homebrew-cask) installed, you can use it to install  the CloudFoundry CLI: `brew cask install cloudfoundry-cli`.
 
-<a name="not_found"><sup>1</sup></a> If you see `command not found`, then /usr/local/bin is unlikely to be in your PATH.  A simple workaround is to invoke the CLI by typing `/usr/local/bin/cf` rather than `cf`.
+<a name="not_found"><sup>2</sup></a> If you see `command not found`, then /usr/local/bin is unlikely to be in your PATH.  A simple workaround is to invoke the CLI by typing `/usr/local/bin/cf` rather than `cf`.
 
 ---
 
