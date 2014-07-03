@@ -306,7 +306,7 @@ Click the *Add a Host* icon (a computer with a green "+").  An *Add Host* window
 2. (VM location) click **Next**
 3. (Ready to complete) click **Finish**
 
-Congratulations, we have created an IaaS.
+Congratulations, we have created an IaaS.  Ready for more? Let's install Cloud Foundry's Ops Manager and deploy BOSH in the subsequent post, [World’s Smallest IaaS, Part 2](http://pivotallabs.com/worlds-smallest-iaas-part-2/).
 
 ---
 
@@ -441,7 +441,7 @@ When installation has completed, you'll see a notification, "Changes Applied"
 
 Click **Return to Installation Dashboard**
 
-Congratulations, we have deployed Cloud Foundry's Ops Manager and BOSH.
+Congratulations, we have deployed Cloud Foundry's Ops Manager and BOSH.  Ready for more?  Let's install Elastic Runtime (i.e. Cloud Foundry), which is described in the subsequent post, [World’s Smallest IaaS, Part 3: the PaaS](http://pivotallabs.com/worlds-smallest-iaas-part-3-paas/).
 
 ---
 
@@ -543,6 +543,8 @@ As a final test of Cloud Foundry, we log into the Console, which is Cloud Foundr
 * Pick an organization name; we chose **CF Engineering**
 
 Note: we can't send email invites because we never configured out outbound mail server. Configuring outbound email may require help from the IT department.
+
+Congratulations, we have an up-and-running Cloud Foundry installation. Ready for more?  Let's push our first application to our Cloud Foundry installation by following the subsequent post, [World’s Smallest IaaS, Part 4: Hello World](http://pivotallabs.com/worlds-smallest-iaas-part-4-hello-world/).
 
 ---
 <a name="mac_mini"><sup>1</sup></a> We used a 64GiB Mac Pro because we were unable to install on the 16GiB Mac Mini. We tried to install of Elastic Runtime on the Mac Mini, but the install came to a screeching halt:
