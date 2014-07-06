@@ -258,39 +258,121 @@ Yes, `pcap_len` passes our cross-check.
 
 ---
 
-* Set up DNS for
-  * w7.nono.com
-  * vm-ubuntu.nono.com
-  * vm-fbsd.nono.com
-* Start up windows at 17:45 PDT 6/15/2014
+# Why Is My NTP Server Costing Me $500/Year? Part 2
 
+In the [previous blog](http://pivotallabs.com/ntp-server-costing-500year/) post, we concluded that providing an Amazon AWS-based NTP server that was a member of the  [NTP Pool Project](http://www.pool.ntp.org/en/) was incurring ~$500/year bandwidth charges.
+
+In this blog post we discuss the techniques we applied to reduce the bandwidth charges.
+
+### Recognizing Unhealthy NTP Clients
+
+We suspect that a significant amount of traffic is due to unhealthy NTP clients, but we're not sure&mdash;we don't know what the traffic pattern of an unhealthy client looks like.  For that matter, we don't know what the traffic pattern of a *healthy* client looks like.
+
+### Characterizing Healthy NTP Clients
+
+We decide to characterize the NTP traffic of four different operating systems: Windows, OS X, Linux, and FreeBSD:
+
+1. Windows 7 64-bit
+2. OS X 10.9.3
+3. Ubuntu 14.04 64-bit
+4. FreeBSD 10.0 64-bit
+
+### Why We Are Not Characterizing NTP Clients on Embedded Systems
+
+Note that we're ignoring embedded systems, a fairly broad category which covers things as modest as a home WiFi Access Point to as complex as a high-end Juniper router.
+
+There are several reasons we are ignoring those systems.
+
+* We don't have the resources to test them (we don't have the time or the money to purchase dozens of home gateways, configure them, and measure their NTP behavior, let alone the more-expensive higher-end equipment)
+* The operating system of many embedded systems have roots in the Open Source community (e.g. dd-wrt is linux-based, Juniper's JunOS is FreeBSD-based). There's reason to believe that the NTP client of those systems would behave no differently than those of the systems upon which they are based.
+* Embedded eystems have a [poor track record](http://en.wikipedia.org/wiki/NTP_server_misuse_and_abuse#Notable_cases) of providing good NTP clients. Netgear, SMC, and D-Link, to mention a few, have had their misssteps.
+
+### Why Windows and Apple Don't Matter
+
+Windows and Apple clients don't matter. Why? Because both Microsoft and Apple have made NTP servers available (time.windows.com and time.apple.com, respectively) *and* have made them the default NTP server for their operating system.  We suspect that fewer than 1% of our NTP clients are either Windows or OS X (but we have no data to confirm that).
+
+Regardless of their usefulness, we're characterizing the behavior of their clients because it's easy.
+
+## Characterization Procedure
+
+### 1. The Four Operating Systems
+
+We choose one machine of each of the four primary Operating Systems (OS X, Windows, Linux, *BSD).  We define hostnames, IP addresses, and, in the case of FreeBSD and Linux, ethernet MAC addresses (we use locally-administered MAC addresses<sup> [[1]](#pcap_len)</sup> ). Strictly speaking, creating hostnames, defining MAC addresses in order to create DHCP entries, is not necessary.
+
+<table>
+<tr>
+<th>Operating System</th><th>Fully-Qualified<br />Domain Name</th><th>IP Address</th><th>MAC Address</th>
+</tr>
+<tr>
+<td>OS X 10.9.3</td><td>tara.nono.com</td><td>10.9.9.30</td><td>00:3e:e1:c2:0e:1a</td>
+</tr>
+<tr>
+<td>Windows 7  Pro 64-bit</td><td>w7.nono.com</td><td>10.9.9.100</td><td>08:00:27:ea:2e:43</td>
+</tr>
+<tr>
+<td>Ubuntu 14.04 64-bit</td><td>vm-ubuntu.nono.com</td><td>10.9.9.101</td><td>02:00:11:22:33:44</td>
+</tr>
+<tr>
+<td>FreeBSD 10.0 64-bit</td><td>vm-fbsd.nono.com</td><td>10.9.9.102</td><td>02:00:11:22:33:55</td>
+</tr>
+</table>
+
+### 2. Capture NTP Packets
+
+First we enable packet tracing on our firewall for all NTP packets coming from our internal machines:
 
 ```
-ssh lana
+ssh lana # our firewall is named Lana
 tmux
+# `em0` is our firewall's inside interface; we save the tcpdump output
+# to a file for later examination:
 sudo tcpdump -ni em0 -w /tmp/ntp.pcap port ntp
 ^bd
 exit
-vagrant add box ubuntu/trusty64
+```
+
+### 3. Use Vagrant to Configure Ubuntu and FreeBSD VMs
+
+We use [Vagrant](http://www.vagrantup.com/) (a tool that automates the creation and configuration of VMs) to create our VMs.  We add the Vagrant "boxes" (VM templates) and create & initialize the necessary directories:
+
+```
+vagrant box add ubuntu/trusty64
 vagrant box add http://files.wunki.org/freebsd-10.0-amd64-wunki.box --name freebsd/10.0-amd64
 cd ~/workspace
 mkdir vagrant_vms
 cd vagrant_vms
-git init
 for DIR in ubuntu_14.04 fbsd_10.0; do
   mkdir $DIR
   pushd $DIR
   vagrant init
   popd
 done
-git add .
-git commit -m"initial commit"
-cd vm-ubuntu/
-vim Vagrantfile
-vagrant up
 ```
+
+
+Now let's configure the Ubuntu VM. We have a couple of goals:
+
+1. We want the Ubuntu VM to have an *IP address that is from the host machine's*.  This will enable us to distinguish the Ubuntu VM's NTP traffic from the host machine's (the host machine, by the way, is an Apple Mac Pro running OS X 10.9.3).
+
+```
+cd ubuntu_14.04/
+vim Vagrantfile
+  config.vm.box = 'ubuntu/trusty64'
+  config.vm.network :public_network, bridge: 'en0: Ethernet 1', mac: '020011223344', use_dhcp_assigned_default_route: true
+  config.vm.provision :shell, path: 'ntp.sh'
+cat > ntp.sh <<EOF
+  #!/usr/bin/env bash
+  apt-get install -y ntp
+EOF
+vagrant up
+cd ../fbsd_10.0
+
+```
+Now that we have set up an Ubuntu 14.04 as a client
 
 ---
 
-[1] to define our own addresses without fear of colliding with an existing address, we set the [locally administered bit](http://en.wikipedia.org/wiki/MAC_address#Address_details) (the second least significant bit of the most significant byte) to 1.
+#### Footnotes
+
+<a name="local_mac"><sup>1</sup></a>  To define our own addresses without fear of colliding with an existing address, we set the [locally administered bit](http://en.wikipedia.org/wiki/MAC_address#Address_details) (the second least significant bit of the most significant byte) to 1.
 
