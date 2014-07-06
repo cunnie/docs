@@ -22,7 +22,7 @@ We determined the following:
 
 We needed more data.  We turned to Amazon's [Usage Reports](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/usage-reports.html).
 
-**AWS Console &rarr; My Account &rarr; Reports &rarr; AWS Usage Report &rarr; Amazon Elastic Compute Cloud** 
+**AWS Console &rarr; My Account &rarr; Reports &rarr; AWS Usage Report &rarr; Amazon Elastic Compute Cloud**
 
   We ran a report requesting the following information:
 
@@ -72,7 +72,7 @@ It takes about a day for the NTP Pool to satisfy itself that your newly-added se
 
 ### ["Et tu, NTP?"](http://en.wikipedia.org/wiki/Et_tu,_Brute%3F)
 
-Could NTP be the culprit?  Had our good friend NTP stabbed us in the back?  It didn't seem possible. Furthermore, the [documentation](http://www.pool.ntp.org/en/join.html) on the www.pool.ntp.org website states that typical traffic is "...roughly equivalent to 10-15Kbit/sec *(sic)*  <sup>[[2]](#k_is_lowercase)</sup> with spikes of 50-120Kbit/sec". 
+Could NTP be the culprit?  Had our good friend NTP stabbed us in the back?  It didn't seem possible. Furthermore, the [documentation](http://www.pool.ntp.org/en/join.html) on the www.pool.ntp.org website states that typical traffic is "...roughly equivalent to 10-15Kbit/sec *(sic)*  <sup>[[2]](#k_is_lowercase)</sup> with spikes of 50-120Kbit/sec".
 
 But we're seeing 740-1000kbit/sec <sup>[[3]](#kbit_sec)</sup>: *seventy times more* than what we should be seeing. And note that we're being generous&mdash;we assume that they are referring to outbound traffic only when they suggest it should be 10-15kbit/sec; if they meant inbound and outbound combined, then our NTP traffic is *one hundred forty times* more than what we should be seeing.
 
@@ -147,7 +147,7 @@ $ pcap_len ~/Downloads/home-outbound-ntp-only.pcap
 linktype EN10MB
 total len = 17161678, total packets = 190685
 ```
-Let's determine our home NTP outbound traffic: 17161678 bytes / 2209 secs = 7769 bytes / sec = 62 kbits /sec.  
+Let's determine our home NTP outbound traffic: 17161678 bytes / 2209 secs = 7769 bytes / sec = 62 kbits /sec.
 
 Let's determine our AWS NTP outbound traffic: 247581892 bytes / 2693 secs = 91935 bytes / sec = 735 kbits /sec
 
@@ -209,10 +209,10 @@ We'll explore finer-grained approaches to determining faulty clients in the next
 
 <a name="kbit_sec"><sup>3</sup></a> Math is as follows:
 
-8,000,000,000 bytes / day  
-&times; 1 day / 24 hours  
-&times; 1 hour / 3600 seconds  
-&times; 8 bits / 1 byte  
+8,000,000,000 bytes / day<br />
+&times; 1 day / 24 hours<br />
+&times; 1 hour / 3600 seconds<br />
+&times; 8 bits / 1 byte<br />
 &times; 1 kbit / 1000 bits
 
 = 740.740740740741 kbit / sec
@@ -228,7 +228,7 @@ The size of the NTP packet is straightforward, 90 bytes:
 
 * 14 bytes [Ethernet II MAC header](http://en.wikipedia.org/wiki/Ethernet_frame)
 * 20 bytes [IPv4 header](http://en.wikipedia.org/wiki/IPv4#Header)
-* 8 bytes [UDP header](http://en.wikipedia.org/wiki/User_Datagram_Protocol#Packet_structure) 
+* 8 bytes [UDP header](http://en.wikipedia.org/wiki/User_Datagram_Protocol#Packet_structure)
 * 48 bytes [NTP data](http://www.ietf.org/rfc/rfc5905.txt)
 
 And the pcap file format overhead per packet? [16 bytes](http://wiki.wireshark.org/Development/LibpcapFileFormat#Record_.28Packet.29_Header).
@@ -244,10 +244,10 @@ Yes, `pcap_len` passes our cross-check.
 
 <a name="outbound_throughput"><sup>5</sup></a> Math is as follows:
 
-248453677 bytes / 2693 seconds  
+248453677 bytes / 2693 seconds
 
-= 92259 bytes / sec  
-&times; 8 bits / 1 byte  
+= 92259 bytes / sec<br />
+&times; 8 bits / 1 byte<br />
 &times; 1 kbit / 1000 bits
 
 = 738 kbits /sec
