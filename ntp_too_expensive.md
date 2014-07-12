@@ -302,7 +302,7 @@ We choose one machine of each of the four primary Operating Systems (OS X, Windo
 * hostname&harr;IP address mappings are centralized in DNS (which is technically a distributed, not centralized, system, but we're not here to quibble)
 * IP address&harr;MAC address mappings are centralized in one DHCP configuration file rather than being balkanized in various Vagrantfiles.
 
-Here are the [Four Hosts of the Apocalypse](http://en.wikipedia.org/wiki/Four_Horsemen_of_the_Apocalypse) (with apologies to St. John the Evangelist)
+Here are the [Four Hosts of the Apocalypse](http://en.wikipedia.org/wiki/Four_Horsemen_of_the_Apocalypse)<sup> [[2]](#hosts) </sup> (with apologies to St. John the Evangelist)
 
 
 <table>
@@ -398,7 +398,7 @@ EOF
 vagrant up
 ```
 
-The [FreeBSD Vagrantfile](https://github.com/cunnie/vagrant_vms/blob/master/fbsd_10.0/Vagrantfile) is slightly different<sup> [[2]](#vagrant_fbsd) </sup> than the [Ubuntu Vagrantfile](https://github.com/cunnie/vagrant_vms/blob/master/ubuntu_14.04/Vagrantfile).
+The [FreeBSD Vagrantfile](https://github.com/cunnie/vagrant_vms/blob/master/fbsd_10.0/Vagrantfile) is slightly different<sup> [[3]](#vagrant_fbsd) </sup> than the [Ubuntu Vagrantfile](https://github.com/cunnie/vagrant_vms/blob/master/ubuntu_14.04/Vagrantfile).
 
 ### 4. Characterizing the NTP Traffic
 
@@ -459,7 +459,11 @@ done
 
 <a name="local_mac"><sup>1</sup></a> To define our own addresses without fear of colliding with an existing address, we set the [locally administered bit](http://en.wikipedia.org/wiki/MAC_address#Address_details) (the second least significant bit of the most significant byte) to 1.
 
-<a name="vagrant_fbsd"><sup>2</sup></a> We'd like to point out the shortcomings of the FreeBSD setup versus the Ubuntu setup: in the Ubuntu setup, we were able to use a directive (`use_dhcp_assigned_default_route`) to configure Ubuntu to send outbound traffic via its bridged interface. Unfortunately, that directive didn't work for our FreeBSD VM. So we used a script to set the default route, *but the script is not executed when FreeBSD VM is rebooted*, and the FreeBSD VM will revert to using the NAT interface instead of the bridged interface, which means we will no longer be able to distinguish the FreeBSD NTP traffic from the OS X host's NTP traffic.
+<a name="hosts"><sup>2</sup></a> The term "host" has a specific connotation within the context of virtualization, and we are deliberately mis-using using that term to achieve poetic effect (i.e. "hosts" sounds similar to "horsemen"). But let's be clear on our terms: a "host" is an Operating System (*usually* running on bare-iron, but optionally running as a guest VM on another host) running virtualization software (e.g. VirtualBox, Fusion, ESXi, Xen); a "guest" is an operating system that's running on top of the virtualization software which the host is providing.
+
+In our example only one of the 4 hosts is truly a host&mdash;the OS X box is a true host (it provides the virtualization software (VirtualBox) on top of which the remaining 3 operating systems (Ubuntu, FreeBSD, and Windows 7) are running).
+
+<a name="vagrant_fbsd"><sup>3</sup></a> We'd like to point out the shortcomings of the FreeBSD setup versus the Ubuntu setup: in the Ubuntu setup, we were able to use a directive (`use_dhcp_assigned_default_route`) to configure Ubuntu to send outbound traffic via its bridged interface. Unfortunately, that directive didn't work for our FreeBSD VM. So we used a script to set the default route, *but the script is not executed when FreeBSD VM is rebooted*, and the FreeBSD VM will revert to using the NAT interface instead of the bridged interface, which means we will no longer be able to distinguish the FreeBSD NTP traffic from the OS X host's NTP traffic.
 
 The workaround is to never reboot the FreeBSD VM. Instead, we use `vagrant up` and `vagrant destroy` when we need to bring up or shut down the FreeBSD VM. We incur a penalty in that it takes slightly longer to boot our machine via `vagrant up`.
 
