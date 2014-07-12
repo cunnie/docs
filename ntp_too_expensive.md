@@ -297,7 +297,13 @@ Regardless of their usefulness, we're characterizing the behavior of their clien
 
 ### 1. The Four Operating Systems
 
-We choose one machine of each of the four primary Operating Systems (OS X, Windows, Linux, *BSD).  We define hostnames, IP addresses, and, in the case of FreeBSD and Linux, ethernet MAC addresses (we use locally-administered MAC addresses<sup> [[1]](#pcap_len)</sup> ). Strictly speaking, creating hostnames, defining MAC addresses in order to create DHCP entries, is not necessary.
+We choose one machine of each of the four primary Operating Systems (OS X, Windows, Linux, *BSD).  We define hostnames, IP addresses, and, in the case of FreeBSD and Linux, ethernet MAC addresses (we use locally-administered MAC addresses<sup> [[1]](#pcap_len) </sup>). Strictly speaking, creating hostnames, defining MAC addresses, creating DHCP entries, is not necessary. We put in the effort because we prefer structure:
+
+* hostname&harr;IP address mappings are centralized in DNS (which is technically a distributed, not centralized, system, but we're not here to quibble)
+* IP address&harr;MAC address mappings are centralized in one DHCP configuration file rather than being balkanized in various Vagrantfiles.
+
+Here are the [Four Hosts of the Apocalypse](http://en.wikipedia.org/wiki/Four_Horsemen_of_the_Apocalypse) (with apologies to St. John the Evangelist)
+
 
 <table>
 <tr>
@@ -319,10 +325,12 @@ We choose one machine of each of the four primary Operating Systems (OS X, Windo
 
 ### 2. Capture NTP Packets
 
-First we enable packet tracing on our firewall for all NTP packets coming from our internal machines:
+First we enable packet tracing on our firewall (which is named `lana` because Lana said it was okay to name the firewall after her. Thanks Lana!) for all NTP packets coming from our internal machines:
 
 ```
-ssh lana # our firewall is named Lana
+ssh lana
+# we use `tmux` so that we can safely exit our ssh session without
+# terminating the tcpdump command:
 tmux
 # `em0` is our firewall's inside interface; we save the tcpdump output
 # to a file for later examination:
@@ -337,7 +345,7 @@ We use [Vagrant](http://www.vagrantup.com/) (a tool that automates the creation 
 
 ```
 vagrant box add ubuntu/trusty64
-vagrant box add http://files.wunki.org/freebsd-10.0-amd64-wunki.box --name freebsd/10.0-amd64
+vagrant box add chef/freebsd-10.0
 cd ~/workspace
 mkdir vagrant_vms
 cd vagrant_vms
@@ -350,9 +358,12 @@ done
 ```
 
 
-Now let's configure the Ubuntu VM. We have a couple of goals:
+Now let's configure the Ubuntu VM. We have two goals:
 
-1. We want the Ubuntu VM to have an *IP address that is from the host machine's*.  This will enable us to distinguish the Ubuntu VM's NTP traffic from the host machine's (the host machine, by the way, is an Apple Mac Pro running OS X 10.9.3).
+1. We want the Ubuntu VM to have an *IP address that is distinct from the host machine's*. This will enable us to distinguish the Ubuntu VM's NTP traffic from the host machine's (the host machine, by the way, is an Apple Mac Pro running OS X 10.9.3).
+2. We want the Ubuntu VM to run NTP
+
+The former is accomplished by modifying the `config.vm.network` setting in the `Vagrantfile` to use a bridged interface (in addition to Vagrant's default use of a NAT interface); the latter is accomplished by creating a shell script that installs and runs NTP and modifying the `Vagrantfile` to run said script.
 
 ```
 cd ubuntu_14.04/
@@ -365,14 +376,102 @@ cat > ntp.sh <<EOF
   apt-get install -y ntp
 EOF
 vagrant up
-cd ../fbsd_10.0
+```
+Now that we have set up an Ubuntu 14.04 as a client, let's turn our attention to FreeBSD.
 
 ```
-Now that we have set up an Ubuntu 14.04 as a client
+cd ../fbsd_10.0
+vim Vagrantfile
+  config.vm.box = 'chef/freebsd-10.0'
+  # Use NFS as a shared folder
+  config.vm.network 'private_network', ip: '10.0.1.10'
+  config.vm.network :public_network, bridge: 'en0: Ethernet 1', mac: '020011223355', use_dhcp_assigned_default_route: true
+  config.vm.synced_folder ".", "/vagrant", :nfs => true, id: "vagrant-root"
+  config.vm.provision :shell, path: 'gateway_and_ntp.sh'
+cat > gateway_and_ntp.sh <<EOF
+  #!/usr/bin/env bash
+  route delete default 10.0.2.2
+  route add default 10.9.9.1
+  grep ntpd_enable /etc/rc.conf || echo 'ntpd_enable="YES"' >> /etc/rc.conf
+  /etc/rc.d/ntpd start
+EOF
+vagrant up
+```
+
+The [FreeBSD Vagrantfile](https://github.com/cunnie/vagrant_vms/blob/master/fbsd_10.0/Vagrantfile) is slightly different<sup> [[2]](#vagrant_fbsd) </sup> than the [Ubuntu Vagrantfile](https://github.com/cunnie/vagrant_vms/blob/master/ubuntu_14.04/Vagrantfile).
+
+### 4. Characterizing the NTP Traffic
+
+#### Ubuntu and FreeBSD VMs: Greedy NTP Clients
+
+We characterize the traffic and discover a horrible truth: our Ubuntu and FreeBSD VMs are constantly querying their upstream servers.  Every 64 seconds, that is.
+
+64 seconds is the [default value of *minpoll*](http://www.ntp.org/ntpfaq/NTP-s-algo.htm#Q-POLL-RANGE), an NTP parameter that sets the limit (in seconds) how frequently the NTP daemon can query a given upstream server. And our FreeBSD and Ubuntu VMs? They're at that limit. They query their upstream servers as often as they can.
+
+And the Windows VM?  Model citizen. And the OS X host?  Model Citizen.
+
+We need to characterize the NTP traffic. We want to see how frequently our VMs query their upstream servers.  
+
+First we determine the upstream NTP servers using `ntpq`:
+
+```
+ntpq -pn
+     remote           refid      st t when poll reach   delay   offset  jitter
+==============================================================================
+*198.199.100.18  216.218.254.202  2 u   43   64  377   13.542  -78.380  10.469
++50.116.39.180   96.237.191.14    2 u   16   64  377   70.895  -74.273  11.093
++2607:fcd0:daaa: 129.6.15.28      2 u   43   64  377   55.439  -79.890  14.303
+-108.61.73.244   18.26.4.105      2 u   18   64  377   83.532  -93.890  23.345
++91.189.89.199   131.188.3.220    2 u   57   64  377  148.209  -77.059  10.851
+```
+
+We begin with the Ubuntu host.  We randomly select one of its four upstream servers (i.e. 198.199.100.18) and limit our analysis to that specific server<sup> [[3]](#pcap_len) </sup>.
+
+
+We next use the `-tt` flag to generate relative timestamps.  We select the outbound portion of the traffic (we're curious how often we query the server, and the replies are redundant) (we do an eyeball-check to make sure the NTP server consistently replies to our VM, that *minpoll* is not the result of a non-respon), `src host vm-ubuntu.nono.com`.
+
+```
+for NTP_SERVER in \
+  198.199.100.18 \
+  50.116.39.180 \
+  2607:fcd0:daaa:daaa:daaa:daaa:daaa:daaa \
+  108.61.73.244 \
+  91.189.89.199
+do
+  tcpdump -tt -nr ~/Downloads/ntp.pcap host vm-ubuntu.nono.com and src host $NTP_SERVER | 
+   awk 'BEGIN {prev = 0 }; { printf "%d\n", $1 -prev; prev = $1 }' |
+   tail +2 | sort | uniq -c | 
+   sort -n -k 2 |
+   awk "BEGIN { print \"Ubuntu VM and $NTP_SERVER\"
+                print \"polling interval (seconds), # queries\" }
+        {print \$2, \",\", \$1}"
+done
+```
+
+| 
+   awk "BEGIN { print $NTP_SERVER
+                print "polling interval (seconds), # queries" } 
+     {print \$2, ',', \$1}"
+
 
 ---
-
 #### Footnotes
 
-<a name="local_mac"><sup>1</sup></a>  To define our own addresses without fear of colliding with an existing address, we set the [locally administered bit](http://en.wikipedia.org/wiki/MAC_address#Address_details) (the second least significant bit of the most significant byte) to 1.
+<a name="local_mac"><sup>1</sup></a> To define our own addresses without fear of colliding with an existing address, we set the [locally administered bit](http://en.wikipedia.org/wiki/MAC_address#Address_details) (the second least significant bit of the most significant byte) to 1.
 
+<a name="vagrant_fbsd"><sup>2</sup></a> We'd like to point out the shortcomings of the FreeBSD setup versus the Ubuntu setup: in the Ubuntu setup, we were able to use a directive (`use_dhcp_assigned_default_route`) to configure Ubuntu to send outbound traffic via its bridged interface. Unfortunately, that directive didn't work for our FreeBSD VM. So we used a script to set the default route, *but the script is not executed when FreeBSD VM is rebooted*, and the FreeBSD VM will revert to using the NAT interface instead of the bridged interface, which means we will no longer be able to distinguish the FreeBSD NTP traffic from the OS X host's NTP traffic.
+
+The workaround is to never reboot the FreeBSD VM. Instead, we use `vagrant up` and `vagrant destroy` when we need to bring up or shut down the FreeBSD VM. We incur a penalty in that it takes slightly longer to boot our machine via `vagrant up`.
+
+Also note that we modified the `config.vm.network` to use a host-only network instead of the regular NAT network. That change was necessary for the FreeBSD guest to run the required `gateway_and_ntp.sh` script.  Virtualbox was kind enough to warn us:
+
+```
+NFS requires a host-only network to be created.
+Please add a host-only network to the machine (with either DHCP or a
+static IP) for NFS to work.
+```
+
+<a name="one_ntp_server"><sup>3</sup></a> We restrict ourselves to viewing the NTP traffic to but one of our Ubuntu VM's upstream servers for two reasons:
+
+1. We are interested in characterizing the traffic between an NTP server and an Ubuntu (or Windows, OS X, or FreeBSD) NTP client; we are not interested in characterizing the traffic between an NTP client and multiple servers. Remember, our here is that of a server, specifically our Amazon NTP server that is costing us $500/year.
+2. Characterizing interaction with one server is much simpler than characterizing many.
