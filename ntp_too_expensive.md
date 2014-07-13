@@ -258,11 +258,52 @@ Yes, `pcap_len` passes our cross-check.
 
 ---
 
-# Why Is My NTP Server Costing Me $500/Year? Part 2
+# Why Is My NTP Server Costing Me $500/Year? Part 2: Characterizing the NTP Clients
 
-In the [previous blog](http://pivotallabs.com/ntp-server-costing-500year/) post, we concluded that providing an Amazon AWS-based NTP server that was a member of the  [NTP Pool Project](http://www.pool.ntp.org/en/) was incurring ~$500/year bandwidth charges.
+In the [previous blog](http://pivotallabs.com/ntp-server-costing-500year/) post, we concluded that providing an Amazon AWS-based NTP server that was a member of the  [NTP Pool Project](http://www.pool.ntp.org/en/) was incurring ~$500/year in bandwidth charges.
 
-In this blog post we discuss the techniques we applied to reduce the bandwidth charges.
+In this blog post we examine the characteristics of NTP clients (mostly virtualized). We are particularly interested in the NTP [polling interval](http://www.ntp.org/ntpfaq/NTP-s-algo.htm#Q-ALGO-POLL-BEST), the frequency with which the NTP client polls its upstream server. The frequency with which our server is polled correlates directly with our costs ($500 in Amazon AWS bandwidth corresponds to 46 billion NTP polls<sup> [[1]](#polling_costs) </sup>). Determining which clients poll excessively may provide us a tool to reduce the costs of maintaining our NTP server.
+
+This blog posts describes the polling interval of several clients running under several [hypervisors](http://en.wikipedia.org/wiki/Hypervisor), and one client running on bare metal (OS X). This post also describes our methodology in gathering those numbers.
+
+## NTP Polling Intervals
+
+The default polling intervals of `ntpd` vary as much as 64s (the minimum) to 1024s (the maximum)&mdash;as much as sixteenfold (note that these values can be overridden in the configuration file, but for purposes of our research we are focusing solely on the default values).
+
+We discover that clients running on certain hypervisors (e.g. Virtualbox) correlate strongly with a fifteen-fold increase in the amount of polling to upstream servers (i.e. the VirtualBox NTP clients poll at the default minimum poll interval, 64 seconds).
+
+<table>
+<tr>
+<th>Guest Operating System</th><th>Hypervisor</th><th>ntpd version</th><th>Average polling interval (higher is better)</th>
+</tr><tr>
+<td>Ubuntu 14.04 64-bit</td><td>VirtualBox 4.3.12 r93733 on OS X 10.9.4</td><td>4.2.6p5</td><td>64</td>
+</tr><tr>
+<td>FreeBSD 10.0 64-bit</td><td>VirtualBox 4.3.12 r93733 on OS X 10.9.4</td><td>4.2.4p8</td><td>64</td>
+</tr><tr>
+<td>Windows 7 Pro 64-bit</td><td>VirtualBox 4.3.12 r93733 on OS X 10.9.4</td><td>N/A</td><td>1000</td>
+</tr><tr>
+<td>Ubuntu 13.04 64-bit</td><td>AWS (Xen), t1.micro</td><td>4.2.6p5</td><td>1000</td>
+</tr><tr>
+<td>FreeBSD 9.2 64-bit</td><td>Hetzner (KVM), <a href=""http://www.hetzner.de/en/hosting/produkte_vserver/vq7">VQ7</a></td><td>4.2.4p8</td><td>?</td>
+</tr><tr>
+<td>Ubuntu 12.04 64-bit</td><td>ESXi 5.5</td><td>4.2.6p3</td><td>?</td>
+</tr>
+</table>
+
+## Methodology
+
+We enable packet tracing, on the upstream firewall (in the case of the VirtualBox guests or the bare-iron OS X host) or on the VM itself (in the case of our AWS/[Xen](http://www.xenproject.org/developers/teams/hypervisor.html), Hetzner/[KVM](http://www.linux-kvm.org/page/Main_Page), and [ESXi](http://www.vmware.com/products/vsphere-hypervisor/) guests).
+
+```
+# on our internal firewall
+sudo tcpdump -ni em0 -w /tmp/ntp_vbox.pcap -W 1 -G 10800 port ntp
+# on our AWS t1.micro instance
+sudo tcpdump -w /tmp/ntp_upstream_xen.ntp -W 1 -G 10800 port 123 and \( host 216.66.0.142 or host 50.97.210.169 or host 72.14.183.239 or host 108.166.189.70 \)
+# our our Hetzner FreeBSD instance
+sudo tcpdump -i re0 -w /tmp/ntp_upstream_kvm.ntp -W 1 -G 10800 port 123 and \( host 2a01:4f8:141:282::5:3 or host 2a01:4f8:201:4101::5 or host 78.46.60.42 or host 129.70.132.32 \)
+# our ESXi 5.5 instance
+sudo tcpdump -w /tmp/ntp_upstream_esxi.ntp -W 1 -G 10800 port 123 and host 91.189.94.4
+```
 
 ### Recognizing Unhealthy NTP Clients
 
@@ -504,6 +545,19 @@ We leave the task of merging the remaining .csv files to the reader.
 
 ---
 #### Footnotes
+
+<a name="polling_costs"><sup>1</sup></a> Math is as follows:
+
+90 B / NTP poll<br />
+$500 total<br />
+$0.12 / 1 GB<br />
+
+$500<br />
+&times; 1 GB / $0.12<br />
+&times; 1,000,000,000 bytes / GB<br />
+&times; 1 poll / 90 B<br />
+
+= 46296296296 polls = **46.29** Gpolls
 
 <a name="local_mac"><sup>1</sup></a> To define our own addresses without fear of colliding with an existing address, we set the [locally administered bit](http://en.wikipedia.org/wiki/MAC_address#Address_details) (the second least significant bit of the most significant byte) to 1.
 
