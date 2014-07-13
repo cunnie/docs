@@ -410,7 +410,7 @@ We characterize the traffic and discover a horrible truth: our Ubuntu and FreeBS
 
 And the Windows VM?  Model citizen. And the OS X host?  Model Citizen.
 
-We need to characterize the NTP traffic. We want to see how frequently our VMs query their upstream servers.  
+We need to characterize the NTP traffic. We want to see how frequently our VMs query their upstream servers.
 
 First we determine the upstream NTP servers using `ntpq`:
 
@@ -425,33 +425,81 @@ ntpq -pn
 +91.189.89.199   131.188.3.220    2 u   57   64  377  148.209  -77.059  10.851
 ```
 
-We begin with the Ubuntu host.  We randomly select one of its four upstream servers (i.e. 198.199.100.18) and limit our analysis to that specific server<sup> [[3]](#pcap_len) </sup>.
+We begin with the Ubuntu host.
 
+
+
+
+#### Appendix 1: Massaging Time Data
 
 We next use the `-tt` flag to generate relative timestamps.  We select the outbound portion of the traffic (we're curious how often we query the server, and the replies are redundant) (we do an eyeball-check to make sure the NTP server consistently replies to our VM, that *minpoll* is not the result of a non-respon), `src host vm-ubuntu.nono.com`.
 
 ```
+# First, Ubuntu
 for NTP_SERVER in \
   198.199.100.18 \
   50.116.39.180 \
-  2607:fcd0:daaa:daaa:daaa:daaa:daaa:daaa \
   108.61.73.244 \
   91.189.89.199
 do
-  tcpdump -tt -nr ~/Downloads/ntp.pcap host vm-ubuntu.nono.com and src host $NTP_SERVER | 
+  tcpdump -tt -nr ~/Downloads/ntp.pcap host vm-ubuntu.nono.com and src host $NTP_SERVER |
    awk 'BEGIN {prev = 0 }; { printf "%d\n", $1 -prev; prev = $1 }' |
-   tail +2 | sort | uniq -c | 
-   sort -n -k 2 |
-   awk "BEGIN { print \"Ubuntu VM and $NTP_SERVER\"
-                print \"polling interval (seconds), # queries\" }
-        {print \$2, \",\", \$1}"
+   tail +2 | sort | uniq -c |
+   sort -k 2 |
+   awk "BEGIN { print \"polling interval (seconds), FBSD/$NTP_SERVER\" }
+        { printf \"%d,%d\n\", \$2, \$1 }" > /tmp/ubuntu-$NTP_SERVER.csv
 done
+# Second, FreeBSD
+for NTP_SERVER in \
+  162.243.72.74 \
+  107.170.242.27 \
+  209.114.111.1
+do
+  tcpdump -tt -nr ~/Downloads/ntp.pcap host vm-fbsd.nono.com and src host $NTP_SERVER |
+   awk 'BEGIN {prev = 0 }; { printf "%d\n", $1 -prev; prev = $1 }' |
+   tail +2 | sort | uniq -c |
+   awk "BEGIN { print \"polling interval (seconds), FBSD/$NTP_SERVER\" }
+        { printf \"%d,%d\n\", \$2, \$1 }" |
+   sort > /tmp/fbsd-$NTP_SERVER.csv
+done
+# Third, Windows. One server, time.windows.com
+tcpdump -tt -nr ~/Downloads/ntp.pcap host w7.nono.com |
+ awk 'BEGIN {prev = 0 }; { printf "%d\n", $1 -prev; prev = $1 }' |
+ tail +2 | sort | uniq -c |
+ awk "BEGIN { print \"polling interval (seconds), Windows 7\" }
+   { printf \"%d,%d\n\", \$2, \$1 }" |
+ sort > /tmp/w7.csv
+# Final, OS X, One server, time.apple.com
+tcpdump -tt -nr ~/Downloads/ntp.pcap host tara.nono.com |
+ awk 'BEGIN {prev = 0 }; { printf "%d\n", $1 -prev; prev = $1 }' |
+ tail +2 | sort | uniq -c |
+ awk "BEGIN { print \"polling interval (seconds), OS X\" }
+   { printf \"%d,%d\n\", \$2, \$1 }" |
+ sort > /tmp/osx.csv
 ```
 
-| 
-   awk "BEGIN { print $NTP_SERVER
-                print "polling interval (seconds), # queries" } 
-     {print \$2, ',', \$1}"
+Notes regarding the shell script above:
+
+* `tcpdump`'s `-tt` flag is to generate relative timestamps, so that we may easily calculate the amount of time between each query
+* `tcpdump`'s `src host` parameter is to restrict the packets to NTP responses and not NTP queries (we want to exclude the queries because it would make determining the interval between responses more difficult)
+* the first `awk` command prints the interval (in seconds) between each NTP response
+* the `tail` command strips the very first response whose time interval is pathological (i.e. whose time interval is the number of seconds since [the Epoch](http://en.wikipedia.org/wiki/Unix_time), e.g. 1404857430)
+* the `sort` and `uniq` tells us the number of times a response was made for a given interval (e.g. "384 responses were given that had a 64-second interval between the previous response")
+* the second `sort` command sorts the query by seconds, lexically (not numerically). The reason we sort lexically is because the `join` command, which we will use in the next step, requires lexical collation, not numerical. (in other words, "1 < 120 < 16 < 2", not "1 < 2 < 16 < 120")
+* the second `awk` command puts the data in a format that's friendly for Google spreadsheets
+* We removed the IPv6 time server (2607:fcd0:daaa:daaa:daaa:daaa:daaa:daaa) from the list because it didn't lend itself to the script (i.e. the host vm-ubuntu.nono.com only resolved to an IPv4 address, so there were no matches of NTP responses from an IPv6 address) (a given packet has either all IPv6 addresses or all IPv4, but cannot be mixed)). We felt the 4 other time servers were an adequate sample size.
+
+Next we need to merge the above files. We use the `join` command to merge them, but it only works on 2 files at a time, so we need to be clever to merge all of them. Let's merge the first 2:
+
+```
+CSV1=/tmp/ubuntu-108.61.73.244.csv
+CSV2=/tmp/ubuntu-198.199.100.18.csv
+( join -t , $CSV1 $CSV2
+  join -v 1 -t , $CSV1 $CSV2 | sed 's=$=,0='
+  join -v 2 -t , $CSV1 $CSV2 | sed 's=\([^,]*$\)=0,0,0,0,0,0,0,0,\1=' ) |
+sort > /tmp/9.csv
+```
+We leave the task of merging the remaining .csv files to the reader.
 
 
 ---
