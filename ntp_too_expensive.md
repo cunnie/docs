@@ -262,7 +262,7 @@ Yes, `pcap_len` passes our cross-check.
 
 In the [previous blog](http://pivotallabs.com/ntp-server-costing-500year/) post, we concluded that providing an Amazon AWS-based NTP server that was a member of the  [NTP Pool Project](http://www.pool.ntp.org/en/) was incurring ~$500/year in bandwidth charges.
 
-In this blog post we examine the characteristics of NTP clients (mostly virtualized). We are particularly interested in the NTP [polling interval](http://www.ntp.org/ntpfaq/NTP-s-algo.htm#Q-ALGO-POLL-BEST), the frequency with which the NTP client polls its upstream server. The frequency with which our server is polled correlates directly with our costs ($500 in Amazon AWS bandwidth corresponds to 46 billion NTP polls<sup> [[1]](#polling_costs) </sup>). Determining which clients poll excessively may provide us a tool to reduce the costs of maintaining our NTP server.
+In this blog post we examine the characteristics of NTP clients (mostly virtualized). We are particularly interested in the NTP [polling interval](http://www.ntp.org/ntpfaq/NTP-s-algo.htm#Q-ALGO-POLL-BEST), the frequency with which the NTP client polls its upstream server. The frequency with which our server is polled correlates directly with our costs (our $500 in Amazon AWS bandwidth corresponds to 46 billion NTP polls<sup> [[1]](#polling_costs) </sup>). Determining which clients poll excessively may provide us a tool to reduce the costs of maintaining our NTP server.
 
 This blog posts describes the polling interval of several clients running under several [hypervisors](http://en.wikipedia.org/wiki/Hypervisor), and one client running on bare metal (OS X). This post also describes our methodology in gathering those numbers.
 
@@ -270,7 +270,7 @@ This blog posts describes the polling interval of several clients running under 
 
 The default polling intervals of `ntpd` vary as much as 64s (the minimum) to 1024s (the maximum)&mdash;as much as sixteenfold (note that these values can be overridden in the configuration file, but for purposes of our research we are focusing solely on the default values).
 
-We discover that clients running on certain hypervisors (e.g. Virtualbox) correlate strongly with a fifteen-fold increase in the amount of polling to upstream servers (i.e. the VirtualBox NTP clients poll at the default minimum poll interval, 64 seconds).
+We discover that clients running on certain hypervisors (e.g. Virtualbox) correlate strongly in the amount of polling to upstream servers (i.e. the VirtualBox NTP clients poll at the default minimum poll interval, 64 seconds).
 
 <table>
 <tr>
@@ -292,58 +292,54 @@ We discover that clients running on certain hypervisors (e.g. Virtualbox) correl
 
 ## Methodology
 
-We enable packet tracing, on the upstream firewall (in the case of the VirtualBox guests or the bare-iron OS X host) or on the VM itself (in the case of our AWS/[Xen](http://www.xenproject.org/developers/teams/hypervisor.html), Hetzner/[KVM](http://www.linux-kvm.org/page/Main_Page), and [ESXi](http://www.vmware.com/products/vsphere-hypervisor/) guests).
+### 1. Choosing the Hypervisors and OSes to Characterize
 
-```
-# on our internal firewall
-sudo tcpdump -ni em0 -w /tmp/ntp_vbox.pcap -W 1 -G 10800 port ntp
-# on our AWS t1.micro instance
-sudo tcpdump -w /tmp/ntp_upstream_xen.ntp -W 1 -G 10800 port 123 and \( host 216.66.0.142 or host 50.97.210.169 or host 72.14.183.239 or host 108.166.189.70 \)
-# our our Hetzner FreeBSD instance
-sudo tcpdump -i re0 -w /tmp/ntp_upstream_kvm.ntp -W 1 -G 10800 port 123 and \( host 2a01:4f8:141:282::5:3 or host 2a01:4f8:201:4101::5 or host 78.46.60.42 or host 129.70.132.32 \)
-# our ESXi 5.5 instance
-sudo tcpdump -w /tmp/ntp_upstream_esxi.ntp -W 1 -G 10800 port 123 and host 91.189.94.4
-```
-
-### Recognizing Unhealthy NTP Clients
-
-We suspect that a significant amount of traffic is due to unhealthy NTP clients, but we're not sure&mdash;we don't know what the traffic pattern of an unhealthy client looks like.  For that matter, we don't know what the traffic pattern of a *healthy* client looks like.
-
-### Characterizing Healthy NTP Clients
-
-We decide to characterize the NTP traffic of four different operating systems: Windows, OS X, Linux, and FreeBSD:
+We decide to characterize the NTP traffic of four different operating systems: Windows, OS X, Linux, and FreeBSD <sup> [[2]](#fbsd_love) </sup>:
 
 1. Windows 7 64-bit
 2. OS X 10.9.3
-3. Ubuntu 14.04 64-bit
-4. FreeBSD 10.0 64-bit
+3. Ubuntu 64-bit (14.04, 13.04, and 12.04) 
+4. FreeBSD 64-bit (10.0 and 9.2)
 
-### Why We Are Not Characterizing NTP Clients on Embedded Systems
+We decide to test the following Hypervisors:
 
-Note that we're ignoring embedded systems, a fairly broad category which covers things as modest as a home WiFi Access Point to as complex as a high-end Juniper router.
+1. [VirtualBox](https://www.virtualbox.org/) 4.3.12 r93733
+2. [KVM](http://www.linux-kvm.org/page/Main_Page) (Hetzner)
+3. [Xen](http://www.xenproject.org/developers/teams/hypervisor.html) (Amazon AWS)
+4. [ESXi](http://www.vmware.com/products/vsphere-hypervisor/) 5.5
 
-There are several reasons we are ignoring those systems.
+
+#### Why We Are Not Characterizing NTP Clients on Embedded Systems
+
+We're ignoring embedded systems, a fairly broad category which covers things as modest as a home WiFi Access Point to as complex as a high-end Juniper router.
+
+There are two reasons we are ignoring those systems.
 
 * We don't have the resources to test them (we don't have the time or the money to purchase dozens of home gateways, configure them, and measure their NTP behavior, let alone the more-expensive higher-end equipment)
-* The operating system of many embedded systems have roots in the Open Source community (e.g. dd-wrt is linux-based, Juniper's JunOS is FreeBSD-based). There's reason to believe that the NTP client of those systems would behave no differently than those of the systems upon which they are based.
-* Embedded eystems have a [poor track record](http://en.wikipedia.org/wiki/NTP_server_misuse_and_abuse#Notable_cases) of providing good NTP clients. Netgear, SMC, and D-Link, to mention a few, have had their misssteps.
+* The operating system of many embedded systems have roots in the Open Source community (e.g. dd-wrt is linux-based, Juniper's JunOS is FreeBSD-based). There's reason to believe that the NTP client of those systems would behave the same as the systems upon which they are based.
 
-### Why Windows and Apple Don't Matter
+We wish we had the resources to characterize embedded systems&mdash;sometimes they are troublemakers:
+
+* The operating system of embedded systems that do *not* have roots in the Open Source community have a [poor track record](http://en.wikipedia.org/wiki/NTP_server_misuse_and_abuse#Notable_cases) of providing good NTP clients. Netgear, SMC, and D-Link, to mention a few, have had their missteps.
+
+#### Why Windows and OS X NTP Clients Don't Matter
 
 Windows and Apple clients don't matter. Why? Because both Microsoft and Apple have made NTP servers available (time.windows.com and time.apple.com, respectively) *and* have made them the default NTP server for their operating system.  We suspect that fewer than 1% of our NTP clients are either Windows or OS X (but we have no data to confirm that).
 
 Regardless of their usefulness, we're characterizing the behavior of their clients because it's easy.
 
-## Characterization Procedure
+### 2. Setting Up the NTP Clients
 
-### 1. The Four Operating Systems
+The ESXi, Xen (AWS), and KVM (Hetzner) clients have already been set up (not for characterizing NTP, but we're temporarily borrowing them to perform our measurements); however, the VirtualBox clients (specifically the Ubuntu and FreeBSD guest VMs) need to be set up.
 
-We choose one machine of each of the four primary Operating Systems (OS X, Windows, Linux, *BSD).  We define hostnames, IP addresses, and, in the case of FreeBSD and Linux, ethernet MAC addresses (we use locally-administered MAC addresses<sup> [[1]](#pcap_len) </sup>). Strictly speaking, creating hostnames, defining MAC addresses, creating DHCP entries, is not necessary. We put in the effort because we prefer structure:
+#### The 3 VirtualBox and 1 Bare-Iron NTP Clients
+
+We choose one machine of each of the four primary Operating Systems (OS X, Windows, Linux, *BSD).  We define hostnames, IP addresses, and, in the case of FreeBSD and Linux, ethernet MAC addresses (we use locally-administered MAC addresses<sup> [[3]](#pcap_len) </sup>). Strictly speaking, creating hostnames, defining MAC addresses, creating DHCP entries, is not necessary. We put in the effort because we prefer structure:
 
 * hostname&harr;IP address mappings are centralized in DNS (which is technically a distributed, not centralized, system, but we're not here to quibble)
 * IP address&harr;MAC address mappings are centralized in one DHCP configuration file rather than being balkanized in various Vagrantfiles.
 
-Here are the [Four Hosts of the Apocalypse](http://en.wikipedia.org/wiki/Four_Horsemen_of_the_Apocalypse)<sup> [[2]](#hosts) </sup> (with apologies to St. John the Evangelist)
+Here are the [Four Hosts of the Apocalypse](http://en.wikipedia.org/wiki/Four_Horsemen_of_the_Apocalypse)<sup> [[4]](#hosts) </sup> (with apologies to St. John the Evangelist)
 
 
 <table>
@@ -364,23 +360,7 @@ Here are the [Four Hosts of the Apocalypse](http://en.wikipedia.org/wiki/Four_Ho
 </tr>
 </table>
 
-### 2. Capture NTP Packets
-
-First we enable packet tracing on our firewall (which is named `lana` because Lana said it was okay to name the firewall after her. Thanks Lana!) for all NTP packets coming from our internal machines:
-
-```
-ssh lana
-# we use `tmux` so that we can safely exit our ssh session without
-# terminating the tcpdump command:
-tmux
-# `em0` is our firewall's inside interface; we save the tcpdump output
-# to a file for later examination:
-sudo tcpdump -ni em0 -w /tmp/ntp.pcap port ntp
-^bd
-exit
-```
-
-### 3. Use Vagrant to Configure Ubuntu and FreeBSD VMs
+#### Use Vagrant to Configure Ubuntu and FreeBSD VMs
 
 We use [Vagrant](http://www.vagrantup.com/) (a tool that automates the creation and configuration of VMs) to create our VMs.  We add the Vagrant "boxes" (VM templates) and create & initialize the necessary directories:
 
@@ -418,7 +398,7 @@ cat > ntp.sh <<EOF
 EOF
 vagrant up
 ```
-Now that we have set up an Ubuntu 14.04 as a client, let's turn our attention to FreeBSD.
+Now that we have set up an Ubuntu 14.04 as a client, let's turn our attention to FreeBSD 10.0.
 
 ```
 cd ../fbsd_10.0
@@ -439,19 +419,34 @@ EOF
 vagrant up
 ```
 
-The [FreeBSD Vagrantfile](https://github.com/cunnie/vagrant_vms/blob/master/fbsd_10.0/Vagrantfile) is slightly different<sup> [[3]](#vagrant_fbsd) </sup> than the [Ubuntu Vagrantfile](https://github.com/cunnie/vagrant_vms/blob/master/ubuntu_14.04/Vagrantfile).
+The [FreeBSD Vagrantfile](https://github.com/cunnie/vagrant_vms/blob/master/fbsd_10.0/Vagrantfile) is slightly different<sup> [[5]](#vagrant_fbsd) </sup> than the [Ubuntu Vagrantfile](https://github.com/cunnie/vagrant_vms/blob/master/ubuntu_14.04/Vagrantfile).
+
+### 3. Capturing the NTP Traffic
+
+We enable packet tracing on the upstream firewall (in the case of the VirtualBox guests or the bare-iron OS X host) or on the VM itself (in the case of our AWS/Xen, Hetzner/KVM, and ESXi guests).
+
+Here are the commands we used:
+
+```
+# on our internal firewall
+sudo tcpdump -ni em0 -w /tmp/ntp_vbox.pcap -W 1 -G 10800 port ntp
+# on our AWS t1.micro instance
+sudo tcpdump -w /tmp/ntp_upstream_xen.pcap -W 1 -G 10800 port ntp and \( host 216.66.0.142 or host 50.97.210.169 or host 72.14.183.239 or host 108.166.189.70 \)
+# our our Hetzner FreeBSD instance
+sudo tcpdump -i re0 -w /tmp/ntp_upstream_kvm.pcap -W 1 -G 10800 port ntp and \( host 2a01:4f8:141:282::5:3 or host 2a01:4f8:201:4101::5 or host 78.46.60.42 or host 129.70.132.32 \)
+# our ESXi 5.5 instance
+sudo tcpdump -w /tmp/ntp_upstream_esxi.pcap -W 1 -G 10800 port ntp and host 91.189.94.4
+```
+Notes
+
+* we passed the `-W 1 -G 10800` to `tcpdump`; this is to enable packet capture for 10800 seconds (i.e. 3 hours) and then stop.  This will allow us to capture the same duration of traffic from our machines, which makes certain comparisons easier (e.g. the number of times upstream servers were polled over the course of three hours).
+* we used the `-w` flag (e.g. `-w /tmp/ntp_vbox.pcap`) to save the output to a file. This would enable us to make several passes at the capture data.
+* We filtered for ntp traffic (`port ntp`)
+* for machines that were NTP servers as well as clients, we restricted traffic capture to the machines that were *its* upstream server (e.g. the ESXi's Ubuntu VM's upstream server is 91.189.94.4, so we appended `and host 91.189.94.4` to the filter)
+
+
 
 ### 4. Characterizing the NTP Traffic
-
-#### Ubuntu and FreeBSD VMs: Greedy NTP Clients
-
-We characterize the traffic and discover a horrible truth: our Ubuntu and FreeBSD VMs are constantly querying their upstream servers.  Every 64 seconds, that is.
-
-64 seconds is the [default value of *minpoll*](http://www.ntp.org/ntpfaq/NTP-s-algo.htm#Q-POLL-RANGE), an NTP parameter that sets the limit (in seconds) how frequently the NTP daemon can query a given upstream server. And our FreeBSD and Ubuntu VMs? They're at that limit. They query their upstream servers as often as they can.
-
-And the Windows VM?  Model citizen. And the OS X host?  Model Citizen.
-
-We need to characterize the NTP traffic. We want to see how frequently our VMs query their upstream servers.
 
 First we determine the upstream NTP servers using `ntpq`:
 
@@ -473,21 +468,22 @@ We begin with the Ubuntu host.
 
 #### Appendix 1: Massaging Time Data
 
-We next use the `-tt` flag to generate relative timestamps.  We select the outbound portion of the traffic (we're curious how often we query the server, and the replies are redundant) (we do an eyeball-check to make sure the NTP server consistently replies to our VM, that *minpoll* is not the result of a non-respon), `src host vm-ubuntu.nono.com`.
+
 
 ```
 # First, Ubuntu
 for NTP_SERVER in \
-  198.199.100.18 \
-  50.116.39.180 \
-  108.61.73.244 \
-  91.189.89.199
+  74.120.8.2 \
+  50.7.64.4 \
+  2001:19f0:1590:5123:1057:a11:da7a:1 \
+  4.53.160.75 \
+  91.189.94.4
 do
-  tcpdump -tt -nr ~/Downloads/ntp.pcap host vm-ubuntu.nono.com and src host $NTP_SERVER |
+  tcpdump -tt -nr ~/Downloads/ntp.pcap src host $NTP_SERVER |
    awk 'BEGIN {prev = 0 }; { printf "%d\n", $1 -prev; prev = $1 }' |
    tail +2 | sort | uniq -c |
    sort -k 2 |
-   awk "BEGIN { print \"polling interval (seconds), FBSD/$NTP_SERVER\" }
+   awk "BEGIN { print \"polling interval (seconds), VB/Ubu/$NTP_SERVER\" }
         { printf \"%d,%d\n\", \$2, \$1 }" > /tmp/ubuntu-$NTP_SERVER.csv
 done
 # Second, FreeBSD
@@ -499,7 +495,7 @@ do
   tcpdump -tt -nr ~/Downloads/ntp.pcap host vm-fbsd.nono.com and src host $NTP_SERVER |
    awk 'BEGIN {prev = 0 }; { printf "%d\n", $1 -prev; prev = $1 }' |
    tail +2 | sort | uniq -c |
-   awk "BEGIN { print \"polling interval (seconds), FBSD/$NTP_SERVER\" }
+   awk "BEGIN { print \"polling interval (seconds), VB/FB/$NTP_SERVER\" }
         { printf \"%d,%d\n\", \$2, \$1 }" |
    sort > /tmp/fbsd-$NTP_SERVER.csv
 done
@@ -559,13 +555,15 @@ $500<br />
 
 = 46296296296 polls = **46.29** Gpolls
 
-<a name="local_mac"><sup>1</sup></a> To define our own addresses without fear of colliding with an existing address, we set the [locally administered bit](http://en.wikipedia.org/wiki/MAC_address#Address_details) (the second least significant bit of the most significant byte) to 1.
+<a name="fbsd_love"><sup>2</sup></a> The inclusion of FreeBSD in the list of Operating Systems is made less for its prevalence (it is vastly overshadowed by Linux in terms of deployments) than for the strong emotional attachment the author has for it.
 
-<a name="hosts"><sup>2</sup></a> The term "host" has a specific connotation within the context of virtualization, and we are deliberately mis-using using that term to achieve poetic effect (i.e. "hosts" sounds similar to "horsemen"). But let's be clear on our terms: a "host" is an Operating System (*usually* running on bare-iron, but optionally running as a guest VM on another host) running virtualization software (e.g. VirtualBox, Fusion, ESXi, Xen); a "guest" is an operating system that's running on top of the virtualization software which the host is providing.
+<a name="local_mac"><sup>3</sup></a> To define our own addresses without fear of colliding with an existing address, we set the [locally administered bit](http://en.wikipedia.org/wiki/MAC_address#Address_details) (the second least significant bit of the most significant byte) to 1.
+
+<a name="hosts"><sup>4</sup></a> The term "host" has a specific connotation within the context of virtualization, and we are deliberately mis-using using that term to achieve poetic effect (i.e. "hosts" sounds similar to "horsemen"). But let's be clear on our terms: a "host" is an Operating System (*usually* running on bare-iron, but optionally running as a guest VM on another host) running virtualization software (e.g. VirtualBox, Fusion, ESXi, Xen); a "guest" is an operating system that's running on top of the virtualization software which the host is providing.
 
 In our example only one of the 4 hosts is truly a host&mdash;the OS X box is a true host (it provides the virtualization software (VirtualBox) on top of which the remaining 3 operating systems (Ubuntu, FreeBSD, and Windows 7) are running).
 
-<a name="vagrant_fbsd"><sup>3</sup></a> We'd like to point out the shortcomings of the FreeBSD setup versus the Ubuntu setup: in the Ubuntu setup, we were able to use a directive (`use_dhcp_assigned_default_route`) to configure Ubuntu to send outbound traffic via its bridged interface. Unfortunately, that directive didn't work for our FreeBSD VM. So we used a script to set the default route, *but the script is not executed when FreeBSD VM is rebooted*, and the FreeBSD VM will revert to using the NAT interface instead of the bridged interface, which means we will no longer be able to distinguish the FreeBSD NTP traffic from the OS X host's NTP traffic.
+<a name="vagrant_fbsd"><sup>5</sup></a> We'd like to point out the shortcomings of the FreeBSD setup versus the Ubuntu setup: in the Ubuntu setup, we were able to use a directive (`use_dhcp_assigned_default_route`) to configure Ubuntu to send outbound traffic via its bridged interface. Unfortunately, that directive didn't work for our FreeBSD VM. So we used a script to set the default route, *but the script is not executed when FreeBSD VM is rebooted*, and the FreeBSD VM will revert to using the NAT interface instead of the bridged interface, which means we will no longer be able to distinguish the FreeBSD NTP traffic from the OS X host's NTP traffic.
 
 The workaround is to never reboot the FreeBSD VM. Instead, we use `vagrant up` and `vagrant destroy` when we need to bring up or shut down the FreeBSD VM. We incur a penalty in that it takes slightly longer to boot our machine via `vagrant up`.
 
@@ -576,8 +574,3 @@ NFS requires a host-only network to be created.
 Please add a host-only network to the machine (with either DHCP or a
 static IP) for NFS to work.
 ```
-
-<a name="one_ntp_server"><sup>3</sup></a> We restrict ourselves to viewing the NTP traffic to but one of our Ubuntu VM's upstream servers for two reasons:
-
-1. We are interested in characterizing the traffic between an NTP server and an Ubuntu (or Windows, OS X, or FreeBSD) NTP client; we are not interested in characterizing the traffic between an NTP client and multiple servers. Remember, our here is that of a server, specifically our Amazon NTP server that is costing us $500/year.
-2. Characterizing interaction with one server is much simpler than characterizing many.
