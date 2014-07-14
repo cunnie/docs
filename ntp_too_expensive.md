@@ -268,9 +268,9 @@ This blog posts describes the polling interval of several clients running under 
 
 ## NTP Polling Intervals
 
-The default polling intervals of `ntpd` vary as much as 64s (the minimum) to 1024s (the maximum)&mdash;as much as sixteenfold (note that these values can be overridden in the configuration file, but for purposes of our research we are focusing solely on the default values).
+The polling intervals of `ntpd` vary from 64 seconds (the minimum) to 1024 seconds (the maximum)&mdash;as much as sixteenfold (note that these values can be overridden in the configuration file, but for purposes of our research we are focusing solely on the default values).
 
-We discover that clients running on certain hypervisors correlate strongly in the amount of polling (e.g. the VirtualBox NTP clients poll at the default minimum poll interval, 64 seconds).
+We discover that clients running on certain hypervisors correlate strongly in the amount of polling (e.g. the VirtualBox NTP clients frequently poll at the default minimum poll interval, 64 seconds).
 
 [caption id="attachment_29440" align="alignnone" width="300"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/07/ntp_polling.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/07/ntp_polling-300x231.png" alt="Chart of NTP Polling Intervals" width="300" height="231" class="size-medium wp-image-29440" /></a> NTP Polling Intervals over a 3-hour period. Note the heavy cluster of dots around 64 seconds—the minimum polling interval[/caption]
 
@@ -312,12 +312,12 @@ By examining the chart (the chart and the underlying data can be viewed on [Goog
 
 ### 1. Choosing the Hypervisors and OSes to Characterize
 
-We decide to characterize the NTP traffic of four different operating systems: Windows, OS X, Linux, and FreeBSD <sup> [[2]](#fbsd_love) </sup>:
+We decide to characterize the NTP traffic of four different operating systems:
 
 1. Windows 7 64-bit
 2. OS X 10.9.3
 3. Ubuntu 64-bit (14.04, 13.04, and 12.04)
-4. FreeBSD 64-bit (10.0 and 9.2)
+4. FreeBSD<sup> [[2]](#fbsd_love) </sup> 64-bit (10.0 and 9.2)
 
 We decide to test the following Hypervisors:
 
@@ -357,7 +357,7 @@ The ESXi, Xen (AWS), and KVM (Hetzner) clients have already been set up (not for
 
 #### The 3 VirtualBox and 1 Bare-Iron NTP Clients
 
-We choose one machine of each of the four primary Operating Systems (OS X, Windows, Linux, *BSD).  We define hostnames, IP addresses, and, in the case of FreeBSD and Linux, ethernet MAC addresses (we use locally-administered MAC addresses<sup> [[3]](#pcap_len) </sup>). Strictly speaking, creating hostnames, defining MAC addresses, creating DHCP entries, is not necessary. We put in the effort because we prefer structure:
+We choose one machine of each of the four primary Operating Systems (OS X, Windows, Linux, *BSD).  We define hostnames, IP addresses, and, in the case of FreeBSD and Linux, ethernet MAC addresses (we use locally-administered MAC addresses<sup> [[3]](#local_mac) </sup>). Strictly speaking, creating hostnames, defining MAC addresses, creating DHCP entries, is not necessary. We put in the effort because we prefer structure:
 
 * hostname&harr;IP address mappings are centralized in DNS (which is technically a distributed, not centralized, system, but we're not here to quibble)
 * IP address&harr;MAC address mappings are centralized in one DHCP configuration file rather than being balkanized in various Vagrantfiles.
@@ -463,9 +463,9 @@ sudo tcpdump -w /tmp/ntp_upstream_esxi.pcap -W 1 -G 10800 port ntp and host 91.1
 Notes
 
 * we passed the `-W 1 -G 10800` to `tcpdump`; this is to enable packet capture for 10800 seconds (i.e. 3 hours) and then stop.  This will allow us to capture the same duration of traffic from our machines, which makes certain comparisons easier (e.g. the number of times upstream servers were polled over the course of three hours).
-* we used the `-w` flag (e.g. `-w /tmp/ntp_vbox.pcap`) to save the output to a file. This would enable us to make several passes at the capture data.
+* we used the `-w` flag (e.g. `-w /tmp/ntp_vbox.pcap`) to save the output to a file. This enables us to make several passes at the capture data.
 * We filtered for ntp traffic (`port ntp`)
-* for machines that were NTP servers as well as clients, we restricted traffic capture to the machines that were *its* upstream server (e.g. the ESXi's Ubuntu VM's upstream server is 91.189.94.4, so we appended `and host 91.189.94.4` to the filter)
+* for machines that were NTP servers as well as clients, we restricted traffic capture to the machines that were *its* upstream server(s) (e.g. the ESXi's Ubuntu VM's upstream server is 91.189.94.4, so we appended `and host 91.189.94.4` to the filter)
 
 ### 4. Converting NTP Capture to CSV
 We need to convert our output into .csv (comma-separated values) files to enable us to import them into Google Docs.
@@ -506,7 +506,7 @@ done
 Notes regarding the shell script above:
 
 * `tcpdump`'s `-tt` flag is to generate relative timestamps, so that we may easily calculate the amount of time between each response
-* `tcpdump`'s `src host` parameter is to restrict the packets to NTP responses and not NTP queries (we want to exclude the queries because it would make determining the interval between responses more difficult)
+* `tcpdump`'s `src host` parameter is to restrict the packets to NTP responses and not NTP queries (it's simpler if we pay attention to half the conversation)
 * the first `awk` command prints the interval (in seconds) between each NTP response
 * the `tail` command strips the very first response whose time interval is pathological (i.e. whose time interval is the number of seconds since [the Epoch](http://en.wikipedia.org/wiki/Unix_time), e.g. 1404857430)
 * the `sort` and `uniq` tells us the number of times a response was made for a given interval (e.g. "384 NTP responses had a 64-second polling interval")
@@ -618,9 +618,9 @@ Note:
 
 * we use the `join` command to merge the proper fields together; this is so our scatterplot will display properly. The join-field is the polling interval in seconds
 * we use 3 iterations of `join`
-  1. the first one merges the fields with a common polling interval
-  1. the second one merges the polling interval that's present in the first file but not the second
-  1. the final one merges the polling interval that's present in the second file but not the first
+  1. the first one merges the fields with common polling intervals
+  1. the second one merges the polling intervals that are present in the first file but not the second
+  1. the final one merges the polling intervals that are present in the second file but not the first
 * we invoke `sort` in order to keep our temporary files lexically collated, a requirement of `join`
 * we create a series of temporary files, the last one of which (e.g. `5192.17.csv`) we will import into Google Docs
 * we need to perform one final `sort` before import (we need to sort numerically, not lexically):
