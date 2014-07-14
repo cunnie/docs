@@ -558,7 +558,7 @@ do
   tcpdump -tt -nr ~/Downloads/ntp_upstream_kvm.pcap src host $NTP_SERVER |
    awk 'BEGIN {prev = 0 }; { printf "%d\n", $1 -prev; prev = $1 }' |
    tail +2 | sort | uniq -c |
-   awk "BEGIN { print \"polling interval (seconds), ESXi/Ubu/$NTP_SERVER\" }
+   awk "BEGIN { print \"polling interval (seconds), KVM/FB/$NTP_SERVER\" }
         { printf \"%d,%d\n\", \$2, \$1 }" |
    sort > /tmp/kvm-fb-$NTP_SERVER.csv
 done
@@ -569,13 +569,13 @@ done
 tcpdump -tt -nr ~/Downloads/ntp_upstream_esxi.pcap src host 91.189.94.4 |
  awk 'BEGIN {prev = 0 }; { printf "%d\n", $1 -prev; prev = $1 }' |
  tail +2 | sort | uniq -c |
- awk "BEGIN { print \"polling interval (seconds), OS X\" }
+ awk "BEGIN { print \"polling interval (seconds), ESXi/Ubu\" }
    { printf \"%d,%d\n\", \$2, \$1 }" |
  sort > /tmp/esxi-ubu.csv
 ```
 
 ### 5. Merging the 17 .csv Files
-Next we need to merge the above files into one file that we can easily import. We use the `join` command to merge them, but it only works on 2 files at a time, so we need to be clever to merge all of them. Let's merge the first 2:
+Next we need to merge the above files into one file that we can easily import into Google Docs.
 
 ```
 COMMAS=''
@@ -591,7 +591,16 @@ for CSV_FILE in *.csv; do
   COMMAS="$COMMAS,"
 done
 ```
-We leave the task of merging the remaining .csv files to the reader.
+Note:
+
+* we use the `join` command to merge the proper fields together; this is so our scatterplot will display properly. The join-field is the polling interval in seconds
+* we use 3 iterations of `join`
+  1. the first one merges the fields with a common polling interval
+  1. the second one merges the polling interval that's present in the first file but not the second
+  1. the final one merges the polling interval that's present in the second file but not the first
+* we invoke `sort` in order to keep our temporary files lexically collated, a requirement of `join`
+* we create a series of temporary files, the last one of which (e.g. `5192.17.csv`) we will import into Google Docs
+
 
 
 ---
