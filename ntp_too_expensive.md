@@ -272,21 +272,39 @@ The default polling intervals of `ntpd` vary as much as 64s (the minimum) to 102
 
 We discover that clients running on certain hypervisors correlate strongly in the amount of polling (e.g. the VirtualBox NTP clients poll at the default minimum poll interval, 64 seconds).
 
+[caption id="attachment_29440" align="alignnone" width="300"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/07/ntp_polling.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/07/ntp_polling-300x231.png" alt="Chart of NTP Polling Intervals" width="300" height="231" class="size-medium wp-image-29440" /></a> NTP Polling Intervals over a 3-hour period. Note the heavy cluster of dots around 64 seconds—the minimum polling interval[/caption]
+
+[caption id="attachment_29441" align="alignnone" width="300"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/07/64_seconds.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/07/64_seconds-300x247.png" alt="Close-up of the 64-second polling interval" width="300" height="247" class="size-medium wp-image-29441" /></a> A close-up of the 64-second polling interval ("minpoll").  Notice the dots are mostly VirtualBox with a sprinkling of KVM. NTP clients perform poorly under those hypervisors.[/caption]
+
+By examining the chart (the chart and the underlying data can be viewed on [Google Docs](https://docs.google.com/spreadsheets/d/1Vfrt6jZSc7FI5AxLt9F-upinBkydbVQlzxXCoKBbJpI/edit?usp=sharing)), we can see the following:
+
+* The guest VMs running under VirtualBox perform the worst (with one exception: Windows). Note that their polling intervals are clustered around the 64-second mark&mdash;the minimum allowed polling interval.
+* The Windows VM appears to query for time but once a day. It doesn't appear to be running `ntpd`; rather, it appears to set the time via the NTP protocol with a proprietary Microsoft client.
+* The OS X host only queried its NTP server once during a 3-hour period. Since this value (10800 seconds) is more than the default `maxpoll` value (1024 seconds), we suspect that OS X uses a proprietary daemon and not `ntpd`.
+* The guest VM running under ESXi performs quite well; although its datapoint is obscured in the chart, if one were to browse the underlying data, one would see that its datapoints are clustered around `maxpoll`, i.e. 1024 seconds.
+* The guest VM running under Xen (AWS) also performs quite well; its datapoints are also clustered around `maxpoll`.
+* The guest VM running under KVM performs better than the VirtualBox VMs, which is admittedly damning with faint praise. Their polling intervals tend to cluster around 128 seconds, with smaller clusters at 64 and 256 seconds.
+
+
+
+
 <table>
 <tr>
 <th>Guest Operating System</th><th>Hypervisor</th><th>ntpd version</th><th>Average polling interval (higher is better)</th>
 </tr><tr>
-<td>Ubuntu 14.04 64-bit</td><td>VirtualBox 4.3.12 r93733 on OS X 10.9.4</td><td>4.2.6p5</td><td>64</td>
+<td>Ubuntu 14.04 64-bit</td><td>VirtualBox 4.3.12 r93733 on OS X 10.9.4</td><td>4.2.6p5</td><td>126</td>
 </tr><tr>
-<td>FreeBSD 10.0 64-bit</td><td>VirtualBox 4.3.12 r93733 on OS X 10.9.4</td><td>4.2.4p8</td><td>64</td>
+<td>FreeBSD 10.0 64-bit</td><td>VirtualBox 4.3.12 r93733 on OS X 10.9.4</td><td>4.2.4p8</td><td>62</td>
 </tr><tr>
-<td>Windows 7 Pro 64-bit</td><td>VirtualBox 4.3.12 r93733 on OS X 10.9.4</td><td>N/A</td><td>1000</td>
+<td>Windows 7 Pro 64-bit</td><td>VirtualBox 4.3.12 r93733 on OS X 10.9.4</td><td>N/A</td><td>10800</td>
 </tr><tr>
-<td>Ubuntu 13.04 64-bit</td><td>AWS (Xen), t1.micro</td><td>4.2.6p5</td><td>1000</td>
+<td></td><td>OS X 10.9.4</td><td>N/A</td><td>86400</td>
 </tr><tr>
-<td>FreeBSD 9.2 64-bit</td><td>Hetzner (KVM), <a href=""http://www.hetzner.de/en/hosting/produkte_vserver/vq7">VQ7</a></td><td>4.2.4p8</td><td>?</td>
+<td>Ubuntu 13.04 64-bit</td><td>AWS (Xen), t1.micro</td><td>4.2.6p5</td><td>1056</td>
 </tr><tr>
-<td>Ubuntu 12.04 64-bit</td><td>ESXi 5.5</td><td>4.2.6p3</td><td>?</td>
+<td>FreeBSD 9.2 64-bit</td><td>Hetzner (KVM), <a href=""http://www.hetzner.de/en/hosting/produkte_vserver/vq7">VQ7</a></td><td>4.2.4p8</td><td>146</td>
+</tr><tr>
+<td>Ubuntu 12.04 64-bit</td><td>ESXi 5.5</td><td>4.2.6p3</td><td>1048</td>
 </tr>
 </table>
 
@@ -324,9 +342,14 @@ We wish we had the resources to characterize embedded systems&mdash;sometimes th
 
 #### Why Windows and OS X NTP Clients Don't Matter
 
-Windows and Apple clients don't matter. Why? Because both Microsoft and Apple have made NTP servers available (time.windows.com and time.apple.com, respectively) *and* have made them the default NTP server for their operating system.  We suspect that fewer than 1% of our NTP clients are either Windows or OS X (but we have no data to confirm that).
+Windows and Apple clients don't matter. Why?
 
-Regardless of their usefulness, we're characterizing the behavior of their clients because it's easy.
+* They are not our NTP clients. Both Microsoft and Apple have made NTP servers available (time.windows.com and time.apple.com, respectively) *and* have made them the default NTP server for their operating system.
+* They rarely query for time: Windows 7 only once a day, and OS X every few hours.
+
+We suspect that fewer than 1% of our NTP clients are either Windows or OS X (but we have no data to confirm that).
+
+Regardless of its usefulness, we're characterizing the behavior of their clients.
 
 ### 2. Setting Up the NTP Clients
 
@@ -600,7 +623,18 @@ Note:
   1. the final one merges the polling interval that's present in the second file but not the first
 * we invoke `sort` in order to keep our temporary files lexically collated, a requirement of `join`
 * we create a series of temporary files, the last one of which (e.g. `5192.17.csv`) we will import into Google Docs
+* we need to perform one final `sort` before import (we need to sort numerically, not lexically):
 
+```
+sort -g < 5192.17.csv > final.csv
+```
+
+#### 6. Mastering Google Docs
+In order to create our scatterplot, we must comply with Google's requirements.  For example, each column needs at least 1 datapoint.
+
+* we add a value of 1 polling interval of 10800 seconds to the *OS X* column. During our 3-hour packet capture, our OS X host only queried its NTP server once, and we removed that packet (we measure intervals between packets, and we need at least 2 packets measure). Our data now indicates that OS X queries once every 3 hours.
+* we remove the column *VB/FB/72.20.40.62*. That NTP server is unreachable/broken and has no data points.
+* we add a value of 1 polling interval of 86400 seconds to the *VB/W7* column. Windows 7 appears to only query for time information once per day (not discovered in this packet capture but in an earlier one)
 
 
 ---
