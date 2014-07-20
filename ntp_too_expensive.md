@@ -296,9 +296,9 @@ By examining the chart (the chart and the underlying data can be viewed on [Goog
 </tr><tr>
 <td>FreeBSD 10.0 64-bit</td><td>VirtualBox 4.3.12 r93733 on OS X 10.9.4</td><td>4.2.4p8</td><td>62</td>
 </tr><tr>
-<td>Windows 7 Pro 64-bit</td><td>VirtualBox 4.3.12 r93733 on OS X 10.9.4</td><td>N/A</td><td>10800</td>
+<td>Windows 7 Pro 64-bit</td><td>VirtualBox 4.3.12 r93733 on OS X 10.9.4</td><td>N/A</td><td>86400</td>
 </tr><tr>
-<td></td><td>OS X 10.9.4</td><td>N/A</td><td>86400</td>
+<td></td><td>OS X 10.9.4</td><td>N/A</td><td>10800</td>
 </tr><tr>
 <td>Ubuntu 13.04 64-bit</td><td>AWS (Xen), t1.micro</td><td>4.2.6p5</td><td>1056</td>
 </tr><tr>
@@ -636,6 +636,8 @@ In order to create our scatterplot, we must comply with Google's requirements.  
 * we remove the column *VB/FB/72.20.40.62*. That NTP server is unreachable/broken and has no data points.
 * we add a value of 1 polling interval of 86400 seconds to the *VB/W7* column. Windows 7 appears to only query for time information once per day (not discovered in this packet capture but in an earlier one)
 
+#### *Correction: July 16, 2014*
+*An earlier version of this blog post had incorrectly swapped the values of the polling intervals of the OS X and the Windows 7 clients*
 
 ---
 #### Footnotes
