@@ -296,19 +296,20 @@ By examining the chart (the chart and the underlying data can be viewed on [Goog
 </tr><tr>
 <td>FreeBSD 10.0 64-bit</td><td>VirtualBox 4.3.12 r93733 on OS X 10.9.4</td><td>4.2.4p8</td><td>62</td>
 </tr><tr>
-<td>Windows 7 Pro 64-bit</td><td>VirtualBox 4.3.12 r93733 on OS X 10.9.4</td><td>N/A</td><td>86400</td>
+<td>Windows 7 Pro 64-bit</td><td>VirtualBox 4.3.12 r93733 on OS X 10.9.4</td><td>N/A</td><td>N/A <sup><a href='#polling_costs'>[2]</a></sup> </sup></td>
 </tr><tr>
-<td></td><td>OS X 10.9.4</td><td>N/A</td><td>10800</td>
+<td></td><td>OS X 10.9.4</td><td>N/A</td><td>16614</td>
 </tr><tr>
-<td>Ubuntu 13.04 64-bit</td><td>AWS (Xen), t1.micro</td><td>4.2.6p5</td><td>1056</td>
+<td>Ubuntu 13.04 64-bit</td><td>Xen (AWS), t1.micro</td><td>4.2.6p5</td><td>1056</td>
 </tr><tr>
-<td>FreeBSD 9.2 64-bit</td><td>Hetzner (KVM), <a href=""http://www.hetzner.de/en/hosting/produkte_vserver/vq7">VQ7</a></td><td>4.2.4p8</td><td>146</td>
+<td>FreeBSD 9.2 64-bit</td><td>KVM (Hetzner), <a href=""http://www.hetzner.de/en/hosting/produkte_vserver/vq7">VQ7</a></td><td>4.2.4p8</td><td>146</td>
 </tr><tr>
 <td>Ubuntu 12.04 64-bit</td><td>ESXi 5.5</td><td>4.2.6p3</td><td>1048</td>
 </tr>
 </table>
 
 ## Methodology
+The remainder of this blog posts discusses the methodology we used to collect and present the data.
 
 ### 1. Choosing the Hypervisors and OSes to Characterize
 
@@ -344,8 +345,8 @@ We wish we had the resources to characterize embedded systems&mdash;sometimes th
 
 Windows and Apple clients don't matter. Why?
 
-* They are not our NTP clients. Both Microsoft and Apple have made NTP servers available (time.windows.com and time.apple.com, respectively) *and* have made them the default NTP server for their operating system.
-* They rarely query for time: Windows 7 only once a day, and OS X every few hours.
+* They are not our NTP server's clients. Both Microsoft and Apple have made NTP servers available (time.windows.com and time.apple.com, respectively) *and* have made them the default NTP server for their operating system.
+* They rarely query for time: OS X polls every few hours, and Windows 7's polling was so infrequent that we did measure a single query over the course of 3 days.
 
 We suspect that fewer than 1% of our NTP clients are either Windows or OS X (but we have no data to confirm that).
 
@@ -357,12 +358,12 @@ The ESXi, Xen (AWS), and KVM (Hetzner) clients have already been set up (not for
 
 #### The 3 VirtualBox and 1 Bare-Iron NTP Clients
 
-We choose one machine of each of the four primary Operating Systems (OS X, Windows, Linux, *BSD).  We define hostnames, IP addresses, and, in the case of FreeBSD and Linux, ethernet MAC addresses (we use locally-administered MAC addresses<sup> [[3]](#local_mac) </sup>). Strictly speaking, creating hostnames, defining MAC addresses, creating DHCP entries, is not necessary. We put in the effort because we prefer structure:
+We choose one machine of each of the four primary Operating Systems (OS X, Windows, Linux, *BSD).  We define hostnames, IP addresses, and, in the case of FreeBSD and Linux, ethernet MAC addresses (we use locally-administered MAC addresses<sup> [[4]](#local_mac) </sup>). Strictly speaking, creating hostnames, defining MAC addresses, creating DHCP entries, is not necessary. We put in the effort because we prefer structure:
 
 * hostname&harr;IP address mappings are centralized in DNS (which is technically a distributed, not centralized, system, but we're not here to quibble)
 * IP address&harr;MAC address mappings are centralized in one DHCP configuration file rather than being balkanized in various Vagrantfiles.
 
-Here are the [Four Hosts of the Apocalypse](http://en.wikipedia.org/wiki/Four_Horsemen_of_the_Apocalypse)<sup> [[4]](#hosts) </sup> (with apologies to St. John the Evangelist)
+Here are the [Four Hosts of the Apocalypse](http://en.wikipedia.org/wiki/Four_Horsemen_of_the_Apocalypse)<sup> [[5]](#hosts) </sup> (with apologies to St. John the Evangelist)
 
 
 <table>
@@ -442,7 +443,7 @@ EOF
 vagrant up
 ```
 
-The [FreeBSD Vagrantfile](https://github.com/cunnie/vagrant_vms/blob/master/fbsd_10.0/Vagrantfile) is slightly different<sup> [[5]](#vagrant_fbsd) </sup> than the [Ubuntu Vagrantfile](https://github.com/cunnie/vagrant_vms/blob/master/ubuntu_14.04/Vagrantfile).
+The [FreeBSD Vagrantfile](https://github.com/cunnie/vagrant_vms/blob/master/fbsd_10.0/Vagrantfile) is slightly different<sup> [[6]](#vagrant_fbsd) </sup> than the [Ubuntu Vagrantfile](https://github.com/cunnie/vagrant_vms/blob/master/ubuntu_14.04/Vagrantfile).
 
 ### 3. Capturing the NTP Traffic
 
@@ -636,8 +637,8 @@ In order to create our scatterplot, we must comply with Google's requirements.  
 * we remove the column *VB/FB/72.20.40.62*. That NTP server is unreachable/broken and has no data points.
 * we add a value of 1 polling interval of 86400 seconds to the *VB/W7* column. Windows 7 appears to only query for time information once per day (not discovered in this packet capture but in an earlier one)
 
-#### *Correction: July 16, 2014*
-*An earlier version of this blog post had incorrectly swapped the values of the polling intervals of the OS X and the Windows 7 clients*
+#### *Correction: July 20, 2014*
+*An earlier version of this blog post had incorrect values of the polling intervals of the OS X and the Windows 7 clients. Both clients polled so infrequently that we subsequently ran a 3-day trace (instead of the original 3-hour trace)for those clients.*
 
 ---
 #### Footnotes
@@ -655,15 +656,17 @@ $500<br />
 
 = 46296296296 polls = **46.29** Gpolls
 
-<a name="fbsd_love"><sup>2</sup></a> The inclusion of FreeBSD in the list of Operating Systems is made less for its prevalence (it is vastly overshadowed by Linux in terms of deployments) than for the strong emotional attachment the author has for it.
+<a name="w7_nil"><sup>2</sup></a> Over the course of a 72-hour (3 day) trace, we were unable to *capture a single NTP packet with a source or destination of our Windows 7 client machine*. Our conclusion is that Windows is either polling extremely infrequently (more likely) or that it's using a non-NTP protocol to synchronize time (less likely).
 
-<a name="local_mac"><sup>3</sup></a> To define our own addresses without fear of colliding with an existing address, we set the [locally administered bit](http://en.wikipedia.org/wiki/MAC_address#Address_details) (the second least significant bit of the most significant byte) to 1.
+<a name="fbsd_love"><sup>3</sup></a> The inclusion of FreeBSD in the list of Operating Systems is made less for its prevalence (it is vastly overshadowed by Linux in terms of deployments) than for the strong emotional attachment the author has for it.
 
-<a name="hosts"><sup>4</sup></a> The term "host" has a specific connotation within the context of virtualization, and we are deliberately mis-using using that term to achieve poetic effect (i.e. "hosts" sounds similar to "horsemen"). But let's be clear on our terms: a "host" is an Operating System (*usually* running on bare-iron, but optionally running as a guest VM on another host) running virtualization software (e.g. VirtualBox, Fusion, ESXi, Xen); a "guest" is an operating system that's running on top of the virtualization software which the host is providing.
+<a name="local_mac"><sup>4</sup></a> To define our own addresses without fear of colliding with an existing address, we set the [locally administered bit](http://en.wikipedia.org/wiki/MAC_address#Address_details) (the second least significant bit of the most significant byte) to 1.
+
+<a name="hosts"><sup>5</sup></a> The term "host" has a specific connotation within the context of virtualization, and we are deliberately mis-using using that term to achieve poetic effect (i.e. "hosts" sounds similar to "horsemen"). But let's be clear on our terms: a "host" is an Operating System (*usually* running on bare-iron, but optionally running as a guest VM on another host) running virtualization software (e.g. VirtualBox, Fusion, ESXi, Xen); a "guest" is an operating system that's running on top of the virtualization software which the host is providing.
 
 In our example only one of the 4 hosts is truly a host&mdash;the OS X box is a true host (it provides the virtualization software (VirtualBox) on top of which the remaining 3 operating systems (Ubuntu, FreeBSD, and Windows 7) are running).
 
-<a name="vagrant_fbsd"><sup>5</sup></a> We'd like to point out the shortcomings of the FreeBSD setup versus the Ubuntu setup: in the Ubuntu setup, we were able to use a directive (`use_dhcp_assigned_default_route`) to configure Ubuntu to send outbound traffic via its bridged interface. Unfortunately, that directive didn't work for our FreeBSD VM. So we used a script to set the default route, *but the script is not executed when FreeBSD VM is rebooted*, and the FreeBSD VM will revert to using the NAT interface instead of the bridged interface, which means we will no longer be able to distinguish the FreeBSD NTP traffic from the OS X host's NTP traffic.
+<a name="vagrant_fbsd"><sup>6</sup></a> We'd like to point out the shortcomings of the FreeBSD setup versus the Ubuntu setup: in the Ubuntu setup, we were able to use a directive (`use_dhcp_assigned_default_route`) to configure Ubuntu to send outbound traffic via its bridged interface. Unfortunately, that directive didn't work for our FreeBSD VM. So we used a script to set the default route, *but the script is not executed when FreeBSD VM is rebooted*, and the FreeBSD VM will revert to using the NAT interface instead of the bridged interface, which means we will no longer be able to distinguish the FreeBSD NTP traffic from the OS X host's NTP traffic.
 
 The workaround is to never reboot the FreeBSD VM. Instead, we use `vagrant up` and `vagrant destroy` when we need to bring up or shut down the FreeBSD VM. We incur a penalty in that it takes slightly longer to boot our machine via `vagrant up`.
 
