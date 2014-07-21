@@ -313,12 +313,13 @@ The remainder of this blog posts discusses the methodology we used to collect an
 
 ### 1. Choosing the Hypervisors and OSes to Characterize
 
-We decide to characterize the NTP traffic of four different operating systems:
+We decide to characterize the NTP traffic of several different operating systems:
 
 1. Windows 7 64-bit
 2. OS X 10.9.3
 3. Ubuntu 64-bit (14.04, 13.04, and 12.04)
-4. FreeBSD<sup> [[2]](#fbsd_love) </sup> 64-bit (10.0 and 9.2)
+4. Debian 32-bit
+4. FreeBSD<sup> [[3]](#fbsd_love) </sup> 64-bit (10.0 and 9.2)
 
 We decide to test the following Hypervisors:
 
