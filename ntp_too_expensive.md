@@ -304,6 +304,8 @@ By examining the chart (the chart and the underlying data can be viewed on [Goog
 </tr><tr>
 <td>FreeBSD 9.2 64-bit</td><td>KVM (Hetzner), <a href=""http://www.hetzner.de/en/hosting/produkte_vserver/vq7">VQ7</a></td><td>4.2.4p8</td><td>146</td>
 </tr><tr>
+<td>Ubuntu 14.04.1 64-bit</td><td>KVM (Hetzner), <a href=""http://www.hetzner.de/en/hosting/produkte_vserver/vq7">VQ7</a></td><td>4.2.4p8</td><td>146</td>
+</tr><tr>
 <td>Ubuntu 12.04 64-bit</td><td>ESXi 5.5</td><td>4.2.6p3</td><td>1048</td>
 </tr>
 </table>
