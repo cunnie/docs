@@ -457,12 +457,16 @@ Here are the commands we used:
 ```
 # on our internal firewall
 sudo tcpdump -ni em0 -w /tmp/ntp_vbox.pcap -W 1 -G 10800 port ntp
-# on our AWS t1.micro instance
-sudo tcpdump -w /tmp/ntp_upstream_xen.pcap -W 1 -G 10800 port ntp and \( host 216.66.0.142 or host 50.97.210.169 or host 72.14.183.239 or host 108.166.189.70 \)
-# our our Hetzner FreeBSD instance
-sudo tcpdump -i re0 -w /tmp/ntp_upstream_kvm.pcap -W 1 -G 10800 port ntp and \( host 2a01:4f8:141:282::5:3 or host 2a01:4f8:201:4101::5 or host 78.46.60.42 or host 129.70.132.32 \)
+# on our AWS t1.micro instance, traffic to upstream servers only
+sudo tcpdump -w /tmp/ntp_xen_linux.pcap -W 1 -G 10800 port ntp and \( host 216.66.0.142 or host 50.97.210.169 or host 72.14.183.239 or host 108.166.189.70 \)
+# on our Hetzner FreeBSD instance, traffic to upstream servers only
+sudo tcpdump -i re0 -w /tmp/ntp_kvm_fbsd.pcap -W 1 -G 10800 port ntp and \( host 2a01:4f8:141:282::5:3 or host 2a01:4f8:201:4101::5 or host 78.46.60.42 or host 129.70.132.32 \)
 # our ESXi 5.5 instance
-sudo tcpdump -w /tmp/ntp_upstream_esxi.pcap -W 1 -G 10800 port ntp and host 91.189.94.4
+sudo tcpdump -w /tmp/ntp_esxi_ubuntu.pcap -W 1 -G 10800 port ntp and host 91.189.94.4
+# on our bare-iron Raspberry Pi ubuntu (actually raspbian)
+sudo tcpdump -w /tmp/ntp_raspbian.pcap -W 1 -G 10800 port ntp
+# on our Hetzner VQ7
+sudo tcpdump -w /tmp/ntp_kvm_ubuntu.pcap -W 1 -G 10800 port ntp
 ```
 Notes
 
@@ -566,7 +570,7 @@ for NTP_SERVER in \
   72.14.183.239 \
   108.166.189.70
 do
-  tcpdump -tt -nr ~/Downloads/ntp_upstream_xen.pcap src host $NTP_SERVER |
+  tcpdump -tt -nr ~/Downloads/ntp_xen_linux.pcap src host $NTP_SERVER |
    awk 'BEGIN {prev = 0 }; { printf "%d\n", $1 -prev; prev = $1 }' |
    tail +2 | sort | uniq -c |
    awk "BEGIN { print \"polling interval (seconds), Xen/Ubu/$NTP_SERVER\" }
@@ -582,7 +586,7 @@ for NTP_SERVER in \
   2a01:4f8:201:4101::5 \
   78.46.60.42
 do
-  tcpdump -tt -nr ~/Downloads/ntp_upstream_kvm.pcap src host $NTP_SERVER |
+  tcpdump -tt -nr ~/Downloads/ntp_kvm_fbsd.pcap src host $NTP_SERVER |
    awk 'BEGIN {prev = 0 }; { printf "%d\n", $1 -prev; prev = $1 }' |
    tail +2 | sort | uniq -c |
    awk "BEGIN { print \"polling interval (seconds), KVM/FB/$NTP_SERVER\" }
@@ -593,7 +597,7 @@ done
 #### ESXi Client
 
 ```
-tcpdump -tt -nr ~/Downloads/ntp_upstream_esxi.pcap src host 91.189.94.4 |
+tcpdump -tt -nr ~/Downloads/ntp_esxi_ubuntu.pcap src host 91.189.94.4 |
  awk 'BEGIN {prev = 0 }; { printf "%d\n", $1 -prev; prev = $1 }' |
  tail +2 | sort | uniq -c |
  awk "BEGIN { print \"polling interval (seconds), ESXi/Ubu\" }
