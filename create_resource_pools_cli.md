@@ -78,7 +78,7 @@ We can now create our resource pool **test_rp** using the following incantation 
 ```
 resource_pool.create test_rp /vcenter.cf.nono.com/Datacenter/computers/Cluster/resourcePool/ --cpu-reservation 0 --cpu-limit 18446744073709551615 --cpu-expandable --mem-limit 18446744073709551615 --mem-reservation 0 --mem-expandable
 ```
-We verify that the resource pool `rest_rp` has been created by using the vSphere Web Client and browsing to **vCenter &rarr; Resource Pools**
+We verify that the resource pool `test_rp` has been created by using the vSphere Web Client and browsing to **vCenter &rarr; Resource Pools**
 ### Creating Additional Resource Pools
 In order to create additional resource pools, we use rvc's shell's feature which lets you use Ruby to invoke rvc's underlying method. We instruct rvc to execute a line as Ruby code by pre-pending a '/' in front of the line.
 
