@@ -1,5 +1,5 @@
 # Creating Resource Pools and Port Groups via CLI
-Creating a VMware vSphere [resource pool](https://www.vmware.com/support/developer/vc-sdk/visdk2xpubs/ReferenceGuide/vim.ResourcePool.html) is [easily accomplished](http://pubs.vmware.com/vsphere-51/index.jsp?topic=%2Fcom.vmware.vsphere.vcenterhost.doc%2FGUID-9093B588-F9CC-4411-8052-176F3A9A0BCE.html) via the vSphere Web Client; however, the creation of many resource pools quickly devolves into a clickfest, and introduces the possibility of manual error.
+Creating a VMware vSphere [resource pool](https://www.vmware.com/support/developer/vc-sdk/visdk2xpubs/ReferenceGuide/vim.ResourcePool.html) is [easily accomplished](http://pubs.vmware.com/vsphere-51/index.jsp?topic=%2Fcom.vmware.vsphere.vcenterhost.doc%2FGUID-9093B588-F9CC-4411-8052-176F3A9A0BCE.html) via the vSphere Web Client; however, the creation of multiple resource pools quickly devolves into a clickfest, and introduces the possibility of manual error.
 
 This blog post describes how we created dozens of resource pools for the Cloud Foundry development environment using [rvc](https://github.com/vmware/rvc). This blog post also describes the creation of VMware vSphere [distributed port groups](http://pubs.vmware.com/vsphere-51/index.jsp?topic=%2Fcom.vmware.vsphere.networking.doc%2FGUID-AB1D1CD3-646A-490D-8A15-1A9DBF0AE8D8.html).
 
