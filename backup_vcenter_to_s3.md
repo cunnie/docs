@@ -3,7 +3,7 @@ The Cloud Foundry Development Teams use a heavily-customized VMware vCenter Serv
 
 This blog post describes how we configured our VCSA to backup its databases nightly to Amazon S3 (Amazon's cloud storage service).
 
-Best of all, the storage costs are pennies. <sup>[[1]](#s3_prices)</sup>
+The cost for offsite storage of the databases? Pennies. <sup>[[1]](#s3_prices)</sup>
 
 ### Why S3?
 We chose S3 for several reasons:
