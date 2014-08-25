@@ -3,6 +3,8 @@ The Cloud Foundry Development Teams use a heavily-customized VMware vCenter Serv
 
 This blog post describes how we configured our VCSA to backup its databases nightly to Amazon S3 (Amazon's cloud storage service).
 
+Best of all, the storage costs are pennies. <sup>[[1]](#s3_prices)</sup>
+
 ### Why S3?
 We chose S3 for several reasons:
 
@@ -30,8 +32,14 @@ We need to create a bucket, and we need a unique name (per Amazon: "*[The bucket
 * click **S3**
 * click **Create Bucket**
 * Bucket Name: **vcenter.cf.nono.com**; click **Create**
+
+[caption id="attachment_29879" align="alignnone" width="630"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/08/1_create_bucket.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/08/1_create_bucket-630x350.png" alt="We create the bucket on S3. We use the fully-qualified domain name (FQDN) of the vCenter we&#039;re backing up, and then we click create." width="630" height="350" class="size-large wp-image-29879" /></a> We create the bucket on S3. We use the fully-qualified domain name (FQDN) of the vCenter we're backing up, and then we click create.[/caption]
+
 * click **Lifecycle**
 * click **Add rule**
+
+[caption id="attachment_29880" align="alignnone" width="630"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/08/2_add_rule.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/08/2_add_rule-630x454.png" alt="To make sure that we don&#039;t waste money storing stale copies of our vCenter&#039;s databases, we need to add a rule (one that deletes files in the bucket that are older than 30 days)." width="630" height="454" class="size-large wp-image-29880" /></a> To make sure that we don't waste money storing stale copies of our vCenter's databases, we need to add a rule (one that deletes files in the bucket that are older than 30 days).[/caption]
+
 * click **Configure Rule** (rule applies to whole bucket)
 * select: Action on Objects: **Permanently Delete Only**
 	* Permanently Delete **30** days after the object's creation date
@@ -49,14 +57,20 @@ Interestingly, it's not the *name* of the user that is important; is is the *cre
 * click **Create New Group**
 * Group Name: **s3-uploaders**; click **Next Step**
 * Select Policy Template: **Amazon S3 Full Access**; click **Select**
+
+[caption id="attachment_29881" align="alignnone" width="630"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/08/3_s3_full_access.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/08/3_s3_full_access-630x500.png" alt="Before we can create a user whose sole function is to enable the uploading of the vCenter&#039;s databases backups, we must first create a group with restrictive permissions that only allow manipulation of S3 buckets (if the credentials are compromised, they can only be used to store data on S3 and not to spin up instances, modify domain names, etc....)." width="630" height="500" class="size-large wp-image-29881" /></a> Before we can create a user whose sole function is to enable the uploading of the vCenter's databases backups, we must first create a group with restrictive permissions that only allow manipulation of S3 buckets (if the credentials are compromised, they can only be used to store data on S3 and not to spin up instances, modify domain names, etc....).[/caption]
+
 * click **Next Step**
 * click **Create Group**
 * click **Users**
 * click **Create New Users**
-* Enter User Name **vcenter.cf.nono.com-backup**
+* Enter User Name **vcenter.cf.nono.com**
 * click **Create**
 * click **Download Credentials**; click **Close**
-* select user **vcenter.cf.nono.com-backup**
+
+[caption id="attachment_29882" align="alignnone" width="630"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/08/4_user_creds.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/08/4_user_creds-630x357.png" alt="We save our credentials. If we lose them, we will be unable to backup to S3, we will need to delete the user and create a new one with the same permissions (admittedly not a burdensome task, but one that&#039;s easily avoidable)." width="630" height="357" class="size-large wp-image-29882" /></a> We save our credentials. If we lose them, we will be unable to backup to S3, we will need to delete the user and create a new one with the same permissions (admittedly not a burdensome task, but one that's easily avoidable).[/caption]
+
+* select user **vcenter.cf.nono.com**
 * **User Actions &rarr; Add User to Groups**
 * select **s3-uploaders**; click **Add to Groups**
 
@@ -76,7 +90,12 @@ tar xf s3cmd-1.0.1.tar.gz
   Path to GPG program [/usr/bin/gpg]:
   Use HTTPS protocol [No]: y
    ...
-  Test access with supplied credentials? [Y/n]
+  Test access with supplied credentials? [Y/n] y
+  Please wait...
+  Success. Your access key and secret key worked fine :-)
+
+  Now verifying that encryption works...
+  Success. Encryption and decryption worked fine :-)
    ...
   Save settings? [y/N] y
 ```
@@ -84,25 +103,41 @@ tar xf s3cmd-1.0.1.tar.gz
 Download the backup script:
 
 ```
-curl -L https://raw.githubusercontent.com/cunnie/bin/master/vcenter_psql_bkup.sh -o /usr/local/sbin/vcenter_psql_bkup.sh
-chmod a+x /usr/local/sbin/vcenter_psql_bkup.sh
+curl -L https://raw.githubusercontent.com/cunnie/bin/master/vcenter_db_bkup.sh -o /usr/local/sbin/vcenter_db_bkup.sh
+chmod a+x /usr/local/sbin/vcenter_db_bkup.sh
 ```
 
-Now let's test it; it requires 2 parameters: the S3 bucket name and a file prefix (to which ".sql.zip" is appended):
+We need to modify the bucket name (it's hard-coded into the script) (normally we'd pass the bucket name as a parameter, but in this particular case we don't have that option *because* this script will be placed in `/etc/cron.daily`, and scripts in that location are executed without parameters passed to them).
+
+Let's replace the placeholder bucket name (`PLACEHOLDER_FOR_S3_BUCKET_NAME`) with our bucket name (`vcenter.cf.nono.com`):
 
 ```
-/usr/local/sbin/vcenter_psql_bkup.sh vcenter.cf.nono.com vblock-vcenter-private
+perl -pi -e 's/PLACEHOLDER_FOR_S3_BUCKET_NAME/vcenter.cf.nono.com/' /usr/local/sbin/vcenter_db_bkup.sh
 ```
+Now let's test it:
 
+```
+/usr/local/sbin/vcenter_db_bkup.sh
+```
 We check S3 to verify that our file was uploaded. A lightly-loaded vCenter may have a small 3MB file; a Vblock vCenter will have > 80MB file.
+
+[caption id="attachment_29918" align="alignnone" width="434"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/08/5_databases_on_s3.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/08/5_databases_on_s3.png" alt="We check to make sure that the two databases were backed up to our S3 bucket" width="434" height="296" class="size-full wp-image-29918" /></a> We check to make sure that the two databases were backed up to our S3 bucket[/caption]
 
 Create the symbolic link to /etc/cron.daily:
 
 ```
-ln -s /usr/local/sbin/vcenter_psql_bkup.sh /etc/cron.daily/
+ln -s /usr/local/sbin/vcenter_db_bkup.sh /etc/cron.daily/
 ```
 
+We check the following day to make sure that the database files were uploaded.
+
 ---
+### Disclaimers
+We don't know if what we're backing up is enough to restore a vCenter; we have never tried to restore a vCenter.
+
+### Footnotes
+<a name="s3_prices"><sup>1</sup></a> At the time of this writing, Amazon charges [$0.03 per GB per month](http://aws.amazon.com/s3/pricing/). Our current vCenter's databases size is 80MB, and thirty copies (one each day) works out to 2.4GB, which is less than 8 cents per month. Annual cost? $0.86.
+
 ### Acknowledgements
 Much of this blog post was based on internal Cloud Foundry documentation.
 
@@ -110,3 +145,4 @@ VMware Knowledge Base has two excellent articles regarding the backup of VCSAs:
 
 1. *[Backing up and restoring the vCenter Server Appliance vPostgres database](http://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=2034505)*.
 2. *[Backing up and restoring the vCenter Server Appliance Inventory Service database](http://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=2062682)*
+
