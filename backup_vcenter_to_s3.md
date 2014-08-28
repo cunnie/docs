@@ -179,28 +179,34 @@ VMware Knowledge Base has two excellent articles regarding the backup of VCSAs:
 </div>
 <br />
 
-Louis the XV, the penultimate King of France, had the prescience to realize that soon after his death a catastrophe of biblical proportions would sweep away the world as he knew it (the French Revolution would destroy the monarchy).
+Louis the XV, the second-to-last King of France, had the prescience to realize that soon after his death a catastrophe of biblical proportions would sweep away the world as he knew it (the French Revolution would destroy the monarchy).
 
-In this blog post, a catastrophe of biblical proportions will sweep away our vCenter as we know it, and we will attempt to restore the databases from that were backed up in a previous blog post, *[Backing up VCSA 5.5 DBs to S3: Part 1](http://pivotallabs.com/backing-vcsa-5-5-dbs-s3/)*.
+In this blog post, a catastrophe of biblical proportions will sweep away our vCenter as we know it, and we will attempt to restore the databases from backups (see *[Backing up VCSA 5.5 DBs to S3: Part 1](http://pivotallabs.com/backing-vcsa-5-5-dbs-s3/)*).
 
-We use this opportunity to see how vCenter reconciles differences between the restored databases and the real world:
+We use this opportunity to examine the manner in which vCenter reconciles differences between the restored databases and the real world:
 
-* the vCenter will have objects in its databases that have been destroyed by the flood (i.e. the *ante diluvian* objects); these objects will no longer exist but will have entries in the vCenter database.
-* the vCenter will not have objects in its database that were created after the backup (i.e. the *novo* objects); these objects exist but not in the vCenter database.
+* the vCenter will have objects in its databases that have been destroyed by the flood (i.e. the *ante diluvium* <sup>[[1]](#ante_diluvium)</sup> objects); these objects will no longer exist but will have entries in the vCenter databases.
+* the vCenter will not have objects in its database that were created after the backup (i.e. the *novus* objects); these objects exist but not in the vCenter databases.
 
 ### Procedure
 We do the following:
 
-* create an *ante diluvian* resource pool
-* create an *ante diluvian* VM and place it in the *ante diluvian* resource pool
-* create an *ante diluvian* distributed virtual switch
+* create an *ante diluvium* resource pool
+* create an *ante diluvium* VM and place it in the *ante diluvium* resource pool
+* create an *ante diluvium* distributed virtual switch
 
 * backup our vCenter
-* destroy the *ante diluvian* resource pool, VM, and distributed virtual switch
-* create a *novo* resource pool
-* create a *novo* VM
-* create a *novo* distributed virtual switch
+* destroy the *ante diluvium* resource pool, VM, and distributed virtual switch
+* create a *novus* resource pool
+* create a *novus* VM
+* create a *novus* distributed virtual switch
 
-* destroy our vCenter
+* destroy our vCenter (the flood)
 * restore the vCenter databases
-* determine the status of *ante diluvian* and *novo* objects
+* determine the status of *ante diluvium* and *novus* objects
+
+---
+### Footnotes
+
+<a name="ante_diluvium"><sup>1</sup></a> *Ante Diluvium*, Latin, *"Before the flood"*. *Novus*, Latin, *"new"*, as in *"Novus ordo seclorum"*
+
