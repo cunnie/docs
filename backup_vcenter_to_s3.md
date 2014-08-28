@@ -1,4 +1,6 @@
-# Backing up VCSA 5.5 DBs to S3
+# Backing up VCSA 5.5 DBs to S3: Part 1
+***[2014-08-28 this blog post has been updated to modify the cron.daily backup time and the S3 storage costs]***
+
 The Cloud Foundry Development Teams use a heavily-customized VMware vCenter Server Appliance (VCSA) 5.5. We needed to architect an offsite backup solution of the VCSA's databases to avoid days of lost developer time in the event of a catastrophic failure.
 
 This blog post describes how we configured our VCSA to backup its databases nightly to Amazon S3 (Amazon's cloud storage service).
@@ -119,7 +121,7 @@ Now let's test it:
 ```
 /usr/local/sbin/vcenter_db_bkup.sh
 ```
-We check S3 to verify that our file was uploaded. A lightly-loaded vCenter may have a small 3MB file; a Vblock vCenter will have > 80MB file.
+We check S3 to verify that our files were uploaded. A lightly-loaded vCenter may have a small (less than 3MB) files; a Vblock vCenter can easily have > 100MB files.
 
 [caption id="attachment_29918" align="alignnone" width="434"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/08/5_databases_on_s3.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/08/5_databases_on_s3.png" alt="We check to make sure that the two databases were backed up to our S3 bucket" width="434" height="296" class="size-full wp-image-29918" /></a> We check to make sure that the two databases were backed up to our S3 bucket[/caption]
 
@@ -129,6 +131,28 @@ Create the symbolic link to /etc/cron.daily:
 ln -s /usr/local/sbin/vcenter_db_bkup.sh /etc/cron.daily/
 ```
 
+#### 2.3 Modify cron.daily's kick-off time
+We decide to modify our cron.daily kick-off time so that our backups to not occur during working hours (our continuous integration tests failed when they tried to contact the vCenter while the backup was taking place (the backup script temporarily shuts down the `vmware-vpxd` and the `vmware-inventoryservice` services)).
+
+VMware doesn't allow one to [change the timezone](http://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=2057956) in the VCSA (it's locked to UTC), so instead we modified the start time of the `/etc/cron.daily` scripts by modifying the [mtime](http://www.unix.com/tips-and-tutorials/20526-mtime-ctime-atime.html) of the `/var/spool/cron/lastrun/cron.daily` directory.
+
+We need to know the following:
+
+* the offset of our timezone (PDT)from UTC (it's **-0700**)
+* the time we want to run our backup scripts (11pm PDT)
+
+We use the `touch` command to set the timestamp (tip: don't set it in the future; it'll kick off a backup within the next 15 minutes):
+
+```
+ls -ld /var/spool/cron/lastrun/cron.daily # check the current timestamp
+ -rw------- 1 root root 0 Aug 28 00:00 /var/spool/cron/lastrun/cron.daily
+touch --date="2 days ago 23:00 -0700" /var/spool/cron/lastrun/cron.daily
+ls -ld /var/spool/cron/lastrun/cron.daily # check the new timestamp
+ -rw------- 1 root root 0 Aug 27 06:00 /var/spool/cron/lastrun/cron.daily
+```
+
+We do a back-of-the-envelope check to make sure the timestamp is correct: 6am UTC Aug 27 is 11pm PDT Aug 26.  If we're typing this command in at 7pm Aug 27 PDT, then the backup will kick off at 11pm (24 hours after the timestamp).
+
 We check the following day to make sure that the database files were uploaded.
 
 ---
@@ -136,7 +160,7 @@ We check the following day to make sure that the database files were uploaded.
 We don't know if what we're backing up is enough to restore a vCenter; we have never tried to restore a vCenter.
 
 ### Footnotes
-<a name="s3_prices"><sup>1</sup></a> At the time of this writing, Amazon charges [$0.03 per GB per month](http://aws.amazon.com/s3/pricing/). Our current vCenter's databases size is 80MB, and thirty copies (one each day) works out to 2.4GB, which is less than 8 cents per month. Annual cost? $0.86.
+<a name="s3_prices"><sup>1</sup></a> At the time of this writing, Amazon charges [$0.03 per GB per month](http://aws.amazon.com/s3/pricing/). Our current vCenter's databases size is 191MB, and thirty copies (one each day) works out to 2.4GB, which is less than 18 cents per month. Annual cost? $2.07.
 
 ### Acknowledgements
 Much of this blog post was based on internal Cloud Foundry documentation.
