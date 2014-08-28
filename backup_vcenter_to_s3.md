@@ -170,3 +170,37 @@ VMware Knowledge Base has two excellent articles regarding the backup of VCSAs:
 1. *[Backing up and restoring the vCenter Server Appliance vPostgres database](http://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=2034505)*.
 2. *[Backing up and restoring the vCenter Server Appliance Inventory Service database](http://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=2062682)*
 
+# Backing up VCSA 5.5 DBs to S3: Part 2: Restoration
+<div style="text-align: center; font-style: italic;">
+"Après moi, le déluge"
+<div style="text-indent: 120px;">
+&mdash;Louis XV of France
+</div>
+</div>
+<br />
+
+Louis the XV, the penultimate King of France, had the prescience to realize that soon after his death a catastrophe of biblical proportions would sweep away the world as he knew it (the French Revolution would destroy the monarchy).
+
+In this blog post, a catastrophe of biblical proportions will sweep away our vCenter as we know it, and we will attempt to restore the databases from that were backed up in a previous blog post, *[Backing up VCSA 5.5 DBs to S3: Part 1](http://pivotallabs.com/backing-vcsa-5-5-dbs-s3/)*.
+
+We use this opportunity to see how vCenter reconciles differences between the restored databases and the real world:
+
+* the vCenter will have objects in its databases that have been destroyed by the flood (i.e. the *ante diluvian* objects); these objects will no longer exist but will have entries in the vCenter database.
+* the vCenter will not have objects in its database that were created after the backup (i.e. the *novo* objects); these objects exist but not in the vCenter database.
+
+### Procedure
+We do the following:
+
+* create an *ante diluvian* resource pool
+* create an *ante diluvian* VM and place it in the *ante diluvian* resource pool
+* create an *ante diluvian* distributed virtual switch
+
+* backup our vCenter
+* destroy the *ante diluvian* resource pool, VM, and distributed virtual switch
+* create a *novo* resource pool
+* create a *novo* VM
+* create a *novo* distributed virtual switch
+
+* destroy our vCenter
+* restore the vCenter databases
+* determine the status of *ante diluvian* and *novo* objects
