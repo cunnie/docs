@@ -208,5 +208,5 @@ We do the following:
 ---
 ### Footnotes
 
-<a name="ante_diluvium"><sup>1</sup></a> *Ante Diluvium*, Latin, *"Before the flood"*. *Novus*, Latin, *"new"*, as in *"Novus ordo seclorum"*
+<a name="ante_diluvium"><sup>1</sup></a> *Ante Diluvium*, Latin, *"Before the flood"*. *Novus*, Latin, *"new"*, as in, *"Novus ordo seclorum"*
 
