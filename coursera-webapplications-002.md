@@ -105,3 +105,82 @@ He consistently confuses forward-slash ("/") and backward-slash ("\").  Look at 
 I will try do the exercises along with him the first time I listen to a lecture because I'll probably have to do them along with him later when I work on the assignment.
 
 Module 3's assignment is Assignment 2, **not** Assignment 3.
+
+### Module 5 Assignment
+Module 5's assignment is **Assignment 3**; don't let the inconsistent numbering scheme throw you off.
+
+#### 1. List Post's Comments
+
+edit `app/views/posts/show.html.erb` and add the following:
+
+```
+ <h2>Comments</h2>
+   <% @post.comments.each do |comment| %>
+     <%= div_for comment do %>
+     <p>
+       <strong>Posted <%= time_ago_in_words(comment.created_at) %></strong><br />
+       <%= h(comment.body) %>
+     </p>
+   <% end %>
+ <% end %>
+```
+
+#### 2. Create new comment form on Post's page
+
+edit `app/views/posts/show.html.erb` and add the following:
+
+```
+<%= form_for([@post, Comment.new]) do |f| %>
+  <p><%= f.label :body, "New Comment" %><br />
+    <%= f.text_area :body %>
+  </p>
+  <p><%= f.submit "Add Comment" %></p>
+<% end %>
+```
+We need to pass in the post's id so that the user isn't prompted to fill it out: edit `app/controllers/comments_controller.rb` and modify as follows:
+
+```
+def create
+  @post = Post.find(params[:post_id])
+  @comment = @post.comments.create(comment_params)
+  
+  respond_to do |format|
+    if @comment.save
+      format.html { redirect_to @post, notice: 'Comment was successfully created.' }
+```
+
+Now let's comment-out the [now unneeded] routes for comments. Edit `config/routes.rb` and comment-out the appropriate line:
+
+```
+Rails.application.routes.draw do
+  #resources :comments
+```
+Remember to restart your rails server (you need to restart your rails server every time you change the routes).
+
+#### 3. Authentication
+We need to add a *before filter* to our post's controller. Let's modify `app/controllers/posts_controller.rb`:
+
+```
+class PostsController < ApplicationController
+  before_action :set_post, only: [:show, :edit, :update, :destroy]
+  before_action :authenticate, except: [:index, :show]
+```
+Let's add an authenticate method in the `private` methods section of the controller:
+
+```
+def authenticate
+  authenticate_or_request_with_http_basic do |name, password|
+    name == "admin" && password == "secret"
+  end
+end
+```
+
+#### 4. Test and Push
+Test to make sure it works. Then push to your bitbucket repo:
+
+```
+git push origin head
+```
+
+#### 5. Submit Assignment
+Submit assignments here: [http://fdisk.co/mooc](http://fdisk.co/mooc).
