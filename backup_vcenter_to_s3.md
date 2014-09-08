@@ -1,5 +1,12 @@
 # Backing up VCSA 5.5 DBs to S3: Part 1
-***[2014-08-28 this blog post has been updated to modify the cron.daily backup time and the S3 storage costs]***
+***2014-09-07 this blog post has been updated:***
+
+* ***we modified the manner in which the backup is kicked off (`/etc/crontab` instead of `/etc/cron.daily`)***
+* ***we updated the S3 storage costs,***
+* ***the backup script `vcenter_db_bkup.sh` accepts the S3 bucket name as an argument***
+* ***we added a reference to a blog post describing the restoration of the databases***
+
+
 
 The Cloud Foundry Development Teams use a heavily-customized VMware vCenter Server Appliance (VCSA) 5.5. We needed to architect an offsite backup solution of the VCSA's databases to avoid days of lost developer time in the event of a catastrophic failure.
 
@@ -108,51 +115,25 @@ Download the backup script:
 curl -L https://raw.githubusercontent.com/cunnie/bin/master/vcenter_db_bkup.sh -o /usr/local/sbin/vcenter_db_bkup.sh
 chmod a+x /usr/local/sbin/vcenter_db_bkup.sh
 ```
-
-We need to modify the bucket name (it's hard-coded into the script) (normally we'd pass the bucket name as a parameter, but in this particular case we don't have that option *because* this script will be placed in `/etc/cron.daily`, and scripts in that location are executed without parameters passed to them).
-
-Let's replace the placeholder bucket name (`PLACEHOLDER_FOR_S3_BUCKET_NAME`) with our bucket name (`vcenter.cf.nono.com`):
+Now let's test it. We pass the S3 bucket name, `vcenter.cf.nono.com`, as a parameter. We also run it under `bash` with `xtrace` enabled so that we can watch it progress (the script may take several minutes to run, and we find it reassuring to follow its progress) (the script's normal execution is silent):
 
 ```
-perl -pi -e 's/PLACEHOLDER_FOR_S3_BUCKET_NAME/vcenter.cf.nono.com/' /usr/local/sbin/vcenter_db_bkup.sh
-```
-Now let's test it:
-
-```
-/usr/local/sbin/vcenter_db_bkup.sh
+bash -x /usr/local/sbin/vcenter_db_bkup.sh vcenter.cf.nono.com
 ```
 We check S3 to verify that our files were uploaded. A lightly-loaded vCenter may have a small (less than 3MB) files; a Vblock vCenter can easily have > 100MB files.
 
 [caption id="attachment_29918" align="alignnone" width="434"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/08/5_databases_on_s3.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/08/5_databases_on_s3.png" alt="We check to make sure that the two databases were backed up to our S3 bucket" width="434" height="296" class="size-full wp-image-29918" /></a> We check to make sure that the two databases were backed up to our S3 bucket[/caption]
+#### 2.3 Add `/etc/crontab` kick-off time
+We will use `/etc/crontab` <sup>[[2]](#cron.daily)</sup> to kick-off our backups at 3:25 a.m. PDT. We do not want our backups to occur during our work hours (9 a.m. - 6 p.m. PDT) (our continuous integration tests failed when they tried to contact the vCenter while the backup was taking place (the backup script temporarily shuts down the `vmware-vpxd` and the `vmware-inventoryservice` services)).
 
-Create the symbolic link to /etc/cron.daily:
+VMware doesn't allow us to [change the timezone](http://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=2057956) in the VCSA (it's locked to UTC), so instead we convert 3:25 a.m. PDT to UTC (i.e. 10:25 a.m.).
 
-```
-ln -s /usr/local/sbin/vcenter_db_bkup.sh /etc/cron.daily/
-```
-
-#### 2.3 Modify cron.daily's kick-off time
-We decide to modify our cron.daily kick-off time so that our backups to not occur during working hours (our continuous integration tests failed when they tried to contact the vCenter while the backup was taking place (the backup script temporarily shuts down the `vmware-vpxd` and the `vmware-inventoryservice` services)).
-
-VMware doesn't allow one to [change the timezone](http://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=2057956) in the VCSA (it's locked to UTC), so instead we modified the start time of the `/etc/cron.daily` scripts by modifying the [mtime](http://www.unix.com/tips-and-tutorials/20526-mtime-ctime-atime.html) of the `/var/spool/cron/lastrun/cron.daily` directory.
-
-We need to know the following:
-
-* the offset of our timezone (PDT)from UTC (it's **-0700**)
-* the time we want to run our backup scripts (11pm PDT)
-
-We use the `touch` command to set the timestamp (tip: don't set it in the future; it'll kick off a backup within the next 15 minutes):
+We edit `/etc/crontab` and add the following lines:
 
 ```
-ls -ld /var/spool/cron/lastrun/cron.daily # check the current timestamp
- -rw------- 1 root root 0 Aug 28 00:00 /var/spool/cron/lastrun/cron.daily
-touch --date="2 days ago 23:00 -0700" /var/spool/cron/lastrun/cron.daily
-ls -ld /var/spool/cron/lastrun/cron.daily # check the new timestamp
- -rw------- 1 root root 0 Aug 27 06:00 /var/spool/cron/lastrun/cron.daily
+# backup the VCSA databases to Amazon AWS S3
+25 10 * * *   root  /usr/local/sbin/vcenter_db_bkup.sh vcenter.cf.nono.com
 ```
-
-We do a back-of-the-envelope check to make sure the timestamp is correct: 6am UTC Aug 27 is 11pm PDT Aug 26.  If we're typing this command in at 7pm Aug 27 PDT, then the backup will kick off at 11pm (24 hours after the timestamp).
-
 We check the following day to make sure that the database files were uploaded.
 
 ---
@@ -161,6 +142,8 @@ We don't know if what we're backing up is enough to restore a vCenter; we have n
 
 ### Footnotes
 <a name="s3_prices"><sup>1</sup></a> At the time of this writing, Amazon charges [$0.03 per GB per month](http://aws.amazon.com/s3/pricing/). Our current vCenter's databases size is 191MB, and thirty copies (one each day) works out to 2.4GB, which is less than 18 cents per month. Annual cost? $2.07.
+
+<a name="cron.daily"><sup>2</sup></a> Originally we attempted to use a symbolic link in `/etc/cron.daily` to our backup script; however, we discovered that solution to be sub-optimal: the time that our backup script was kicked off was non-deterministic, which meant it could (and did) kick off during work hours, causing disruption to our developers.
 
 ### Acknowledgements
 Much of this blog post was based on internal Cloud Foundry documentation.
@@ -179,11 +162,11 @@ VMware Knowledge Base has two excellent articles regarding the backup of VCSAs:
 </div>
 <br />
 
-Louis the XV, the second-to-last King of France, had the prescience to realize that soon after his death a catastrophe of biblical proportions would sweep away the world as he knew it (the French Revolution would destroy the monarchy).
+Louis the XV, the second-to-last King of France, prophetically said, "After me, the flood", suggesting a catastrophe of biblical proportions would sweep away the world as he knew it (i.e. the French Revolution would destroy the monarchy).
 
 In this blog post, a catastrophe of biblical proportions will sweep away our vCenter as we know it, and we will attempt to restore the databases from backups (see *[Backing up VCSA 5.5 DBs to S3: Part 1](http://pivotallabs.com/backing-vcsa-5-5-dbs-s3/)*).
 
-We use this opportunity to examine the manner in which vCenter reconciles differences between the restored databases and the real world:
+We will use this opportunity to examine the manner in which vCenter reconciles differences between the restored databases and the real world:
 
 * the vCenter will have objects in its databases that have been destroyed by the flood (i.e. the *ante diluvium* <sup>[[1]](#ante_diluvium)</sup> objects); these objects will no longer exist but will have entries in the vCenter databases.
 * the vCenter will not have objects in its database that were created after the backup (i.e. the *novus* objects); these objects exist but not in the vCenter databases.
@@ -191,22 +174,44 @@ We use this opportunity to examine the manner in which vCenter reconciles differ
 ### Procedure
 We do the following:
 
-* create an *ante diluvium* resource pool
-* create an *ante diluvium* VM and place it in the *ante diluvium* resource pool
-* create an *ante diluvium* distributed virtual switch
+### 1. Create the *ante diluvium* Objects
+We use the Vsphere Web Client to create the following:
 
-* backup our vCenter
-* destroy the *ante diluvium* resource pool, VM, and distributed virtual switch
-* create a *novus* resource pool
-* create a *novus* VM
-* create a *novus* distributed virtual switch
+* *ante diluvium* resource pool
+* *ante diluvium* distributed port group
+* *ante diluvium* VM, which we place in the *ante diluvium* resource pool
 
-* destroy our vCenter (the flood)
-* restore the vCenter databases
-* determine the status of *ante diluvium* and *novus* objects
+[caption id="attachment_30027" align="alignnone" width="630"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/09/ante_diluvium.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/09/ante_diluvium-630x408.png" alt="vSphere Web Interface" width="630" height="408" class="size-large wp-image-30027" /></a> We have created "ante diluvium" resource pool and VM.  We will destroy both of them after we have backed up our vCenter but before we have restored it.[/caption]
+
+### 2. Backup the vCenter
+We backup our vCenter by running the following command:
+
+```
+/usr/local/sbin/vcenter_db_bkup.sh vcenter.cf.nono.com
+```
+### 3. Destroy the *ante diluvium* Objects
+We use the vSphere Web Client to destroy the *ante diluvium* resource pool, VM, and distributed port group.
+
+### 4. Create the *novus* Objects
+We use the Vsphere Web Client to create the following:
+
+* *novus* resource pool
+* *novus* distributed port group
+* *novus* VM, which we place in the *novus* resource pool
+
+[caption id="attachment_30028" align="alignnone" width="630"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/09/novus.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/09/novus-630x350.png" alt="vSphere Web Client" width="630" height="350" class="size-large wp-image-30028" /></a> After the backup has been done and the "ante diluvium" objects have been deleted, we create the "novus" resource pool and VM[/caption]
+
+### 5. Destroy the vCenter
+We don't really destroy the vCenter; we merely shut it down
+
+### 6. "Le vCenter est mort, vive le vCenter!" <sup>[[2]](#king_is_dead)</sup>
+We install the new vCenter. We follow the vCenter installations instructions [here](http://pivotallabs.com/worlds-smallest-iaas-part-1/) (start halfway down, at the **VMware vCenter Initial Install** section), but we stop before we create the datacenter.
+
+### 7. Restore the Databases
 
 ---
 ### Footnotes
 
 <a name="ante_diluvium"><sup>1</sup></a> *Ante Diluvium*, Latin, *"Before the flood"*. *Novus*, Latin, *"new"*, as in, *"Novus ordo seclorum"*
 
+<a name="king_is_dead"><sup>2</sup></a> "The vCenter is dead, long live the vCenter!", i.e., "[The king is dead, long live the king!](http://en.wikipedia.org/wiki/The_king_is_dead,_long_live_the_king!)"
