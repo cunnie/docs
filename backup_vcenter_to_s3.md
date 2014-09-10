@@ -162,7 +162,7 @@ VMware Knowledge Base has two excellent articles regarding the backup of VCSAs:
 </div>
 <br />
 
-Louis the XV, the second-to-last King of France, prophetically said, "After me, the flood", suggesting a catastrophe of biblical proportions would sweep away the world as he knew it (i.e. the French Revolution would destroy the monarchy).
+Louis the XV, the second-to-last King of France, said in a particularly prescient moment, "After me, the flood", suggesting a catastrophe of biblical proportions would sweep away the world as he knew it (i.e. the French Revolution would destroy the monarchy).
 
 In this blog post, a catastrophe of biblical proportions will sweep away our vCenter as we know it, and we will attempt to restore the databases from backups (see *[Backing up VCSA 5.5 DBs to S3: Part 1](http://pivotallabs.com/backing-vcsa-5-5-dbs-s3/)*).
 
@@ -170,6 +170,19 @@ We will use this opportunity to examine the manner in which vCenter reconciles d
 
 * the vCenter will have objects in its databases that have been destroyed by the flood (i.e. the *ante diluvium* <sup>[[1]](#ante_diluvium)</sup> objects); these objects will no longer exist but will have entries in the vCenter databases.
 * the vCenter will not have objects in its database that were created after the backup (i.e. the *novus* objects); these objects exist but not in the vCenter databases.
+
+### Timeline
+We do the following:
+
+1. Create the *ante diluvium* objects. These will be destroyed once the vCenter's backup has been performed.
+2. Backup the vCenter
+3. Destroy the *ante diluvium* objects
+4. Create the *novus* objects
+5. *Le déluge*: destroy the vCenter
+6. "Le vCenter est mort, vive le vCenter!": <sup>[[2]](#king_is_dead)</sup> install a new vCenter
+7. Restore the databases
+
+[caption id="attachment_30124" align="alignnone" width="630"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/09/vCenter-Backup-and-Restore.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/09/vCenter-Backup-and-Restore-630x472.png" alt="Timeline: vCenter destruction and Restoration" width="630" height="472" class="size-large wp-image-30124" /></a> Timeline: we backup, destroy, and restore our vCenter. We also add and delete objects to determine how the restored vCenter reconciles changes[/caption]
 
 ### Procedure
 We do the following:
@@ -201,10 +214,10 @@ We use the Vsphere Web Client to create the following:
 
 [caption id="attachment_30028" align="alignnone" width="630"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/09/novus.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/09/novus-630x350.png" alt="vSphere Web Client" width="630" height="350" class="size-large wp-image-30028" /></a> After the backup has been done and the "ante diluvium" objects have been deleted, we create the "novus" resource pool and VM[/caption]
 
-### 5. Destroy the vCenter
+### 5. *Le Déluge*: Destroy the vCenter
 We don't really destroy the vCenter; we merely shut it down
 
-### 6. "Le vCenter est mort, vive le vCenter!" <sup>[[2]](#king_is_dead)</sup>
+### 6. "Le vCenter est mort, vive le vCenter!"
 We install the new vCenter. We follow the vCenter installations instructions [here](http://pivotallabs.com/worlds-smallest-iaas-part-1/) (start halfway down, at the **VMware vCenter Initial Install** section), but we stop before we create the datacenter.
 
 ### 7. Restore the Databases
