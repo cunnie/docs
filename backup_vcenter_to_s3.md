@@ -215,10 +215,33 @@ We use the Vsphere Web Client to create the following:
 [caption id="attachment_30028" align="alignnone" width="630"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/09/novus.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/09/novus-630x350.png" alt="vSphere Web Client" width="630" height="350" class="size-large wp-image-30028" /></a> After the backup has been done and the "ante diluvium" objects have been deleted, we create the "novus" resource pool and VM[/caption]
 
 ### 5. *Le Déluge*: Destroy the vCenter
-We don't really destroy the vCenter; we merely shut it down
+We don't really destroy the vCenter&mdash;we first rename it:
+
+* Log into the VMware VSphere Web Client (in our case, [https://vcenter.cf.nono.com:9443](https://vcenter.cf.nono.com:9443))
+* **VMs and Templates**
+* right-click **VMware vCenter Server**
+* select **Rename...**
+* Enter the new name: **VMware vCenter Server Appliance - pre-flood**
+* click **OK**
+
+Secondly we make sure that the old vCenter doesn't start up automatically:
+
+* click the **Home** icon (house)
+* click **Hosts and Clusters**
+* in the lefthand navbar, select the ESXi host (e.g. ***esxi.cf.nono.com***)
+* **Manage &rarr; Settings &rarr; Virtual Machines &rarr; VM Startup/Shutdown**
+* if the vCenter VM is listed under **Automatic Startup**, then click **Edit...** and adjust it so that it's under **Manual Startup**
+
+Thirdly we shut down the vCenter:
+
+* click the **Home** icon (house)
+* **VMs and Templates**
+* right-click **VMware vCenter Server - pre-flood**
+* select **Shut Down Guest OS**
+* "Shut down the guest operating systems...?" click **Yes**
 
 ### 6. "Le vCenter est mort, vive le vCenter!"
-We install the new vCenter. We follow the vCenter installations instructions [here](http://pivotallabs.com/worlds-smallest-iaas-part-1/) (start halfway down, at the **VMware vCenter Initial Install** section), but we stop before we create the datacenter.
+We install the new vCenter. We follow the vCenter installations instructions [here](http://pivotallabs.com/worlds-smallest-iaas-part-1/) (start halfway down, at the **VMware vCenter Initial Install** section, but stop before creating the datacenter).
 
 ### 7. Restore the Databases
 
