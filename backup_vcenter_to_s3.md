@@ -245,8 +245,8 @@ We install the new vCenter. We follow the vCenter installations instructions [he
 
 ### 7. Restore the Databases
 
-#### 7.1 [Optional] Snapshot the New vCenter
-We decide to snapshot our new vCenter; this provides a good rollback point in the event that our restoration goes awry and we need to start from a clean slate.
+#### 7.1 Snapshot the New vCenter
+We decide to snapshot our new vCenter; this provides a good rollback point in the event that our restoration goes awry and we need to start from a clean slate. Also, VMware's restoration instructions suggest taking a snapshot.
 
 1. bring up the Windows vSphere Client
 2. log into the ESXi (e.g. esxi.cf.nono.com)
@@ -282,9 +282,48 @@ Copy the backups to the `/tmp` directory on our vCenter. Note that our backup's 
 cd ~/Downloads
 scp inventory_services_2014-09-07-20_59.DB.gz postgres_2014-09-07-20_59.sql.gz root@vcenter.cf.nono.com:/tmp/
 ```
-#### 7.3
+#### 7.4 Restoration
+We restore the databases using a mash-up of VMware's Knowledge Base articles [2034505](http://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=2034505) and [2062682](http://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=2062682):
 
+We restore Postgres first:
 
+```
+ssh root@vcenter.cf.nono.com
+ # unzip the databases
+gunzip /tmp/inventory_services_2014-09-07-20_59.DB.gz
+gunzip /tmp/postgres_2014-09-07-20_59.sql.gz
+ # source in EMB_DB_INSTANCE and EMB_DB_USER
+. /etc/vmware-vpx/embedded_db.cfg
+cd /opt/vmware/vpostgres/1.0/bin
+service vmware-vpxd stop
+./psql -d $EMB_DB_INSTANCE -Upostgres -f /tmp/postgres_2014-09-07-20_59.sql
+service vmware-vpxd start
+```
+We restore Inventory Services next:
+
+```
+service vmware-inventoryservice stop
+cd /usr/lib/vmware-vpx/inventoryservice/scripts/
+./restore.sh -backup /tmp/inventory_services_2014-09-07-20_59.DB
+service vmware-inventoryservice start
+```
+
+#### 7.5 Review
+We log into our [vCenter](https://vcenter.cf.nono.com:9443) via the web client.
+
+We browse to **vCenter &rarr; Inventory Trees &rarr; Hosts and Clusters**. In the left-hand navbar, we expand **Datacenter &rarr; Cluster** and select **Virtual Machines**
+
+[caption id="attachment_30152" align="alignnone" width="612"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/09/new_vcenter_old_data.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/09/new_vcenter_old_data.png" alt="The vSphere Web Client from the newly-restored vCenter demonstrates that it still sees the long-gone &quot;ante diluvium&quot; objects and does not see the new &quot;novus&quot; objects." width="612" height="452" class="size-full wp-image-30152" /></a> The vSphere Web Client from the newly-restored vCenter demonstrates that it still sees the long-gone "ante diluvium" objects and does not see the new "novus" objects.[/caption]
+
+We note the following:
+
+* We need to re-enter our vCenter license; apparently it's not stored in either database.
+* We see the "ghosts" of our long-gone *ante diluvium* resource pool and VM
+* The new *novus* resource pool and VM are not visible to us.
+
+We also note that when we navigate to our ESXi host we see an error message.
+
+[caption id="attachment_30151" align="alignnone" width="591"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/09/esxi_host_inaccessible.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/09/esxi_host_inaccessible.png" alt="We seem to be having trouble accessing our ESXi server" width="591" height="569" class="size-full wp-image-30151" /></a> We eem to be having trouble accessing our ESXi server[/caption]
 
 
 ---
