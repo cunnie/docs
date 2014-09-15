@@ -323,7 +323,7 @@ We note the following:
 
 We also note that when we navigate to our ESXi host we see an error message.
 
-[caption id="attachment_30151" align="alignnone" width="591"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/09/esxi_host_inaccessible.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/09/esxi_host_inaccessible.png" alt="We seem to be having trouble accessing our ESXi server" width="591" height="569" class="size-full wp-image-30151" /></a> We eem to be having trouble accessing our ESXi server[/caption]
+[caption id="attachment_30151" align="alignnone" width="591"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/09/esxi_host_inaccessible.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/09/esxi_host_inaccessible.png" alt="We seem to be having trouble accessing our ESXi server" width="591" height="569" class="size-full wp-image-30151" /></a> We seem to be having trouble accessing our ESXi server[/caption]
 
 
 ---
