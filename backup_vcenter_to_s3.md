@@ -241,9 +241,51 @@ Thirdly we shut down the vCenter:
 * "Shut down the guest operating systems...?" click **Yes**
 
 ### 6. "Le vCenter est mort, vive le vCenter!"
-We install the new vCenter. We follow the vCenter installations instructions [here](http://pivotallabs.com/worlds-smallest-iaas-part-1/) (start halfway down, at the **VMware vCenter Initial Install** section, but stop before creating the datacenter).
+We install the new vCenter. We follow the vCenter installations instructions [here](http://pivotallabs.com/worlds-smallest-iaas-part-1/) (start halfway down, at the **VMware vCenter Initial Install** section, but stop before assigning the license <strike>creating the datacenter</strike>).
 
 ### 7. Restore the Databases
+
+#### 7.1 [Optional] Snapshot the New vCenter
+We decide to snapshot our new vCenter; this provides a good rollback point in the event that our restoration goes awry and we need to start from a clean slate.
+
+1. bring up the Windows vSphere Client
+2. log into the ESXi (e.g. esxi.cf.nono.com)
+3. select our *new* vCenter appliance (**VMware vCenter Server Appliance**)
+4. type **Ctrl-D** to "Shut Down Guest"
+5. click **Take a snapshot of this virtual machine**
+	* Name: **vCenter default configuration**
+	* click **OK**
+6. click **Ctrl-B** to "Power On"
+
+#### 7.2 Download the Database Backups
+We download our most recent backups from our S3 bucket.
+
+1. log into [Amazon S3](http://aws.amazon.com/s3)
+2. navigate to **My Account / Console &rarr; AWS Management Console &rarr; S3**
+3. click on our bucket (**vcenter.cf.nono.com**)
+4. select the appropriate Inventory Services backup (e.g. ***inventory_services_2014-09-07-20:59.DB.gz***)
+5. **Actions &rarr; Download**
+6. right-click the download link and choose **Save Link As...**; click **Save**
+7. select the appropriate Postgres backup (e.g. ***postgres_2014-09-07-20:59.sql.gz***)
+5. **Actions &rarr; Download**
+6. right-click the download link and choose **Save Link As...**; click **Save**
+
+#### 7.3 Copy the Database Backups to the New vCenter
+Let's clear out our vCenter's old ssh key to prevent `scp` from failing with the message, *WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!*:
+
+```
+ssh-keygen -R vcenter.cf.nono.com
+```
+Copy the backups to the `/tmp` directory on our vCenter. Note that our backup's filenames have changed slightly during download: colons (":") have been converted to underscores ("_"):
+
+```
+cd ~/Downloads
+scp inventory_services_2014-09-07-20_59.DB.gz postgres_2014-09-07-20_59.sql.gz root@vcenter.cf.nono.com:/tmp/
+```
+#### 7.3
+
+
+
 
 ---
 ### Footnotes
