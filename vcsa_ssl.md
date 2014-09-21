@@ -21,9 +21,9 @@ Also, we do not have four CA-signed certificates to install; however, we have a 
 Notes:
 
 * vCenter's FQDN (fully-qualified domain name): **vcenter.cf.nono.com**
-* wildcard SSL key: [*.cf.nono.com.key](https://gist.githubusercontent.com/cunnie/6bba891dfd48d218fd21/raw/1b156976261591e551626a4c9d4724807bc3707d/*.cf.nono.com.key)
-* wildcard SSL certificate: [*.cf.nono.com.pem](https://gist.githubusercontent.com/cunnie/ba0bc254cd6ce87cb5d3/raw/e2515d2004a2edf11a5d9c765dc4ba47a3e88adc/*.cf.nono.com.pem) (note that this .pem file includes three certificates: the wildcard cert, the intermediate CA cert, and the root cert).
-* wildcard SSL certificate: [ *.cf.nono.com.crt](https://gist.githubusercontent.com/cunnie/bfdb243fa310d8411dff/raw/4a84b140bb3ebd740c60a160d0ca843bee455213/*.cf.nono.com.crt)
+* wildcard SSL key: [*.cf.nono.com.key](https://gist.githubusercontent.com/cunnie/6bba891dfd48d218fd21/raw/a9532c2d0ae1225a6cf818c343528f826c2524ef/*.cf.nono.com.key)
+* wildcard SSL certificate: [*.cf.nono.com.pem](https://gist.githubusercontent.com/cunnie/ba0bc254cd6ce87cb5d3/raw/6242708b56800af703120e2abe3c176cf3a492ed/*.cf.nono.com.pem) (note that this .pem file includes three certificates: the wildcard cert, the intermediate CA cert, and the root cert).
+* wildcard SSL certificate: [ *.cf.nono.com.crt](https://gist.githubusercontent.com/cunnie/bfdb243fa310d8411dff/raw/665d08dc6003dcb10dee65e55f2bf9d745f17361/*.cf.nono.com.crt)
 
 Procedure:
 
