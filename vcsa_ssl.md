@@ -8,7 +8,7 @@ VMware has already described such a process in [Knowledge Base Article 2057223](
 3. VMware Log Browser
 4. vSphere AutoDeploy
 
-We are not interested in replacing the SSL certs for all four services&mdash;we are only interested in the replacing the certificate that we see when we browse to the vCenter (i.e. the vCenter Server / vCenter Single Sign-On (SSO) certificate).
+We are not interested in replacing the SSL certs for all four services&mdash;we are only interested in the replacing the certificate that our web browser encounters we browse to the vCenter (i.e. the vCenter Server / vCenter Single Sign-On (SSO) certificate).
 
 Also, we do not have four CA-signed certificates to install; we have but one wildcard certificate (\*.cf.nono.com) available.
 
@@ -26,9 +26,9 @@ Google's Chrome web browser has difficulty permanently storing exceptions for  w
 
 [caption id="attachment_30655" align="alignnone" width="427"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/09/splash_screen_self-signed.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/09/splash_screen_self-signed.png" alt="Chrome&#039;s warning screen when encountering a self-signed certificate. This is particularly irritating under the OS X environment, for Chrome does not have a built-in mechanism to store certificate exceptions" width="427" height="288" class="size-full wp-image-30655" /></a> Chrome's warning screen when encountering a self-signed certificate. This is particularly irritating under the OS X environment, for Chrome does not have a built-in mechanism to store certificate exceptions[/caption]
 
-A fix would be to use CA-issued certificates for frequently visited sites. It's trivial to install certificates on most sites, but the vCenter Server Appliance is a more complex install.
+A fix would be to use CA-issued certificates for frequently visited internal servers. It's trivial to install certificates on most servers, but the vCenter Server Appliance is a more complex install.
 ### Installation Details
-Notes:
+In this example we replace our vcenter server's (vcenter.cf.nono.com) self-signed certificates with CA-signed certificates:
 
 * vCenter's FQDN (fully-qualified domain name): **vcenter.cf.nono.com**
 * wildcard SSL key: [*.cf.nono.com.key](https://gist.githubusercontent.com/cunnie/6bba891dfd48d218fd21/raw/a9532c2d0ae1225a6cf818c343528f826c2524ef/*.cf.nono.com.key)
@@ -70,7 +70,7 @@ service vmware-vpxd start
 [caption id="attachment_30653" align="alignnone" width="406"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/09/splash_screen_CA-cert.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/09/splash_screen_CA-cert.png" alt="Chrome recognizes the CA-signed certificate" width="406" height="244" class="size-full wp-image-30653" /></a> Chrome recognizes the CA-signed certificate[/caption]
 
 * when we click on the &ldquo;[Log in to vSphere Web Client](https://vcenter.cf.nono.com:9443/vsphere-client/)&rdquo; link we see that we still have self-signed cert.
-* reboot
+* reboot the VCSA to fix the vSphere Web Client:
 
 ```
 shutdown -r now
@@ -81,7 +81,7 @@ shutdown -r now
 
 ---
 ### Caveats
-Make sure the key, .pem, and certificate files end in a newline ('\n', 0x0a, Ctrl-J). Github's gists, for example, don't always include a newline at the end. We lost hours.
+Make sure the key, .pem, and certificate files end in a newline ('\n', 0x0a, Ctrl-J). Github's gists, for example, don't always include a newline at the end.
 
 
 
