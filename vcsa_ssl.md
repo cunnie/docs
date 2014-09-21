@@ -1,5 +1,5 @@
 # Installing a CA-issued Wildcard SSL Certificate in VCSA 5.5
-In this blog post we describe a process to replace a VMware vCenter Server Appliance's (VCSA's) self-signed certificates with Certificate Authority-signed (CA-signed) certificates.
+In this blog post we describe a process to replace a VMware vCenter Server Appliance's (VCSA's) self-signed certificate with Certificate Authority-signed (CA-signed) certificate.
 
 VMware has already described such a process in [Knowledge Base Article 2057223](http://kb.vmware.com/selfservice/search.do?cmd=displayKC&docType=kc&docTypeID=DT_KB_1_1&externalId=2057223); however, the process they describe is cumbersome: it requires SSL certificates for *four* services that the VCSA provides.
 
@@ -27,7 +27,7 @@ Notes:
 
 Procedure:
 
-* snapshot your vCenter. Really. We have destroyed a vCenter in the past when trying to modify the SSL certificates.
+* we snapshot our vCenter. Really. We have destroyed a vCenter in the past when trying to modify the SSL certificates.
 * copy the key, cert, and .pem to our vCenter, and set up our variables:
 
 ```
@@ -37,7 +37,7 @@ SSL_KEY=*.cf.nono.com.key
 SSL_PEM=*.cf.nono.com.pem
 SSL_CRT=*.cf.nono.com.crt
  # copy the key, .pem, and certificate to the vCenter
-scp $SSL_KEY $SSL_PEM $SSL_CRT root@$VCENTER_FQDN:/tmp/
+scp $SSL_KEY $SSL_PEM $SSL_CRT root@$VCENTER_FQDN:
  # log into the vCenter
 ssh root@$VCENTER_FQDN
  # set our shell variables again
@@ -53,11 +53,11 @@ SSL_CRT=*.cf.nono.com.crt
 service vmware-stsd stop
 service vmware-vpxd stop
  # install the .pem and key
-/usr/sbin/vpxd_servicecfg certificate change /tmp/$SSL_PEM /tmp/$SSL_KEY
+/usr/sbin/vpxd_servicecfg certificate change ~/$SSL_PEM ~/$SSL_KEY
  # wait for "VC_CFG_RESULT = 0"
- # start up SSO & vCenter
-service vmware-vpxd start
+ # start up SSO #& vCenter
 service vmware-stsd start
+ #service vmware-vpxd start
 ```
 * check: browse to [https://vcenter.cf.nono.com](https://vcenter.cf.nono.com) and notice we have a CA-signed cert; however, when we click on the &ldquo;[Log in to vSphere Web Client](https://vcenter.cf.nono.com:9443/vsphere-client/)&rdquo; link we see that we still have self-signed cert.
 * replace the vCenter Inventory Service's cert:
@@ -68,10 +68,10 @@ cd /etc/vmware-sso/register-hooks.d
 ./02-inventoryservice --mode uninstall --ls-server https://$VCENTER_FQDN:7444/lookupservice/sdk
  # look for `Return code is: Success` and `Stopped VMware Inventory Service.`
 cd /usr/lib/vmware-vpx/inventoryservice/ssl
-cp /tmp/$SSL_KEY rui.key
-cp /tmp/$SSL_CRT rui.crt
+cp ~/$SSL_KEY rui.key
+cp ~/$SSL_CRT rui.crt
  # don't change `testpassword`; it's a constant
-openssl pkcs12 -export -out rui.pfx -in /tmp/$SSL_PEM -inkey rui.key -name rui -passout pass:testpassword
+openssl pkcs12 -export -out rui.pfx -in ~/$SSL_PEM -inkey rui.key -name rui -passout pass:testpassword
 chmod 400 rui.key rui.pfx
 chmod 644 rui.crt
 ```
@@ -80,14 +80,20 @@ chmod 644 rui.crt
 ```
 unset HISTFILE
 ```
-* if the SSO administrator's credentials are not the default (account: **administrator@vSphere.local**, password **vmware**), then you'll need to substitute the correct credentials in the following command:
+* if the SSO administrator's credentials are not the default (account: **administrator@vSphere.local**, password **vmware**), then  substitute the correct credentials in the following command:
 
 ```
  # re-register Inventory Service back to SSO
 cd /etc/vmware-sso/register-hooks.d
 ./02-inventoryservice --mode install --ls-server https://$VCENTER_FQDN:7444/lookupservice/sdk --user administrator@vSphere.local --password vmware
 ```
-* the output should resemble [this](https://gist.github.com/cunnie/614edfc485c5675e6433)
+* the output should resemble [this](https://gist.github.com/cunnie/614edfc485c5675e6433). If instead we see  `com.vmware.vim.sso.admin.exception.DuplicateSolutionCertificateException`, then un-register and re-register the service:
+
+```
+./02-inventoryservice --mode uninstall --ls-server https://$VCENTER_FQDN:7444/lookupservice/sdk
+./02-inventoryservice --mode install --ls-server https://$VCENTER_FQDN:7444/lookupservice/sdk --user administrator@vSphere.local --password vmware
+```
+Final steps:
 
 ```
  # re-register the vCenter Inventory Service to vCenter Server the next time the service starts
@@ -98,6 +104,15 @@ service vmware-vpxd stop
 service vmware-inventoryservice start
 service vmware-vpxd start
 ```
+If you see `com.vmware.vim.binding.vmodl.fault.SecurityError`, restart `vmware-vpxd`:
+
+```
+service vmware-vpxd restart
+```
+
+---
+### Gotchas
+Make sure your key, .pem, and certificate files end in a new-line ()
 
 
 
