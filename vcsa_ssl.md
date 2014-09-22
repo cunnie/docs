@@ -22,7 +22,7 @@ We feel comfortable in replacing one of the certs with a wildcard certificate in
 ### Problem Description
 In Cloud Foundry Engineering the Chrome Web Browser is the most popular browser among the developers, but it is not without shortcomings, especially with regard to self-signed certs.
 
-Google's Chrome web browser has difficulty permanently storing exceptions for  websites which have self-signed certificates (a complicated work-around would be to visit the site in Safari and store the exception in the System's keychain). Every time Chrome is restarted and the site with the self-signed cert is visited, the user encounters a warning screen. To make matters worse, a recent Chrome update requires the user to click not once but twice to get past the warning screen.
+Google's Chrome web browser under OS X has difficulty permanently storing exceptions for  websites which have self-signed certificates (a complicated work-around would be to visit the site in Safari and store the exception in the System's keychain). Every time Chrome is restarted and the site with the self-signed cert is visited, the user encounters a warning screen. To make matters worse, a recent Chrome update requires the user to click not once but twice to get past the warning screen.
 
 [caption id="attachment_30655" align="alignnone" width="427"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/09/splash_screen_self-signed.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/09/splash_screen_self-signed.png" alt="Chrome&#039;s warning screen when encountering a self-signed certificate. This is particularly irritating under the OS X environment, for Chrome does not have a built-in mechanism to store certificate exceptions" width="427" height="288" class="size-full wp-image-30655" /></a> Chrome's warning screen when encountering a self-signed certificate. This is particularly irritating under the OS X environment, for Chrome does not have a built-in mechanism to store certificate exceptions[/caption]
 
@@ -75,13 +75,13 @@ service vmware-vpxd start
 ```
 shutdown -r now
 ```
-* after rebooting, we now see the the vSphere Web Client also has a self-signed cert:
+* after rebooting, we now see the the vSphere Web Client also has a CA-signed cert:
 
 [caption id="attachment_30654" align="alignnone" width="322"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/09/web_client_CA-cert.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/09/web_client_CA-cert.png" alt="After rebooting we can see that the vSphere Web Client has a valid CA-signed certificate" width="322" height="318" class="size-full wp-image-30654" /></a> After rebooting we can see that the vSphere Web Client has a valid CA-signed certificate[/caption]
 
 ---
 ### Caveats
-Make sure the key, .pem, and certificate files end in a newline ('\n', 0x0a, Ctrl-J). Github's gists, for example, don't always include a newline at the end.
+Make sure the key, .pem, and certificate files end in a newline ('\n', 0x0a, Ctrl-J). When using Github's gists, for example, it is easy to accidentally omit a newline at the end of the gist.
 
 
 
