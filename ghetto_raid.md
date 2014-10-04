@@ -24,6 +24,12 @@ Prices do not include tax and shipping. Prices were current as of September, 201
 [caption id="attachment_30840" align="alignnone" width="630"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/freenas_back.jpg"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/freenas_back-630x472.jpg" alt="For easier installation of the power supply, we recommend removing the retaining screw of the controller card (it&#039;s not needed). Note that in the photo the screw has already been removed." width="630" height="472" class="size-large wp-image-30840" /></a> For easier installation of the power supply, we recommend removing the retaining screw of the controller card (it's not needed). Note that in the photo the screw has already been removed.[/caption]
 
 
+### Power On
+There are two caveats to the initial power on:
+
+* the unit's power draw is so low that the Corsair power supply's fan will **not** turn on
+* the Supermicro boot process is long; we needed to wait a few minutes before we saw the first splash screen
+
 ```
 bash
 mount -o rw /
