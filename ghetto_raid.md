@@ -1,5 +1,8 @@
-# A Ghetto RAID Server for under $3k
-This blog post describes how we built a high-performing NAS server using off-the-shelf components and open source software ([FreeNAS](http://www.freenas.org/))
+# A High-performing Mid-range NAS Server
+
+This blog post describes how we built a high-performing NAS server using off-the-shelf components and open source software ([FreeNAS](http://www.freenas.org/)).
+
+[caption id="attachment_30838" align="alignnone" width="630"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/freenas_pellegrino.jpg"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/freenas_pellegrino-630x566.jpg" alt="Our NAS server: 28TB raw data. 1 liter Pellegrino bottle is for scale" width="630" height="566" class="size-large wp-image-30838" /></a> Our NAS server: 28TB raw data. 1 liter Pellegrino bottle is for scale[/caption]
 
 ### The Equipment
 Prices do not include tax and shipping. Prices were current as of September, 2014.
@@ -14,7 +17,12 @@ Prices do not include tax and shipping. Prices were current as of September, 201
 * **$31**: 2 &times; [HighPoint SF-8087 &rarr; 4 &times; SATA cables](http://highpoint-tech.com/USA_new/accessories_int_ms1m4s.htm). Although we used a different manufacturer, these cables should work.
 
 
-### Performance
+### Assembly
+
+[caption id="attachment_30839" align="alignnone" width="630"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/freenas_inside.jpg"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/freenas_inside-630x472.jpg" alt="The inside view of the NAS. Note the interesting 3.5&quot; drive layout: 5 of them are in a column, and the remaining 2 (along with the SSD) are installed near the LSI controller" width="630" height="472" class="size-large wp-image-30839" /></a> The inside view of the NAS. Note the interesting 3.5" drive layout: 5 of them are in a column, and the remaining 2 (along with the SSD) are installed near the LSI controller[/caption]
+
+[caption id="attachment_30840" align="alignnone" width="630"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/freenas_back.jpg"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/freenas_back-630x472.jpg" alt="For easier installation of the power supply, we recommend removing the retaining screw of the controller card (it&#039;s not needed). Note that in the photo the screw has already been removed." width="630" height="472" class="size-large wp-image-30840" /></a> For easier installation of the power supply, we recommend removing the retaining screw of the controller card (it's not needed). Note that in the photo the screw has already been removed.[/caption]
+
 
 ```
 bash
