@@ -1,12 +1,12 @@
 # Backing up VCSA 5.5 DBs to S3: Part 1
+***2014-10-04 Owners of medium and large vCenter installations (> 1000 VMs) should expand the vCenter's root filesystem to avoid exhausting the available disk space. We experienced this firsthand on 2014-10-02; we subsequently increased our vCenter's root filesystem from 9.8GB to 84GB.***
+
 ***2014-09-07 this blog post has been updated:***
 
 * ***we modified the manner in which the backup is kicked off (`/etc/crontab` instead of `/etc/cron.daily`)***
 * ***we updated the S3 storage costs,***
 * ***the backup script `vcenter_db_bkup.sh` accepts the S3 bucket name as an argument***
 * ***we added a reference to a blog post describing the restoration of the databases***
-
-
 
 The Cloud Foundry Development Teams use a heavily-customized VMware vCenter Server Appliance (VCSA) 5.5. We needed to architect an offsite backup solution of the VCSA's databases to avoid days of lost developer time in the event of a catastrophic failure.
 
