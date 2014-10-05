@@ -1,6 +1,14 @@
 # A High-performing Mid-range NAS Server
 
-This blog post describes how we built a high-performing NAS server using off-the-shelf components and open source software ([FreeNAS](http://www.freenas.org/)).
+This blog post describes how we built a high-performing NAS server using off-the-shelf components and open source software ([FreeNAS](http://www.freenas.org/)). The NAS has the following characteristics:
+
+* total cost (before tax & shipping): **$2,631**
+* total usable storage: **16.6 TiB**
+* cost / usable GiB: **$0.16/GiB**
+* [IOPS](http://en.wikipedia.org/wiki/IOPS): **497**
+* sequential read: **629MB/s**
+* sequential write: **304MB/s**
+* double-parity RAID: **RAID-Z2**
 
 [caption id="attachment_30838" align="alignnone" width="630"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/freenas_pellegrino.jpg"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/freenas_pellegrino-630x566.jpg" alt="Our NAS server: 28TB raw data. 1 liter Pellegrino bottle is for scale" width="630" height="566" class="size-large wp-image-30838" /></a> Our NAS server: 28TB raw data. 1 liter Pellegrino bottle is for scale[/caption]
 
@@ -25,7 +33,7 @@ Prices do not include tax and shipping. Prices were current as of September, 201
 The assembly is straightforward.
 
 * Do not plug a 4-pin 12V DC power into connector J1&mdash;it's meant as an *alternative* power source when the 24-pin ATX power is not in use
-* Use a consistent system when plugging in SATA data connectors. The LSI card has 2 SF-8087 connectors, each of which fan out to 4 SATA connectors. We counted the drives from the top, so the topmost drive was connected to SF-8087 port 1 SATA cable 1, the second topmost drive was connected to SF-8087 port 1 SATA cable 2, etc&hellip; We connected the SSD to SF-8087 port 2 cable 4 (i.e. the final cable).
+* Use a consistent system when plugging in SATA data connectors. The LSI card has 2 &times; SF-8087 connectors, each of which fan out to 4 SATA connectors. We counted the drives from the top, so the topmost drive was connected to SF-8087 port 1 SATA cable 1, the second topmost drive was connected to SF-8087 port 1 SATA cable 2, etc&hellip; We connected the SSD to SF-8087 port 2 cable 4 (i.e. the final cable).
 
 ### 3. Power On
 There are two caveats to the initial power on:
@@ -100,6 +108,7 @@ We enable ssh in order to allow us to install the disk benchmarking package ([bo
 		* click the wrench next to the **SSH** slider.
 		* check **Login as Root with password**
 		* click **OK**
+	* click the **AFP** slider to turn it on
 	* click the **CIFS** slider to turn it on
 	* click the **iSCSI** slider to turn it on
 
@@ -115,13 +124,53 @@ We create one big volume. We choose ZFS's RAID-Z2 <sup>[[1]](#raid6)</sup> :
 		* Volume Layout: **RaidZ2** (ignore the *non-optimal*  <sup>[[2]](#non_optimal)</sup> warning)
 		* click **Add Volume**
 
-### 7. Benchmarking FreeNAS
+### 7. Enable Filesharing
+
+#### 7.1 Create User
+We create user 'cunnie' for sharing:
+
+* From the left hand navbar: **Account &rarr; Users &rarr; Add User**
+	* Username: **cunnie**
+	* Full Name: **Brian Cunnie**
+	* Password: ***some-password-here***
+	* Password confirmation: ***some-password-here***
+	* click **OK**
+
+#### 7.2 Create Directory
+```
+ssh root@nas.nono.com
+mkdir /mnt/tank/big
+chmod 1777 !$
+exit
+```
+
+#### 7.3 Create Share
+* Click the **Sharing** icon
+* select **Apple (AFP))**
+* click **Add Apple (AFP) Share**
+	* Name: **big**
+	* Path: **/mnt/tank/big**
+	* Allow List: **cunnie**
+	* Time Machine: **checked**
+	* click **OK**
+	* click **Yes** (enable this service)
+
+#### 7.4 Access Share from OS X Machine
+
+* switch to finder
+* press **&#8984;-k** to bring up *Connect to Server* dialog
+	* Server Address: **afp://nas.nono.com**
+	* click **Connect**
+* Name: **Brian Cunnie**
+* Password: **some-password-here**
+
+### 8. Benchmarking FreeNAS
 We use [bonnie++](http://www.coker.com.au/bonnie++/) to benchmark our machine for the following reasons:
 
 1. it's a venerable benchmark
 2. it allows easy comparison to Calomel.org's bonnie++ benchmarks
 
-We use a file size of 80GiB
+We use a file size of 80GiB to eliminate the RAM cache (ARC) skewing the numbers&mdash;we are measuring disk performance, not RAM performance.
 
 ```
 ssh root@nas.nono.com
@@ -147,13 +196,22 @@ for i in $(seq 1 3); do
   sleep 60
 done
 ```
-The raw bonnie++ output is available as a [gist](https://gist.github.com/cunnie/9ee194654f0f37348140). The summary (median scores): (w=304MB/s, rw=186MB/s, r=629MB/s)
+The raw bonnie++ output is available as a [gist](https://gist.github.com/cunnie/9ee194654f0f37348140). The summary (median scores): (w=304MB/s, rw=186MB/s, r=629MB/s, IOPS=497)
 
-### Summary
-#### Gigabit
+### 9. Summary
+#### IOPS could be improved
+The IOPS (~497) are respectable. Although well more than twice as fast as a 15k RPM SAS Drive ([~175-210 IOPS](http://en.wikipedia.org/wiki/IOPS#Examples)), it's still much lower than a high-end SSD offers (e.g. an Intel X25-M G2 (MLC) posts ~8,600). we feel that using the SSD as a second-level cache could improve our numbers dramatically.
+
+#### No SSD
+We never put the SSD to use. We plan to use the SSD as both a [L2ARC](https://blogs.oracle.com/brendan/entry/test) (ZFS read cache) and a [ZIL SLOG](https://pthree.org/2012/12/06/zfs-administration-part-iii-the-zfs-intent-log/) (a ZFS write cache for synchronous writes).
+
+#### Gigabit Bottleneck
 Our NAS's performance is *severely limited by the throughput of its gigabit interface* on its sequential reads and writes. Our ethernet interface is limited to [~111 MB/s](http://www.tomshardware.com/reviews/gigabit-ethernet-bandwidth,2321-7.html), but our sequential reads can reach almost six times that (629MB/s).
 
-We can partly address that by using [LACP](http://www.cisco.com/c/en/us/td/docs/ios/12_2sb/feature/guide/gigeth.html) (aggregating the throughput of the 4 available ethernet interfaces).
+We can partly address that by using [LACP](http://en.wikipedia.org/wiki/Link_aggregation) (aggregating the throughput of the 4 available ethernet interfaces).
+
+#### CPU Bottleneck
+We notice that our CPU usage was above 90% on the sequential reads and writes, and that Calomel.org, with similar disk hardware and RAID controller (but much faster CPUs), was able to post sequential read speeds almost 3 times as fast as ours (i.e. 1532MB/s versus our 629MB/s). We suspect that the compression/decompression routines are only running on one core instead of eight, but we have no proof.
 
 #### Noise
 The fans in the case were noiser than expected, Not clicking or tapping, but a discernible hum.
@@ -173,9 +231,6 @@ No component is warmer than body temperature. We are especially impressed with t
 
 #### No Hot Swap
 It would be nice if the system had a hot-swap feature. It doesn't. In the event we need to replace a drive, we'll be powering the system down.
-
-#### No SSD
-We never put the SSD to use. We hope to use the SSD as both a [L2ARC](https://blogs.oracle.com/brendan/entry/test) (ZFS read cache) and a [ZIL SLOG](https://pthree.org/2012/12/06/zfs-administration-part-iii-the-zfs-intent-log/) (a ZFS write cache for synchronous writes).
 
 #### Pool Alignment
 FreeNAS does the right thing: it creates 4kB-aligned pools by default (instead of a 512B-aligned pools). This *should* be  more efficient, though results vary. See Calomel.org's section, [Performance of 512b versus 4K aligned pools](https://calomel.org/zfs_raid_speed_capacity.html) for an in-depth discussion and benchmarks.
