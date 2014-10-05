@@ -7,12 +7,12 @@ This blog post describes how we built a high-performing NAS server using off-the
 ### 1. The Equipment
 Prices do not include tax and shipping. Prices were current as of September, 2014.
 
-* **$375**: 1 &times; [Supermicro A1SAi-2750F Mini-ITX 20W 8-Core Intel C2750 motherboard](http://www.supermicro.com/products/motherboard/Atom/X10/A1SAi-2750F.cfm). This motherboard *includes* the Intel 8-core Atom C2750F. We chose this particular motherboard and chipset combination for its mini-ITX form factor (space is at a premium in our setup) and its low TDP (thermal design power) (better for the environment, lower electricity bills, heat-dissipation not a concern)
+* **$375**: 1 &times; [Supermicro A1SAi-2750F Mini-ITX 20W 8-Core Intel C2750 motherboard](http://www.supermicro.com/products/motherboard/Atom/X10/A1SAi-2750F.cfm). This motherboard *includes* the Intel 8-core Atom C2750F. We chose this particular motherboard and chipset combination for its mini-ITX form factor (space is at a premium in our setup) and its low TDP (thermal design power) (better for the environment, lower electricity bills, heat-dissipation not a concern). The low TDP allows for passive CPU cooling (i.e. no CPU fan).
 * **$372**: 4 &times; [Kingston KVR13LSE9/8 8GB ECC SODIMM](http://www.kingston.com/datasheets/KVR13LSE9_8.pdf). 32GiB is a good match for our aggregate drive size (28TB), for ZFS allocates approximately 1GiB RAM for every 1TB raw storage (i.e. we use 28GiB used for ZFS, leaving 4GiB for the operating system and L2ARC).
 * **$1,190**: 7 &times; [Seagate 4TB NAS HDD ST4000VN000](http://www.seagate.com/internal-hard-drives/nas-drives/nas-hdd/?sku=ST4000VN000). According to [Calomel.org](https://calomel.org/zfs_raid_speed_capacity.html), 'You do not have the get the most expensive SAS drives &hellip; Look for any manufacture [*sic*] which label their drives as RE or Raid Enabled or "For NAS systems."' Calomel.org goes on to warn against using power saving or ECO mode drives, for they have poor RAID performance..
 * **$238**: 1 &times; [LSI SAS 9211-8i 6Gb/s SAS Host Bus Adapter](http://www.lsi.com/products/host-bus-adapters/pages/lsi-sas-9211-8i.aspx). Although expensive SAS drives don't offer much value over less-expensive Raid Enabled SATA drives, the SAS/SATA controller makes a big difference, at times more than three-fold. Calomel.org's section "[All SATA controllers are NOT created equal](https://calomel.org/zfs_raid_speed_capacity.html)" has a convincing series of benchmarks.
 * **$215**: 1 &times; [Crucial MX100 512GB SSD](http://www.crucial.com/usa/en/ct512mx100ssd1). This drive is intended as a caching drive (ZFS's [L2ARC](https://blogs.oracle.com/brendan/entry/test) for reads ZFS's ZIL's [SLOG](https://pthree.org/2012/12/06/zfs-administration-part-iii-the-zfs-intent-log/) for writes). We chose this drive in particular because it offered power-loss protection (important for synchronous writes); however, Anandtech pointed out in the section "[The Truth About Micron's Power-Loss Protection](http://www.anandtech.com/show/8528/micron-m600-128gb-256gb-1tb-ssd-review-nda-placeholder))" that "&hellip; the M500, M550 and MX100 do not have power-loss protection&mdash;what they have is circuitry that protects against corruption of existing data in the case of a power-loss." We encourage the research of alternative SSDs if power-loss protection is desired.
-* **$110**: 1 &times; [Corsair HX650 650 watt power supply](http://www.corsair.com/en-us/hx-series-hx650-power-supply-650-watt-80-plus-gold-certified-modular-psu). We believe we over-specified the wattage required for the power supply. We feel we could have gone with a 450 watt power supply.
+* **$110**: 1 &times; [Corsair HX650 650 watt power supply](http://www.corsair.com/en-us/hx-series-hx650-power-supply-650-watt-80-plus-gold-certified-modular-psu). We believe we over-specified the wattage required for the power supply. [This poster](http://lime-technology.com/forum/index.php?topic=29670.0) recommends the [Silverstone ST45SF-G](http://www.silverstonetek.com/product.php?pid=342), whose size is half that of a standard ATX power supply, making it well-suited for our chassis.
 * **$100**: 1 &times; [Lian Li PC-Q25B Mini ITX chassis](http://www.lian-li.com/en/dt_portfolio/pc-q25/). We like this chassis because in spite of its small form factor we are able to install 7 &times; 3.5" drives, 1 &times; 2.5" SSD, and the LSI controller.
 * **$31**: 2 &times; [HighPoint SF-8087 &rarr; 4 &times; SATA cables](http://highpoint-tech.com/USA_new/accessories_int_ms1m4s.htm). Although we used a different manufacturer, these cables should work.
 
@@ -22,16 +22,21 @@ Prices do not include tax and shipping. Prices were current as of September, 201
 
 [caption id="attachment_30840" align="alignnone" width="630"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/freenas_back.jpg"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/freenas_back-630x472.jpg" alt="For easier installation of the power supply, we recommend removing the retaining screw of the controller card (it&#039;s not needed). Note that in the photo the screw has already been removed." width="630" height="472" class="size-large wp-image-30840" /></a> For easier installation of the power supply, we recommend removing the retaining screw of the controller card (it's not needed). Note that in the photo the screw has already been removed.[/caption]
 
+The assembly is straightforward.
+
+* Do not plug a 4-pin 12V DC power into connector J1&mdash;it's meant as an *alternative* power source when the 24-pin ATX power is not in use
+* Use a consistent system when plugging in SATA data connectors. The LSI card has 2 SF-8087 connectors, each of which fan out to 4 SATA connectors. We counted the drives from the top, so the topmost drive was connected to SF-8087 port 1 SATA cable 1, the second topmost drive was connected to SF-8087 port 1 SATA cable 2, etc&hellip; We connected the SSD to SF-8087 port 2 cable 4 (i.e. the final cable).
+
 ### 3. Power On
 There are two caveats to the initial power on:
 
 * the unit's power draw is so low that the Corsair power supply's fan will **not** turn on
 * make sure your VGA monitor is turned on and working (ours wasn't)
 
-### 4. Installing FreeNAS
-We download the USB image from [here](http://www.freenas.org/download-freenas-release.html). We follow the instructions from [the manual](http://web.freenas.org/images/resources/freenas9.2.1/freenas9.2.1_guide.pdf).
+### 4. Installing FreeNAS (OS X)
+We download the USB image from [here](http://www.freenas.org/download-freenas-release.html). We follow the **OS X instructions** from [the manual](http://web.freenas.org/images/resources/freenas9.2.1/freenas9.2.1_guide.pdf); Windows, Linux, and FreeBSD users should consult the manual for their respective operating system.
 
-#### 4.1 OS X Users Only: Clean Your USB
+#### 4.1 OS X: Destroy USB drive's Second GPT Table
 If you have previously-formatted your USB drive with [GPT](http://en.wikipedia.org/wiki/GUID_Partition_Table) (not MBR) partitioning, you will need to wipe the second GPT table as described [here](https://forums.freenas.org/index.php?threads/freenas-8-3-0-root-mount-error.10270/). These are the commands we used. Your commands will be similar, but the sector numbers will be different. Be cautious.
 
 ```
@@ -45,7 +50,7 @@ diskutil info /dev/disk2
 sudo dd if=/dev/zero of=/dev/disk2 bs=512 oseek=31266808
 ```
 
-#### 4.2 Create FreeNAS USB Image
+#### 4.2 OS X: Create FreeNAS USB Image
 Per the FreeNAS user manual:
 
 ```
@@ -59,7 +64,7 @@ sudo dd if=FreeNAS-9.2.1.8-RELEASE-x64.img of=/dev/disk2 bs=64k
 ### 5. Boot FreeNAS
 We do the following:
 
-* place the USB key in one of the black USB 2 slots instead of one of the blue USB 3 slots. USB 3 support is flaky.
+* place the USB key in one of the black USB 2 slots, *not* one of the blue USB 3 slots&mdash;USB 3 support is flaky.
 * connect an ethernet cable to the ethernet port that is closest to the blue USB slots
 * turn on the machine: it boots from the USB key without needing modified BIOS settings
 
@@ -69,13 +74,12 @@ We see the following screen:
 
 
 ### 6. Configuring FreeNAS
-We log into our NAS box via our browser: [http://nas.nono.com](http://nas.nono.com) (we have previously created a DNS entry (nas.nono.com), assigned an IP address (10.9.9.80), determined the NAS's ethernet MAC address, and entered that information into our DHCP tables).
+We log into our NAS box via our browser: [http://nas.nono.com](http://nas.nono.com) (we have previously created a DNS entry (nas.nono.com), assigned an IP address (10.9.9.80), determined the NAS's ethernet MAC address, and entered that information into our DHCP server's configuration).
 
 #### 6.1 Our first task: set the root password.
 [caption id="attachment_30844" align="alignnone" width="522"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/set_root_password.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/set_root_password.png" alt="Before anything else, we must first set our root password" width="522" height="346" class="size-full wp-image-30844" /></a> Before anything else, we must first set our root password[/caption]
 
 #### 6.2 Basic Settings
-
 * click the **System** icon
 * **Settings &rarr; General**
 	* Protocol: **HTTPS**
@@ -89,7 +93,7 @@ We are redirected to an HTTPS connection with a self-signed cert. We click throu
 	* Hostname: **nas.nono.com**
 	* click **OK**
 
-We enable ssh in order to allow us to install the disk benchmarking package ([bonnie++](http://www.coker.com.au/bonnie++/)). We also enable CIFS for that will be our primary filesharing protocol. We also enable iSCSI for our ESXi host.
+We enable ssh in order to allow us to install the disk benchmarking package ([bonnie++](http://www.coker.com.au/bonnie++/)). We enable CIFS, for that will be our primary filesharing protocol. We also enable iSCSI for our ESXi host.
 
 * click the **Services** icon
 	* click the **SSH** slider to turn it on
@@ -98,13 +102,8 @@ We enable ssh in order to allow us to install the disk benchmarking package ([bo
 		* click **OK**
 	* click the **CIFS** slider to turn it on
 	* click the **iSCSI** slider to turn it on
-	
+
 #### 6.3 Create ZFS Volume
-
-```
-ssh root@nas.nono.com
-
-```
 
 We create one big volume. We choose ZFS's RAID-Z2 <sup>[[1]](#raid6)</sup> :
 
@@ -116,29 +115,48 @@ We create one big volume. We choose ZFS's RAID-Z2 <sup>[[1]](#raid6)</sup> :
 		* Volume Layout: **RaidZ2** (ignore the *non-optimal*  <sup>[[2]](#non_optimal)</sup> warning)
 		* click **Add Volume**
 
+### 7. Benchmarking FreeNAS
+We use [bonnie++](http://www.coker.com.au/bonnie++/) to benchmark our machine for the following reasons:
 
-### Benchmarking FreeNAS
+1. it's a venerable benchmark
+2. it allows easy comparison to Calomel.org's bonnie++ benchmarks
+
+We use a file size of 80GiB
+
 ```
+ssh root@nas.nono.com
+ # we prefer the bash shell; for those we prefer csh syntax,
+ # adjust the for-loop syntax further down
 bash
+ # we remount the root filesystem as read-write so that we
+ # can install bonnie++
 mount -o rw /
 pkg_add -r bonnie++
+ # we add root to sudoers because that will allow us
+ # to run bonnie++ as a _non-root_ user, which it requires.
 cat >> /usr/local/etc/sudoers <<EOF
   root  ALL=(ALL) NOPASSWD: ALL
 EOF
+ # create a temporary directory to hold bonnie++'s
+ # scratch files
 mkdir /mnt/tank/tmp
 chmod 1777 !$
-for i in $(seq 1 1); do
-  sudo -u nobody bonnie++ -m "raidz2 L2ARC/80GB" -r 8192 -s 81920 -d /mnt/tank/tmp/ -f -b -n 1 >> /mnt/tank/tmp/bonnie.out
+ # run 3 times, take the median values
+for i in $(seq 1 3); do
+  sudo -u nobody bonnie++ -m "raidz2_no_l2arc_no_slog" -r 8192 -s 81920 -d /mnt/tank/tmp/ -f -b -n 1 >> /mnt/tank/tmp/bonnie.out
   sleep 60
 done
 ```
+The raw bonnie++ output is available as a [gist](https://gist.github.com/cunnie/9ee194654f0f37348140). The summary (median scores): (w=304MB/s, rw=186MB/s, r=629MB/s)
 
 ### Summary
+#### Gigabit
+Our NAS's performance is *severely limited by the throughput of its gigabit interface* on its sequential reads and writes. Our ethernet interface is limited to [~111 MB/s](http://www.tomshardware.com/reviews/gigabit-ethernet-bandwidth,2321-7.html), but our sequential reads can reach almost six times that (629MB/s).
+
+We can partly address that by using [LACP](http://www.cisco.com/c/en/us/td/docs/ios/12_2sb/feature/guide/gigeth.html) (aggregating the throughput of the 4 available ethernet interfaces).
 
 #### Noise
-
-* the fans in the case were noiser than expected, Not clicking or tapping, but a discernible hum
-* we scraped the PSU when installing&mdash;it's an extremely tight fit
+The fans in the case were noiser than expected, Not clicking or tapping, but a discernible hum.
 
 #### Heat
 The system runs cool. With a room temperature of 23.3&deg;C (74&deg; Fahrenheit), these are the readings we recorded after the machine being powered on for 12 hours:
@@ -151,12 +169,21 @@ The system runs cool. With a room temperature of 23.3&deg;C (74&deg; Fahrenheit)
 * DIMMB1: **33&deg;C**
 * DIMMB2: **34&deg;C**
 
-No component is warmer than body temperature. We are especially impressed with the low CPU temperature, doubly so given that it's passively cooled.
+No component is warmer than body temperature. We are especially impressed with the low CPU temperature, doubly so that it's passively cooled.
+
+#### No Hot Swap
+It would be nice if the system had a hot-swap feature. It doesn't. In the event we need to replace a drive, we'll be powering the system down.
+
+#### No SSD
+We never put the SSD to use. We hope to use the SSD as both a [L2ARC](https://blogs.oracle.com/brendan/entry/test) (ZFS read cache) and a [ZIL SLOG](https://pthree.org/2012/12/06/zfs-administration-part-iii-the-zfs-intent-log/) (a ZFS write cache for synchronous writes).
+
+#### Pool Alignment
+FreeNAS does the right thing: it creates 4kB-aligned pools by default (instead of a 512B-aligned pools). This *should* be  more efficient, though results vary. See Calomel.org's section, [Performance of 512b versus 4K aligned pools](https://calomel.org/zfs_raid_speed_capacity.html) for an in-depth discussion and benchmarks.
 
 ---
 ### Footnotes
 
-<a name="raid6"><sup>1</sup></a> We feel that [double-parity RAID](http://en.wikipedia.org/wiki/Standard_RAID_levels#RAID_6) is a safer approach. Adam Leventhal, in his [article for the ACM](http://queue.acm.org/detail.cfm?id=1670144), describes the challenges that large capacity disks pose to a RAID 5 solution. A [NetApp paper](http://synergy-ds.com/netapp/wp-7005.pdf) states, "&hellip; in the event of a drive failure, utilizing a
+<a name="raid6"><sup>1</sup></a> We feel that [double-parity RAID](http://en.wikipedia.org/wiki/Standard_RAID_levels#RAID_6) is a safer approach than single-parity (e.g. RAID 5). Adam Leventhal, in his [article for the ACM](http://queue.acm.org/detail.cfm?id=1670144), describes the challenges that large capacity disks pose to a RAID 5 solution. A [NetApp paper](http://synergy-ds.com/netapp/wp-7005.pdf) states, "&hellip; in the event of a drive failure, utilizing a
 SATA RAID 5 group (using 2TB disk drives) can mean
 a *33.28% chance of data loss per year*" (italics ours).
 
@@ -165,7 +192,3 @@ a *33.28% chance of data loss per year*" (italics ours).
 ### Acknowledgements
 
 Calomel.org has one of the [most comprehensive set of ZFS benchmarks](https://calomel.org/zfs_raid_speed_capacity.html) and good advice for maximizing the performance of ZFS, some of it not obvious (e.g. the importance of a good controller)
-
-### Disclosures
-
-The author of this blog post works for Pivotal Software, a company that is owned by EMC, which manufactures storage devices.
