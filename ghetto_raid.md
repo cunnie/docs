@@ -1,4 +1,5 @@
 # A High-performing Mid-range NAS Server
+## Part 1: Initial Set-up and Testing
 
 This blog post describes how we built a high-performing NAS server using off-the-shelf components and open source software ([FreeNAS](http://www.freenas.org/)). The NAS has the following characteristics:
 
@@ -101,7 +102,7 @@ We are redirected to an HTTPS connection with a self-signed cert. We click throu
 	* Hostname: **nas.nono.com**
 	* click **OK**
 
-We enable ssh in order to allow us to install the disk benchmarking package ([bonnie++](http://www.coker.com.au/bonnie++/)). We enable CIFS, for that will be our primary filesharing protocol. We also enable iSCSI for our ESXi host.
+We enable ssh in order to allow us to install the disk benchmarking package ([bonnie++](http://www.coker.com.au/bonnie++/)). We enable AFP, for that will be our primary filesharing protocol. We also enable iSCSI for our ESXi host. We enable CIFS for good measure (we don't have Windows clients, but we may in the future).
 
 * click the **Services** icon
 	* click the **SSH** slider to turn it on
@@ -247,3 +248,6 @@ a *33.28% chance of data loss per year*" (italics ours).
 ### Acknowledgements
 
 Calomel.org has one of the [most comprehensive set of ZFS benchmarks](https://calomel.org/zfs_raid_speed_capacity.html) and good advice for maximizing the performance of ZFS, some of it not obvious (e.g. the importance of a good controller)
+
+# A High-performing Mid-range NAS Server
+## Part 2: Performance Tuning
