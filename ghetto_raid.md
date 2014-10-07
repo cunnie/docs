@@ -13,6 +13,8 @@ This blog post describes how we built a high-performing NAS server using off-the
 
 [caption id="attachment_30838" align="alignnone" width="630"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/freenas_pellegrino.jpg"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/freenas_pellegrino-630x566.jpg" alt="Our NAS server: 28TB raw data. 1 liter Pellegrino bottle is for scale" width="630" height="566" class="size-large wp-image-30838" /></a> Our NAS server: 28TB raw data. 1 liter Pellegrino bottle is for scale[/caption]
 
+***[Author's note &amp; disclosure: This FreeNAS server is a personal project, intended for my home lab. At work we use an EMC VNX5400, with which we are quite pleased&mdash;in fact we are planning to triple its storage. I am employed by Pivotal Labs, which is partly-owned by EMC, a storage manufacturer]***
+
 ### 1. The Equipment
 Prices do not include tax and shipping. Prices were current as of September, 2014.
 
@@ -73,7 +75,7 @@ sudo dd if=FreeNAS-9.2.1.8-RELEASE-x64.img of=/dev/disk2 bs=64k
 ### 5. Boot FreeNAS
 We do the following:
 
-* place the USB key in one of the black USB 2 slots, *not* one of the blue USB 3 slots&mdash;USB 3 support is flaky.
+* place the USB key in one of the black USB 2 slots, *not* one of the blue USB 3 slots (USB 3.0 support is available if needed, check the [FreeNAS User Guide](http://web.freenas.org/images/resources/freenas9.2.1/freenas9.2.1_guide.pdf) for more information.
 * connect an ethernet cable to the ethernet port that is closest to the blue USB slots
 * turn on the machine: it boots from the USB key without needing modified BIOS settings
 
