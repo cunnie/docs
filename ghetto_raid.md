@@ -161,7 +161,7 @@ exit
 #### 7.4 Access Share from OS X Machine
 
 * switch to finder
-* press **&#8984;-k** to bring up *Connect to Server* dialog
+* press **cmd-k** to bring up *Connect to Server* dialog
 	* Server Address: **afp://nas.nono.com**
 	* click **Connect**
 * Name: **Brian Cunnie**
