@@ -1,20 +1,24 @@
 # World's Smallest IaaS, Part 1
 
-***[2014-06-29 this blog post has been updated to reflect installation on a 64GiB Mac Pro (not a 16GiB Mac Mini, which didn't have enough RAM to deploy Cloud Foundry)]***
-
 In this blog post, we describe the procedure to deploy VMware ESXi and VMware vCenter on an Apple Mac Mini running VMware Fusion.
 
 [caption id="attachment_29263" align="alignnone" width="300"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/mac_pro.jpg"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/mac_pro-300x264.jpg" alt="Mac Pro and Bottle of Pellegrino" width="300" height="264" class="size-medium wp-image-29263" /></a> This 64GiB Mac Pro is the World's Smallest Installation of Cloud Foundry.  The Bottle of Pellegrino is for scale.  Not pictured:  4TB External USB 3 Drive.[/caption]
+
+***[2014-10-07 this blog post has been updated to reflect ESXi 5.5U2, VCSA 5.5U2, and the pivotal.io domain]***
+
+***[2014-06-29 this blog post has been updated to reflect installation on a 64GiB Mac Pro (not a 16GiB Mac Mini, which didn't have enough RAM to deploy Cloud Foundry)]***
 
 #### Mac Pro Configuration
 
 We went with the following configuration:
 
 * 3.7GHz quad-core with 10MB of L3 cache (i.e. Intel Xeon E5-1620 v2)
-* D500 Graphics Card [[1]](#d500).
+* D500 Graphics Card <sup>[[1]](#d500)</sup> .
 * 512MB Flash (note: we regretted this decision; we wished we had opted for the $500-more-expensive 1TB)
 * 64GiB <sup>[[2]](#crucial_ram)</sup> RAM
 * [External 4TB USB 3 Drive](http://eshop.macsales.com/item/Newer%20Technology/MSQ7S40TB64/)
+* VMware Fusion Professional 7.0 (VMware Fusion 6.0.3 should work; we used that for our initial install)
+* OS X 10.9.5
 
 Why the Mac Pro?  It's the only machine that Apple sells that accepts more than 32GB of RAM.
 
@@ -61,13 +65,20 @@ For a brief portion of the install we will need a Windows machine (in order to d
 
 #### 4. Download VMware Software
 
-1. **Download ESXi**: We browse to [VMware](https://my.vmware.com/group/vmware/home) (you may need to create a VMware account).  The path we follow to download is **My VMware &rarr; Downloads &rarr; All Downloads &rarr; VMware vSphere &rarr; VMware ESXi 5.5.0 Update 1**.  The download should be approximately 335 MB.
-2. **Download vCenter Server**: Again, we browse to VMware and follow this path: **My VMware &rarr; Downloads &rarr; All Downloads &rarr; VMware vSphere &rarr;  VMware vCenter Server 5.5 Update 1a Appliance**.  The download should be approximately 2GB.<br /> <br />*We download this file to our Windows machine because we will use the vSphere client on our Windows machine to install vCenter on our ESXi.*<br /><br />Make sure that the downloaded file has a *.ova* extension and not a *.ovf* extension.  Certain browsers (i.e. Chrome) append the wrong extension to the downloaded file.
+1. **Download ESXi**: We browse to [VMware](https://my.vmware.com/group/vmware/home) (you may need to create a VMware account).  The path we follow to download is **My VMware &rarr; Downloads &rarr; Product Downloads &rarr; All Downloads**
+2. type **esxi 5.5.0** in the *Search All Downloads* field and click the **search icon** (magnifying glass)
+3. scroll down until we see [VMware vSphere > VMware ESXi 5.5.0 Update 2](https://my.vmware.com/web/vmware/details?downloadGroup=ESXI55U2&productId=353). We click the link.
+2. Download **ESXi 5.5 Update 2 Driver Rollup (Includes VMware Tools)**.  The site states the download File size is 340MB, but the actual size is 356MB (340***MiB***).
+2. **Downloads &rarr; Product Downloads &rarr; All Downloads**
+3. type **vcenter 5.5.0** in the *Search All Downloads* field and click the **search icon** (magnifying glass)
+4. scroll down until we see [VMware vSphere > VMware vCenter Server 5.5 Update 2](https://my.vmware.com/web/vmware/details?downloadGroup=VC55U2&productId=353). We click the link.
+5. download **VMware vCenter Server 5.5 Update 2 Appliance**.
+The stated file size is 2GB.<br /> <br />*We download this file to our Windows machine because we will use the vSphere client on our Windows machine to install vCenter on our ESXi.*<br /><br />Make sure that the downloaded file has a *.ova* extension and not a *.ovf* extension.  Certain browsers (i.e. Chrome) append the wrong extension to the downloaded file.
 
 
 #### 4. Download Cloud Foundry Software
 
-1. Download [Pivotal CF](https://network.gopivotal.com/products/pivotal-cf)  (you'll need to create an account and agree to the EULA). Click **Download**.  The download should be approximately 5.3GB
+1. Download [Pivotal CF](https://network.pivotal.io/products/pivotal-cf)  (you'll need to create an account and agree to the EULA). Click **Download**.  The download should be approximately 5.3GB
 
 ### ESXi 5.5
 
@@ -77,7 +88,7 @@ For a brief portion of the install we will need a Windows machine (in order to d
 2. &#8984;N (**File &rarr; New**)
 3. Select **Install from disc or image**; click **Continue**
 4. Click **Use another disc or disc image...**
-5. Browse to your ESXi ISO image (e.g. *VMware-ESXi-5.5U1-Rollup_2ISO.iso*) and click **Open**
+5. Browse to your ESXi ISO image (e.g. *VMware-ESXi-5.5U2-RollupISO2.iso*) and click **Open**
 6. Click **Continue**
 7. Click **Customize Settings**
 8. Change the name to **CF ESXi** and click **Save** (choose a location on the 4TB External Drive, e.g. our location is "/Volumes/Big Disk/vmware/") (note: if you decide to place the Virtual Machine on the Mac Pro's flash drive, remember to exclude that location from Time Machine backups)
@@ -89,14 +100,14 @@ For a brief portion of the install we will need a Windows machine (in order to d
    * **Network Adapter**
      * Select **Bridged Networking &rarr; Ethernet** (our Mac Pro is using its ethernet port, not its WiFi)
    * **Hard Disk**
-     * **750.00** GB
+     * **750.00** GB [[3]](#storage)
      * click **Apply**; click **Show All**
    * Close the Settings window
 
 #### 2. Install ESXi:
 
 10. Click the &#9654; button to start the ESXi Virtual Machine.
-1. You'll see an *ESXi-5.5U1-1623589-RollupISO-standard Boot Menu* panel. It has a ten-second timeout.  Don't do anything; let it time out.
+1. You'll see an *ESXi-5.5U2-2069112-RollupISO-standard Boot Menu* panel. It has a ten-second timeout.  Don't do anything; let it time out.
 11. You will see a warning, "A virtual machine is attempting to monitor...".  Enter your password; click **OK**
 12. You'll see a panel that says *Welcome to the VMware ESXi 5.5.0 Installations*; Press **Enter** to continue
 1. press **F11** to Accept and Continue
@@ -110,7 +121,7 @@ For a brief portion of the install we will need a Windows machine (in order to d
 
 1. Wait until ESXi finishes rebooting
 2. Press **F2** twice (yes, twice) to login
-3. Enter your username and password, then press **Enter**
+3. Enter the username "root" and password, then press **Enter**
 4. Select **Configure Management Network**; press **Enter**
 5. Select **IP Configure**; press **Enter**
   * Select **Set static IP address...**
@@ -123,12 +134,14 @@ For a brief portion of the install we will need a Windows machine (in order to d
   * Primary DNS Server: **8.8.8.8** (unless you have a local DNS server you'd like to use)
   * Hostname: **esxi.cf.nono.com**
   * Press **Enter**
+  * Press **Escape**
 7. Press **Y** (Apply changes and restart management network)
 8. Select **Test Management Network**
 9. Press **Enter**; every test should return **OK**
 10. Press **Enter**; Press **Esc** to log out
 
 #### 4. Configure ESXi License, NTP
+Our ESXi server will need a 4-CPU [Enterprise or Enterprise Plus](http://www.vmware.com/products/vsphere/compare.html) license <sup>[[4]](#esxi_license)</sup> . The license's description, when installed, should be similar to, "VMware vSphere 5 Hypervisor Enterprise Licensed for XX physical CPUs". The temporary evaluation license should work, too. The free permanent license won't work.
 
 Note: configuring NTP is optional; we just can't help ourselves&mdash;NTP is the crack cocaine of system administrators.
 
@@ -169,7 +182,7 @@ We do the following on the *Windows* machine.
 1. We do the following on the Windows vSphere client:
 **File &rarr; Deploy OVF Template…**
     * Click **Browse…**
-    * Browse to the downloaded vCenter .ova file (e.g. *VMware-vCenter-Server-Appliance-5.5.0.10100-1750781_OVF10.ova*); select it and click **Open**
+    * Browse to the downloaded vCenter .ova file (e.g. *VMware-vCenter-Server-Appliance-5.5.0.20000-2063318_OVF10.ova*); select it and click **Open**
     * Click **Next** (OVF Template Details)
     * Click **Next** (default name of "VMware vCenter Server Appliance")
     * Click **Next** (Thick Provision)
@@ -186,7 +199,7 @@ We do the following on the *Windows* machine, in the VMware vSphere Client.
 ).
 1. Click **Console** tab
 1. Click *inside* the Console tab (your mouse pointer will disappear)
-1. When Prompted with "NO NETWORKING DETECTED", press **Enter**<br />
+1. When the screen background turns blue, look for either "NO NETWORKING DETECTED" or "Open a browser to https://", press **Enter**<br />
 login: **root**<br />
 Password: **vmware**<br />
 1. change password: `passwd`<br />
@@ -240,6 +253,7 @@ User name: **root**<br />
 Password: the-vcenter-password<br />
 check **Accept license agreement**<br />
 click **Next**<br />
+check **Enable data collection** (or not); click **Next**
 Select **Configure with default settings**; click **Next**<br />
 Click **Start**<br />
 Click **Close**
@@ -275,7 +289,6 @@ We see a yellow band on the top of the page with the words, "There are vCenter S
 
 ##### Create Datacenter
 
-
 1. Click the home icon (top of the page, towards the left) to return to the main screen
 2. Click the **vCenter** icon (we can choose the icon from the navbar on the left or the icon in the middle of the screen&mdash;they both take us to the same place)
 1. Click **Datacenters** on the lefthand side navbar
@@ -291,20 +304,23 @@ We see a yellow band on the top of the page with the words, "There are vCenter S
 
 ##### Add ESXi Server
 
-Click the *Add a Host* icon (a computer with a green "+").  An *Add Host* window will pop up.
-
-1. Name and Location
-   * Host name or IP address: **esxi.cf.nono.com**
-   * click **Next**
-1. Connection settings
-   * User name: **root**
-   * Password:  *whatever-we-set-the-password-to*
-1. Click **Yes** to verify the authenticity of the host
-1. (Host summary) click **Next**
-2. (Assign license) click **Next**
-1. (Lockdown mode) click **Next**
-2. (VM location) click **Next**
-3. (Ready to complete) click **Finish**
+1. Click the home icon (top of the page, towards the left) to return to the main screen
+2. Click the **vCenter** icon (we can choose the icon from the navbar on the left or the icon in the middle of the screen&mdash;they both take us to the same place)
+1. Click **Clusters** on the lefthand side navbar
+1. Click the *Add a Host* icon (a computer with a green "+").  An *Add Host* window will pop up.
+	1. Name and Location
+	   * Host name or IP address: **esxi.cf.nono.com**
+	   * Location: select **Cluster** (you may need to expand "Datacenter")
+	   * click **Next**
+	1. Connection settings
+	   * User name: **root**
+	   * Password:  *whatever-we-set-the-password-to*
+	1. Click **Yes** to verify the authenticity of the host
+	1. (Host summary) click **Next**
+	2. (Assign license) click **Next**
+	1. (Lockdown mode) click **Next**
+	2. (Resource pool) click **Next**
+	3. (Ready to complete) click **Finish**
 
 Congratulations, we have created an IaaS.  Ready for more? Let's install Cloud Foundry's Ops Manager and deploy BOSH in the subsequent post, [World’s Smallest IaaS, Part 2](http://pivotallabs.com/worlds-smallest-iaas-part-2/).
 
@@ -322,11 +338,19 @@ Some of the ESXi and vCenter configuration was drawn from internal Cloud Foundry
 
 Do **not** make the mistake that we did, thinking we could mix the Crucial RAM with the Apple RAM: Originally we had purchased only 32GiB from Crucial, with the belief that we could retain 8GiB of the 12GiB that were included with our Mac Pro, for a grand total of 40GiB.  We were doomed to disappointment.  The Crucial RAM was RDIMM; the Apple RAM was UDIMM. "[Do not mix UDIMMs and RDIMMs,](http://support.apple.com/kb/HT6064)" says Apple on its Mac Pro memory specification page. If you mix them, like we did, the Mac Pro will not boot but instead will beep plaintively.
 
+<a name="storage"><sup>3</sup></a> Our actual ESXi installation differs from the instructions given here; specifically, we use a 16GiB disk rather than a 750GB disk for the ESXi install (note that we could have opted for an even smaller 5.2GB disk, "[When booting from a local disk or SAN/iSCSI LUN, a **5.2GB disk is required** to allow for the creation of the VMFS volume and a 4GB scratch partition on the boot device](http://pubs.vmware.com/vsphere-55/index.jsp?topic=%2Fcom.vmware.vsphere.upgrade.doc%2FGUID-DEB8086A-306B-4239-BF76-E354679202FC.html)"). Subsequently we attach a 1.5TiB iSCSI target to our ESXi host.
+
+We opted not to describe our more-complicated storage configuration (16GiB boot + 1.5TiB iSCSI) because it doesn't further the goal of this series of blog posts, i.e. how to install Cloud Foundry in a simple manner: it would unnecessarily lengthen the steps required to complete the install as well as burden the user with additional hardware requirements (i.e. a NAS).
+
+<a name="esxi_license"><sup>4</sup></a> Our use of DRS ([Distributed Resource Scheduler](http://www.vmware.com/products/vsphere/features/drs-dpm.html)) requires us to use an Enterprise or Enterprise Plus license.
+
 # World's Smallest IaaS, Part 2
 
-***[2014-06-29 this blog post has been updated to reflect installation on a 64GiB Mac Pro (not a 16GiB Mac Mini, which didn't have enough RAM to deploy Cloud Foundry)]***
+In this blog post, we describe the procedure to deploy [Pivotal CF Operations Manager](http://docs.pivotal.io/pivotalcf/customizing/) (a web-based tool for deploying Cloud Foundry) and [BOSH](https://github.com/cloudfoundry/bosh) (a VM that creates other VMs) to a VMware vCenter.
 
-In this blog post, we describe the procedure to deploy [Pivotal CF Operations Manager](http://docs.gopivotal.com/pivotalcf/customizing/) (a web-based tool for deploying Cloud Foundry) and [BOSH](https://github.com/cloudfoundry/bosh) (a VM that creates other VMs) to a VMware vCenter.
+***[2014-10-07 this blog post has been updated to reflect ESXi 5.5U2, VCSA 5.5U2, the pivotal.io domain, and Pivotal CF 1.3.1]***
+
+***[2014-06-29 this blog post has been updated to reflect installation on a 64GiB Mac Pro (not a 16GiB Mac Mini, which didn't have enough RAM to deploy Cloud Foundry)]***
 
 ### Pre-requisites
 
@@ -336,12 +360,12 @@ In *[World's Smallest IaaS, Part 1](http://pivotallabs.com/worlds-smallest-iaas-
 
 #### 2. Pivotal CF
 
-* Browse to [https://network.gopivotal.com/products](https://network.gopivotal.com/products).
+* Browse to [https://network.pivotal.io/products](https://network.pivotal.io/products).
 * Log in (if you don't have a userid, create one; they're free)
 * Click the **Pivotal CF** tile
 * Click **Download**; it should be a .tgz file; it should be approximately 5.6GB
 
-[caption id="attachment_28762" align="alignnone" width="300"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/click_download.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/click_download-300x115.png" alt="click_download" width="300" height="115" class="size-medium wp-image-28762" /></a> Download Pivotal CF Version 1.2.0.0, a 5.6GB .tgz file[/caption]
+[caption id="attachment_30887" align="alignnone" width="630"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/click_download.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/click_download-630x167.png" alt="Download Pivotal CF Version 1.3.1.0, a 5.6GB .tgz file" width="630" height="167" class="size-large wp-image-30887" /></a> Download Pivotal CF Version 1.3.1.0, a 5.6GB .tgz file[/caption]
 
 * double-click the downloaded file to untar it (using a Windows box may require the installation of an application to untar the file).
 
@@ -358,7 +382,7 @@ In *[World's Smallest IaaS, Part 1](http://pivotallabs.com/worlds-smallest-iaas-
 
 [caption id="attachment_28772" align="alignnone" width="300"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/deploy_ovf.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/deploy_ovf-300x211.png" alt="menubar showing &quot;Deploy OVF Template...&quot;" width="300" height="211" class="size-medium wp-image-28772" /></a> Click "Deploy OVF Template..." from the Actions drop-down[/caption]
 
-* if prompted to download and install the plugin, install the plugin; we'll need this to deploy Ops Manager
+* if prompted to download and install the plugin, install the plugin; we'll need this to deploy Ops Manager. If you're using [Firefox 30](https://communities.vmware.com/thread/472152), you may need go to **Tools &rarr; Add-ons &rarr; Plugins &rarr; VMWare Client Support Plug-in** and set it to **Always Activate**
 
 [caption id="attachment_28771" align="alignnone" width="300"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/download_plugin.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/download_plugin-300x165.png" alt="prompt to download and install plugin" width="300" height="165" class="size-medium wp-image-28771" /></a> Install the vCenter Client Integration Plugin[/caption]
 
@@ -366,7 +390,7 @@ In *[World's Smallest IaaS, Part 1](http://pivotallabs.com/worlds-smallest-iaas-
 * Click **Actions &rarr; Deploy OVF Template...**
 * Click **Allow** to when prompted by the **Client Integration Access Control**
   * Select **Local File**; click **Browse...**
-  * Select the **pcf-1.2.0.0.ova** file that we untarred from the Pivotal CF file we downloaded (it should be under the *pcf-1.2.0.0_allinone* directory); click **Open**
+  * Select the **pcf-vsphere-1.3.1.0.ova** file that we untarred from the Pivotal CF file we downloaded (it should be under the *pcf-1.3.1.0_allinone* directory); click **Open**
   * Click **Next**
 * (Review details) click **Next**
 * (Accept EULAs) click **Accept**; click **Next**
@@ -459,9 +483,11 @@ For example, a network's DHCP server and gateway is an [Apple Airport Time Capsu
 
 ## a.k.a. The World's Smallest PaaS
 
-***[2014-06-29 this blog post has been updated to reflect installation on a 64GiB Mac Pro (not a 16GiB Mac Mini <sup>[[1]](#mac_mini)</sup> ) with 48GiB allocated to the ESXi VM]***
-
 In this blog post, we describe deploying Cloud Foundry/Elastic Runtime to our VMware/vCenter setup (i.e. the world's smallest [IaaS](http://en.wikipedia.org/wiki/Cloud_computing#Infrastructure_as_a_service_.28IaaS.29)) in order to create the World's Smallest [PaaS](http://en.wikipedia.org/wiki/Platform_as_a_service) (Platform as a Service).
+
+***[2014-10-07 this blog post has been updated to reflect ESXi 5.5U2, VCSA 5.5U2, the pivotal.io domain, and Pivotal CF 1.3.1]***
+
+***[2014-06-29 this blog post has been updated to reflect installation on a 64GiB Mac Pro (not a 16GiB Mac Mini <sup>[[1]](#mac_mini)</sup> ) with 48GiB allocated to the ESXi VM]***
 
 Previous blog posts have covered setting up the necessary environment:
 
@@ -475,8 +501,8 @@ Previous blog posts have covered setting up the necessary environment:
 
 [caption id="attachment_28936" align="alignnone" width="300"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/import_a_product.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/import_a_product-300x278.png" alt="screenshot of Ops Manager to import a product" width="300" height="278" class="size-medium wp-image-28936" /></a> Click "Import a Product" and browse to the Elastic Runtime file we downloaded and unzipped earlier[/caption]
 
-* Browse to the directory that contains the files that we untarred from the 5.6GB file we downloaded from network.gopivotal.com in [Part 2](http://pivotallabs.com/worlds-smallest-iaas-part-2/) (the directory name should be **pcf-1.2.0.0_allinone**)
-* select the file named **cf-1.2.0.0.pivotal** and upload it
+* Browse to the directory that contains the files that we untarred from the 5.6GB file we downloaded from network.pivotal.io in [Part 2](http://pivotallabs.com/worlds-smallest-iaas-part-2/) (the directory name should be **pcf-1.3.1.0_allinone**)
+* select the file named **cf-1.3.1.0.pivotal** and upload it
 * When it has finished uploading, we see green band at the top of the screen confirming that we've "**Successfully added product**".
 *  We see a new option in the left hand navbar:  **Pivotal Elastic Runtime**.  Hover our mouse over that option to make the blue *Add* button appear.  Click the blue **Add** button.
 
@@ -805,14 +831,14 @@ Generating a 2048 bit RSA private key
 .............................+++
 ......................................+++
 writing new private key to 'wildcard.cf.nono.com.key'
------
+ -----
 You are about to be asked to enter information that will be incorporated
 into your certificate request.
 What you are about to enter is what is called a Distinguished Name or a DN.
 There are quite a few fields but you can leave some blank
 For some fields there will be a default value,
 If you enter '.', the field will be left blank.
------
+ -----
 Country Name (2 letter code) [AU]:US
 State or Province Name (full name) [Some-State]:California
 Locality Name (eg, city) []:San Francisco
