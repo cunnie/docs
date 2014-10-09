@@ -342,7 +342,7 @@ Do **not** make the mistake that we did, thinking we could mix the Crucial RAM w
 
 We opted not to describe our more-complicated storage configuration (16GiB boot + 1.5TiB iSCSI) because it doesn't further the goal of this series of blog posts, i.e. how to install Cloud Foundry in a simple manner: it would unnecessarily lengthen the steps required to complete the install as well as burden the user with additional hardware requirements (i.e. a NAS).
 
-<a name="esxi_license"><sup>4</sup></a> Our use of DRS ([Distributed Resource Scheduler](http://www.vmware.com/products/vsphere/features/drs-dpm.html)) requires us to use an Enterprise or Enterprise Plus license.
+<a name="esxi_license"><sup>4</sup></a> We use resource pools, which require DRS ([Distributed Resource Scheduler](http://www.vmware.com/products/vsphere/features/drs-dpm.html)), which requires an Enterprise or Enterprise Plus license.
 
 # World's Smallest IaaS, Part 2
 
