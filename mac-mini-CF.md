@@ -447,7 +447,8 @@ We see the configuration screen. There are several panels. We fill them out
 * click **Create Availability Zones**
   * click **Add**
   * Name: **Cluster**
-  * Cluster **Cluster**
+  * Cluster: **Cluster**
+  * Resource Pool: *leave blank* <sup>[[1]](#resource_pool)</sup>
   * click **Save**
 
 [caption id="attachment_31124" align="alignnone" width="630"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/Add-Availability-Zone.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/Add-Availability-Zone-630x368.png" alt="Click &quot;Add&quot; to create an Availability Zone, which is one method of creating a highly-available application. For our instructional purposes, we need but one Availability Zone." width="630" height="368" class="size-large wp-image-31124" /></a> Click "Add" to create an Availability Zone. “Availability Zone” is a term borrowed from Amazon AWS, and corresponds most closely with vSphere’s “Cluster”. Having multiple Availability Zones is a technique to make one’s application highly available. For our instructional purposes we need but one Availability Zone.[/caption]
