@@ -4,7 +4,7 @@ In this blog post, we describe the procedure to deploy VMware ESXi and VMware vC
 
 [caption id="attachment_29263" align="alignnone" width="300"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/mac_pro.jpg"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/mac_pro-300x264.jpg" alt="Mac Pro and Bottle of Pellegrino" width="300" height="264" class="size-medium wp-image-29263" /></a> This 64GiB Mac Pro is the World's Smallest Installation of Cloud Foundry.  The Bottle of Pellegrino is for scale.  Not pictured:  4TB External USB 3 Drive.[/caption]
 
-***[2014-10-07 this blog post has been updated to reflect ESXi 5.5U2, VCSA 5.5U2, and the pivotal.io domain]***
+***[2014-10-18 this blog post has been updated to reflect ESXi 5.5U2, VCSA 5.5U2, and the pivotal.io domain]***
 
 ***[2014-06-29 this blog post has been updated to reflect installation on a 64GiB Mac Pro (not a 16GiB Mac Mini, which didn't have enough RAM to deploy Cloud Foundry)]***
 
@@ -342,13 +342,15 @@ Do **not** make the mistake that we did, thinking we could mix the Crucial RAM w
 
 We opted not to describe our more-complicated storage configuration (16GiB boot + 1.5TiB iSCSI) because it doesn't further the goal of this series of blog posts, i.e. how to install Cloud Foundry in a simple manner: it would unnecessarily lengthen the steps required to complete the install as well as burden the user with additional hardware requirements (i.e. a NAS).
 
+If interested in replicating our actual configuration, we direct you to a blog post which describes [how to set up a FreeNAS server](http://pivotallabs.com/high-performing-mid-range-nas-server/). Additionally, there’s an excellent [blog post](http://www.erdmanor.com/blog/connecting-freenas-9-2-iscsi-esxi-5-5-hypervisor-performing-vm-guest-backups/) which describes creating an ESXi iSCSI-based data store which resides on a FreeNAS server.
+
 <a name="esxi_license"><sup>4</sup></a> We use resource pools, which require DRS ([Distributed Resource Scheduler](http://www.vmware.com/products/vsphere/features/drs-dpm.html)), which requires an Enterprise or Enterprise Plus license.
 
 # World's Smallest IaaS, Part 2
 
 In this blog post, we describe the procedure to deploy [Pivotal CF Operations Manager](http://docs.pivotal.io/pivotalcf/customizing/) (a web-based tool for deploying Cloud Foundry) and [BOSH](https://github.com/cloudfoundry/bosh) (a VM that creates other VMs) to a VMware vCenter.
 
-***[2014-10-07 this blog post has been updated to reflect ESXi 5.5U2, VCSA 5.5U2, the pivotal.io domain, and Pivotal CF 1.3.1]***
+***[2014-10-18 this blog post has been updated to reflect ESXi 5.5U2, VCSA 5.5U2, the pivotal.io domain, and Pivotal CF 1.3.1]***
 
 ***[2014-06-29 this blog post has been updated to reflect installation on a 64GiB Mac Pro (not a 16GiB Mac Mini, which didn't have enough RAM to deploy Cloud Foundry)]***
 
@@ -430,29 +432,40 @@ We are now ready to use Ops Manager to Deploy BOSH
 
 We see the configuration screen. There are several panels. We fill them out
 
-* vCenter Credentials
+* vCenter Config
   * IP address: **10.9.8.20** (this must be an IP address, e.g. '10.9.8.20'; hostnames (e.g. 'vcenter.cf.nono.com') aren't accepted)
   * Login credentials: **root**, *whatever-we-set-the-password-to*
+  * Datacenter Name: **Datacenter**
+  * Datastore Names: **datastore1**
   * Click **Save**
 
 [caption id="attachment_28776" align="alignnone" width="232"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/Ops_Manager_bosh.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/Ops_Manager_bosh-232x300.png" alt="Initial BOSH configuration screen" width="232" height="300" class="size-medium wp-image-28776" /></a> Initial configuration for BOSH.  The vCenter must be reachable from the Ops Manager VM to validate settings.[/caption]
 
-* click **vSphere configuration** on the left navbar
-  * Datacenter name: **Datacenter**
-  * Cluster name: **Cluster**
-  * Datastore names: **datastore1**
-  * Resource pool name: leave blank <sup>[[1]](#resource_pool)</sup>
+* click **Director Config** on the left navbar
+  * NTP servers: **time.apple.com**
   * click **Save**
-* click **Network Configuration** on the left navbar
+* click **Create Availability Zones**
+  * click **Add**
+  * Name: **Cluster**
+  * Cluster **Cluster**
+  * click **Save**
+* click **Assign Availability Zones**
+  * Singleton Availability Zone: choose **Cluster** from the dropdown
+  * click **Save**
+* click **Create Networks**
+  * click **Add**
+  * Name: **VM Network**
   * vSphere Network name: **VM Network**
   * Subnet: **10.9.8.0/24**
   * Excluded IP Ranges: **10.9.8.1-10.9.8.30**  <sup>[[2]](#ip_exclude)</sup>
   * DNS: **8.8.8.8**
   * Gateway: **10.9.8.1**
   * click **Save**
-* click **NTP servers** on the left navbar
-  * NTP servers: **time.apple.com**
+* click **Assign Networks**
+  * Infrastructure Network: select **VM Network** from the dropdown
+  * Deployment Network: select **VM Network** from the dropdown
   * click **Save**
+* click **Installation Dashboard**
 * click the white-on-blue **Install** button on the right hand side
 
 #### Monitoring BOSH Install Progress
