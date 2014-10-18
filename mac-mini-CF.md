@@ -428,7 +428,7 @@ We are now ready to use Ops Manager to Deploy BOSH
 
 * click on **Operations Manager Director for vmware vSphere** tile (although the description doesn't have the word 'BOSH' in it, this tile deploys BOSH)
 
-[caption id="attachment_28774" align="alignnone" width="300"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/ops_manager_main.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/ops_manager_main-300x247.png" alt="Operations Manager home page.  Unconfigured BOSH tile." width="300" height="247" class="size-medium wp-image-28774" /></a> Click the "Operations Manager" tile to configure the BOSH VM.  Note the orange band at the bottom of the tile&mdash;it indicates that the product is available but has not yet been configured.[/caption]
+[caption id="attachment_31122" align="alignnone" width="630"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/Operations_Manager_Tile.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/Operations_Manager_Tile-630x556.png" alt="Click the &quot;Operations Manager&quot; tile to configure the BOSH VM. Note the orange band at the bottom of the tile—it indicates that the product is available but has not yet been configured" width="630" height="556" class="size-large wp-image-31122" /></a> Click the "Operations Manager" tile to configure the BOSH VM. Note the orange band at the bottom of the tile—it indicates that the product is available but has not yet been configured[/caption]
 
 We see the configuration screen. There are several panels. We fill them out
 
@@ -439,7 +439,7 @@ We see the configuration screen. There are several panels. We fill them out
   * Datastore Names: **datastore1**
   * Click **Save**
 
-[caption id="attachment_28776" align="alignnone" width="232"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/Ops_Manager_bosh.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/Ops_Manager_bosh-232x300.png" alt="Initial BOSH configuration screen" width="232" height="300" class="size-medium wp-image-28776" /></a> Initial configuration for BOSH.  The vCenter must be reachable from the Ops Manager VM to validate settings.[/caption]
+[caption id="attachment_31123" align="alignnone" width="630"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/vCenter-Config.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/vCenter-Config-630x810.png" alt="Initial configuration for BOSH. The vCenter must be reachable from the Ops Manager VM to validate settings" width="630" height="810" class="size-large wp-image-31123" /></a> Initial configuration for BOSH. The vCenter must be reachable from the Ops Manager VM to validate settings[/caption]
 
 * click **Director Config** on the left navbar
   * NTP servers: **time.apple.com**
@@ -449,6 +449,9 @@ We see the configuration screen. There are several panels. We fill them out
   * Name: **Cluster**
   * Cluster **Cluster**
   * click **Save**
+
+[caption id="attachment_31124" align="alignnone" width="630"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/Add-Availability-Zone.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/Add-Availability-Zone-630x368.png" alt="Click &quot;Add&quot; to create an Availability Zone, which is one method of creating a highly-available application. For our instructional purposes, we need but one Availability Zone." width="630" height="368" class="size-large wp-image-31124" /></a> Click "Add" to create an Availability Zone. “Availability Zone” is a term borrowed from Amazon AWS, and corresponds most closely with vSphere’s “Cluster”. Having multiple Availability Zones is a technique to make one’s application highly available. For our instructional purposes we need but one Availability Zone.[/caption]
+
 * click **Assign Availability Zones**
   * Singleton Availability Zone: choose **Cluster** from the dropdown
   * click **Save**
