@@ -582,6 +582,7 @@ As a final test of Cloud Foundry, we log into the Console, which is Cloud Foundr
 * browse to the [Console application](https://console.cf.nono.com)
 * Log in using the Admin Credentials. Yes, even though "admin" is not an email address, it will work when logging into the console.
 * Pick an organization name; we chose **CF Engineering**
+* click **Create Org**
 
 Note: we can't send email invites because we never configured out outbound mail server. Configuring outbound email may require help from the IT department.
 
@@ -598,13 +599,15 @@ Task 20 error
 For a more detailed error report, run: bosh task 20 --debug
 Try no. 4 failed. Exited with 1.
 ```
-<a name="ssl"><sup>2</sup></a> For those curious about installing with a *genuine* SSL cert, install this [Certificate PEM](https://gist.github.com/cunnie/ba0bc254cd6ce87cb5d3), this [Private Key PEM](https://gist.github.com/cunnie/6bba891dfd48d218fd21).  Only use this certificate and key if your System and App domains are **cf.nono.com** and your HA Proxy IP is **10.9.8.40**.  Note: be sure to check **Trust Self-Signed Certificates**. Really. Otherwise the install will fail.
+<a name="ssl"><sup>2</sup></a> For those curious about installing with a *genuine* SSL cert, install this [Certificate PEM](https://gist.github.com/cunnie/ba0bc254cd6ce87cb5d3), this [Private Key PEM](https://gist.github.com/cunnie/6bba891dfd48d218fd21).  Only use this certificate and key if your System and App domains are **cf.nono.com** and your HA Proxy IP is **10.9.8.40**
 
 <a name="cpu_cores"><sup>3</sup></a> CPU core over-subscription is not something we worry about. vSphere 5.5's Virtual CPU limit is [32 Virtual CPUs per core](http://www.vmware.com/pdf/vsphere5/r55/vsphere-55-configuration-maximums.pdf), which means that our 4-core Mac Pro could support as many as 128 Virtual CPUs. Cloud Foundry's Engineering Team's servers are often over-subscribed by a factor of more than 20:1 (i.e. as many as 240 cores allocated, but only 12 physical cores available).
 
 # World's Smallest IaaS, Part 4: Hello World
 
 In this blog post we deploy a simple "hello world" app to our Cloud Foundry installation.
+
+***[2014-10-19 this blog post has been updated to reflect Cloud Foundry CLI version 6.6.1]***
 
 ### Pre-requisites
 
@@ -622,7 +625,7 @@ Test for a successful install by bringing up a terminal and querying the version
 
 ```
 cf --version
-  cf version 6.2.0-c9d4aaa-2014-06-19T22:03:53+00:00
+  cf version 6.6.1-b2cdb2b-2014-09-23T23:07:17+00:00
 ```
 Let's point the CLI to our installation:
 
@@ -632,7 +635,7 @@ cf api --skip-ssl-validation api.cf.nono.com
 Let's log in.  We'll use the UAA admin credentials (these credentials can be retrieved from Ops Manager; [here](http://pivotallabs.com/worlds-smallest-iaas-part-3-paas/#admin_creds) is a description of how to retrieve the credentials). We'll target the "CF Engineering" organization, which we created at the end of [Part 3](http://pivotallabs.com/worlds-smallest-iaas-part-3-paas/):
 
 ```
-cf login -u admin -p f1e25xxxxxxxxxxxxxxxx # use your admin password
+cf login -u admin -p a723936f2102e4xxxxxx # Use admin login
   API endpoint: https://api.cf.nono.com
   Authenticating...
   OK
@@ -648,7 +651,7 @@ cf login -u admin -p f1e25xxxxxxxxxxxxxxxx # use your admin password
 
 
 
-  API endpoint:   https://api.cf.nono.com (API version: 2.2.0)
+  API endpoint:   https://api.cf.nono.com (API version: 2.13.0)
   User:           admin
   Org:            CF Engineering
   Space:          development
@@ -702,56 +705,62 @@ cf push hello-world
   Creating route hello-world.cf.nono.com...
   OK
 
-  Binding hello-world.cf.nono.com to hello_world...
+  Binding hello-world.cf.nono.com to hello-world...
   OK
 
-  Uploading hello_world...
+  Uploading hello-world...
   Uploading app files from: /Users/cunnie/workspace/hello-world
-  Uploading 893, 4 files
+  Uploading 892, 4 files
   OK
 
-  Starting app hello_world in org CF Engineering / space development as admin...
+  Starting app hello-world in org CF Engineering / space development as admin...
   OK
   -----> Downloaded app package (4.0K)
-  -----> Using Ruby version: ruby-1.9.3
-  -----> Installing dependencies using Bundler version 1.3.2
-	 Running: bundle install --without development:test --path vendor/bundle --binstubs vendor/bundle/bin --deployment
-	 Fetching gem metadata from http://rubygems.org/..........
-	 Fetching gem metadata from http://rubygems.org/..
-	 Installing rack (1.5.2)
-	 Installing rack-protection (1.5.3)
-	 Installing tilt (1.4.1)
-	 Installing sinatra (1.4.5)
-	 Using bundler (1.3.2)
-	 Your bundle is complete! It was installed into ./vendor/bundle
-	 Cleaning up the bundler cache.
-  -----> WARNINGS:
-	 You have not declared a Ruby version in your Gemfile.
-	 To set your Ruby version add this line to your Gemfile:"
-	 ruby '1.9.3'"
-	 # See https://devcenter.heroku.com/articles/ruby-versions for more information."
+  -----> Compiling Ruby/Rack
+  -----> Using Ruby version: ruby-2.0.0
+  -----> Installing dependencies using 1.6.3
+         Running: bundle install --without development:test --path vendor/bundle --binstubs vendor/bundle/bin -j4 --deployment
+         Fetching gem metadata from http://rubygems.org/..........
+         Using bundler 1.6.3
+         Installing tilt 1.4.1
+         Installing rack 1.5.2
+         Installing rack-protection 1.5.3
+         Installing sinatra 1.4.5
+         Your bundle is complete!
+         Gems in the groups development and test were not installed.
+         It was installed into ./vendor/bundle
+         Bundle completed (4.41s)
+         Cleaning up the bundler cache.
+  ###### WARNING:
+         You have not declared a Ruby version in your Gemfile.
+         To set your Ruby version add this line to your Gemfile:
+         ruby '2.0.0'
+         # See https://devcenter.heroku.com/articles/ruby-versions for more information.
+  ###### WARNING:
+         No Procfile detected, using the default web server (webrick)
+         https://devcenter.heroku.com/articles/ruby-default-web-server
 
-  -----> Uploading droplet (23M)
+  -----> Uploading droplet (13M)
 
   1 of 1 instances running
 
   App started
 
-  Showing health and status for app hello_world in org CF Engineering / space development as admin...
+  Showing health and status for app hello-world in org CF Engineering / space development as admin...
   OK
 
   requested state: started
-  instances: 0/1
+  instances: 1/1
   usage: 1G x 1 instances
   urls: hello-world.cf.nono.com
 
        state     since                    cpu    memory        disk
-   #0   running   2014-07-02 09:37:55 PM   0.0%   69.8M of 1G   52.2M of 1G
+  #0   running   2014-10-19 12:57:21 PM   0.0%   34.4M of 1G   45M of 1G
 ```
 
 Now we test: let's browse to [https://hello-world.cf.nono.com/](https://hello-world.cf.nono.com/):
 
-[caption id="attachment_29322" align="alignnone" width="285"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/07/hello_world.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/07/hello_world.png" alt="screenshot of &quot;hello world&quot; application" width="285" height="142" class="size-full wp-image-29322" /></a> The output of our "hello world" application.  Plain, minimal formatting, but functional.[/caption]
+[caption id="attachment_31134" align="alignnone" width="241"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/hello-world.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/hello-world.png" alt="The output of our &quot;hello world&quot; application. Plain, minimal formatting, but functional" width="241" height="86" class="size-full wp-image-31134" /></a> The output of our "hello world" application. Plain, minimal formatting, but functional[/caption]
 
 We have successfully tested our Cloud Foundry installation by installing our first app, which is merely a hint of things to come.
 
