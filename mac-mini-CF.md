@@ -502,7 +502,7 @@ For example, a network's DHCP server and gateway is an [Apple Airport Time Capsu
 
 In this blog post, we describe deploying Cloud Foundry/Elastic Runtime to our VMware/vCenter setup (i.e. the world's smallest [IaaS](http://en.wikipedia.org/wiki/Cloud_computing#Infrastructure_as_a_service_.28IaaS.29)) in order to create the World's Smallest [PaaS](http://en.wikipedia.org/wiki/Platform_as_a_service) (Platform as a Service).
 
-***[2014-10-07 this blog post has been updated to reflect ESXi 5.5U2, VCSA 5.5U2, the pivotal.io domain, and Pivotal CF 1.3.1]***
+***[2014-10-18 this blog post has been updated to reflect ESXi 5.5U2, VCSA 5.5U2, the pivotal.io domain, and Pivotal CF 1.3.1]***
 
 ***[2014-06-29 this blog post has been updated to reflect installation on a 64GiB Mac Pro (not a 16GiB Mac Mini <sup>[[1]](#mac_mini)</sup> ) with 48GiB allocated to the ESXi VM]***
 
@@ -516,29 +516,29 @@ Previous blog posts have covered setting up the necessary environment:
 * Browse to our Ops Manager: [https://opsmgr.cf.nono.com/](https://opsmgr.cf.nono.com/).  You may need to re-authenticate (account: **pivotalcf**, password is whatever we set the password to when we deployed Ops Manager in [Part 2](http://pivotallabs.com/worlds-smallest-iaas-part-2/))
 * Click on **Import a Product** (see image)
 
-[caption id="attachment_28936" align="alignnone" width="300"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/import_a_product.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/import_a_product-300x278.png" alt="screenshot of Ops Manager to import a product" width="300" height="278" class="size-medium wp-image-28936" /></a> Click "Import a Product" and browse to the Elastic Runtime file we downloaded and unzipped earlier[/caption]
+[caption id="attachment_31127" align="alignnone" width="553"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/Import-a-Product.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/Import-a-Product.png" alt="Click &quot;Import a Product&quot; and browse to the Elastic Runtime file (cf-1.3.1.0.pivotal) that we unzipped from our earlier download" width="553" height="463" class="size-full wp-image-31127" /></a> Click "Import a Product" and browse to the Elastic Runtime file (cf-1.3.1.0.pivotal) that we unzipped from our earlier download[/caption]
 
 * Browse to the directory that contains the files that we untarred from the 5.6GB file we downloaded from network.pivotal.io in [Part 2](http://pivotallabs.com/worlds-smallest-iaas-part-2/) (the directory name should be **pcf-1.3.1.0_allinone**)
 * select the file named **cf-1.3.1.0.pivotal** and upload it
 * When it has finished uploading, we see green band at the top of the screen confirming that we've "**Successfully added product**".
 *  We see a new option in the left hand navbar:  **Pivotal Elastic Runtime**.  Hover our mouse over that option to make the blue *Add* button appear.  Click the blue **Add** button.
 
-[caption id="attachment_28937" align="alignnone" width="291"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/click_add.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/click_add-291x300.png" alt="Screenshot showing how to add Elastic Runtime" width="291" height="300" class="size-medium wp-image-28937" /></a> Click "Add" to begin configuring Elastic Runtime.  Note: we need to hover over "Pivotal Elastic Runtime" for the "Add" button to appear[/caption]
+[caption id="attachment_31128" align="alignnone" width="630"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/Add-a-Product.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/Add-a-Product-630x524.png" alt="Click &quot;Add&quot; to begin configuring Elastic Runtime. Note: we need to hover over &quot;Pivotal Elastic Runtime&quot; for the &quot;Add&quot; button to appear" width="630" height="524" class="size-large wp-image-31128" /></a> Click "Add" to begin configuring Elastic Runtime. Note: we need to hover over "Pivotal Elastic Runtime" for the "Add" button to appear[/caption]
 
 ### Configuring Elastic Runtime
 
 * Click the **Pivotal Elastic Runtime** tile to begin configuration
 
-[caption id="attachment_28938" align="alignnone" width="300"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/click_to_configure.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/click_to_configure-300x228.png" alt="Screenshot of the Elastic Runtime product tile on the Installation Dashboard" width="300" height="228" class="size-medium wp-image-28938" /></a> Click the "Elastic Runtime" tile to begin configuration[/caption]
+[caption id="attachment_31129" align="alignnone" width="503"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/Click_to_Configure.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/Click_to_Configure.png" alt="Click the &quot;Elastic Runtime&quot; tile to begin configuration" width="503" height="593" class="size-full wp-image-31129" /></a> Click the "Elastic Runtime" tile to begin configuration[/caption]
 
-* We are on the HAProxy tab (as indicated by the left navbar)
+* Click **HAProxy** (left navbar)
    * HAProxy IPs: **10.9.8.40** (the App domain, the wildcard IP address for '*.cf.nono.com')
    * Click **Generate Self-Signed RSA Certificate** <sup>[[2]](#ssl)</sup><br />
    When it asks for domains, type **\*.cf.nono.com**; click **Generate**
    * Check **Trust Self-Signed Certificates**
    * click **Save**
 
-[caption id="attachment_28962" align="alignnone" width="194"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/haproxy_configuration.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/haproxy_configuration-194x300.png" alt="Screenshot of the HAProxy Configuration page" width="194" height="300" class="size-medium wp-image-28962" /></a> Ensure the HAProxy's IP address matches the SSL certificate's hostname (e.g. *.cf.nono.com)[/caption]
+[caption id="attachment_31130" align="alignnone" width="630"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/HAProxy.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/HAProxy-630x767.png" alt="Ensure the HAProxy&#039;s IP address matches the SSL certificate&#039;s hostname (e.g. *.cf.nono.com)" width="630" height="767" class="size-large wp-image-31130" /></a> Ensure the HAProxy's IP address matches the SSL certificate's hostname (e.g. *.cf.nono.com)[/caption]
 
 * Click the **Cloud Controller** tab on the left hand navbar
   * System domain: **cf.nono.com**
@@ -547,15 +547,13 @@ Previous blog posts have covered setting up the necessary environment:
 
 ### Installing Elastic Runtime
 
+* Click **&lt; Installation Dashboard**
 * Click the white-on-blue button **Apply Changes** (on the right hand side)
-* We will see an anxiety-inducing:
-  * *Cluster 'Cluster' has 4 CPU cores. Installation requires 36 CPU cores* <sup>[[3]](#cpu_cores)</sup>
-* Click **Ignore errors and start the install**
 * We see the install screen. We click on **Show verbose output** because we like watching the installation messages
 
 #### Install Issues
 
-Our initial install may end in failure; this is often  remedied by attempting the install again.
+Our initial install may end in failure; this is often remedied by attempting the install again.
 
 [caption id="attachment_29261" align="alignnone" width="300"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/install_issues.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/install_issues-300x264.png" alt="failed Elastic Runtime Installation" width="300" height="264" class="size-medium wp-image-29261" /></a> The initial install failed during the "Running errand Push Console" step.  Many of these failures can be fixed by re-attempting the install.[/caption]
 
@@ -567,7 +565,7 @@ Our initial install may end in failure; this is often  remedied by attempting th
 
 This is a successful deploy:
 
-[caption id="attachment_29264" align="alignnone" width="288"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/success.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/05/success-288x300.png" alt="A Successful Cloud Foundry Deploy" width="288" height="300" class="size-medium wp-image-29264" /></a> A Successful Cloud Foundry Deploy.  This installation includes not only Cloud Foundry but also the Console and the Smoke Tests.[/caption]
+[caption id="attachment_31131" align="alignnone" width="630"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/Successful-Deploy.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/Successful-Deploy-630x409.png" alt="A Successful Cloud Foundry Deploy. This installation includes not only Cloud Foundry but also the Console and the Smoke Tests" width="630" height="409" class="size-large wp-image-31131" /></a> A Successful Cloud Foundry Deploy. This installation includes not only Cloud Foundry but also the Console and the Smoke Tests[/caption]
 
 Click **Return to Installation Dashboard**
 
