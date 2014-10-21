@@ -252,4 +252,30 @@ a *33.28% chance of data loss per year*" (italics ours).
 Calomel.org has one of the [most comprehensive set of ZFS benchmarks](https://calomel.org/zfs_raid_speed_capacity.html) and good advice for maximizing the performance of ZFS, some of it not obvious (e.g. the importance of a good controller)
 
 # A High-performing Mid-range NAS Server
-## Part 2: Performance Tuning
+## Part 2: Performance Tuning for iSCSI
+This blog post describes how, with judicious use of ZFS's L2ARC (read cache) and ZIL SLOG (synchronous write cache) and a consumer-grade SSD, we tuned our FreeNAS fileserver to increase its performance.
+
+### Write, Read, and IOPS
+We use [bonnie++](http://www.coker.com.au/bonnie++/) to measure disk performance. `bonnie++` produces many performance metrics (e.g. "Sequential Output Rewrite Latency"); we focus on three of them:
+
+1. Sequential Write ("Sequential Output Block")
+2. Sequential Read ("Sequential Input Block")
+3. IOPS ("Random Seeks")
+
+### Measurement over iSCSI
+Although we have measured the native performance of our NAS (i.e. we have run `bonnie++` directly on our NAS, bypassing the limitation of our 1Gbe interface), we don't find those numbers terribly meaningful. We are interested in real-world performance of VMs whose data store is on the NAS and which is mounted via iSCSI.
+
+#### Current (Untuned) Numbers, Theoretical Maximums
+For comparison we have added the performance of our external USB hard drive (the performance numbers are from a VM whose data store resided on a USB hard drive). Note that the external USB hard drive is not limited by gigabit ethernet throughput, and thus is able to post a Sequential Read benchmark that exceeds the theoretical maximum.
+
+<table>
+<tr>
+<th></th><th>Sequential Write<br />(MB/s)</th><th>Sequential Read<br />(MB/s)</th><th>IOPS</th>
+</tr><tr>
+<th>Untuned<br /></th><td>59</td><td>74</td><td>99.8</td>
+</tr><tr>
+<th>Theoretical<br />Maximum</th><td>111</td><td>111</td><td>8,600</td>
+</tr><tr>
+<th>External<br />4TB USB3<br />7200 RPM</th><td>33</td><td>159</td><td>121.8</td>
+</tr>
+</table>
