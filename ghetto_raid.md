@@ -279,3 +279,50 @@ For comparison we have added the performance of our external USB hard drive (the
 <th>External<br />4TB USB3<br />7200 RPM</th><td>33</td><td>159</td><td>121.8</td>
 </tr>
 </table>
+
+### Adding L2ARC
+L2ARC is ZFS's secondary storage
+
+```
+ssh root@nas.nono.com
+ # determine the amount of RAM available
+top -d 1 | head -6 | tail -3
+Mem: 250M Active, 3334M Inact, 26G Wired, 236M Cache, 467M Buf, 929M Free
+  ARC: 24G Total, 2073M MFU, 20G MRU, 120K Anon, 1303M Header, 574M Other
+  Swap: 14G Total, 23M Used, 14G Free
+```
+We see we have 5GB RAM at our disposal for our L2ARC (32GB total - 1GB Operating System - 24GB ARC = 5GB L2ARC). We know that approximately 40GB L2ARC requires 1 GB of RAM, so we can make a 200GB L2ARC partition.
+
+We use a combination of `sysctl` and `diskinfo` to determine our disks:
+
+```
+foreach DISK ( `sysctl -b kern.disks`)
+  diskinfo $DISK
+end
+da8	512	16008609792	31266816	0	0	1946	255	63
+da7	512	4000787030016	7814037168	4096	0	486401	255	63
+da6	512	4000787030016	7814037168	4096	0	486401	255	63
+da5	512	4000787030016	7814037168	4096	0	486401	255	63
+da4	512	512110190592	1000215216	4096	0	62260	255	63
+da3	512	4000787030016	7814037168	4096	0	486401	255	63
+da2	512	4000787030016	7814037168	4096	0	486401	255	63
+da1	512	4000787030016	7814037168	4096	0	486401	255	63
+da0	512	4000787030016	7814037168	4096	0	486401	255	63
+```
+We see that **da4** is our 512G SSD (and **da8** is our 16GB bootable USB stick and the remaining disks are our 4TB Seagates which make up our RAID Z2).
+
+We use `gpart` to initialize **da4**. Then we create a 200GB partition which we align on 4kB boundaries (`-a 4k`):
+
+```
+gpart create -s GPT da4
+  da4 created
+gpart add -s 200G -t freebsd-zfs -a 4k da4
+  da4p1 added
+```
+
+We add our new partition as L2ARC:
+
+```
+zpool add tank cache da4p1
+zpool status
+```
