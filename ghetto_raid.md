@@ -268,6 +268,9 @@ We use [bonnie++](http://www.coker.com.au/bonnie++/) to measure disk performance
 
 We use an 80G file for our `bonnie++` tests.
 
+### Background / Setup
+Our FreeNAS server provides storage (data store) via iSCSI to VMs running on our ESXi server. This post does not cover setting up iSCSI and accessing it from ESXi; however, Steve Erdman has written such a blog post, "[Connecting FreeNAS 9.2 iSCSI to ESXi 5.5 Hypervisor and performing VM Guest Backups](http://www.erdmanor.com/blog/connecting-freenas-9-2-iscsi-esxi-5-5-hypervisor-performing-vm-guest-backups/)"
+
 ### Measurement over iSCSI
 Although we have measured the native performance of our NAS (i.e. we have run `bonnie++` directly on our NAS, bypassing the limitation of our 1Gbe interface), we don't find those numbers terribly meaningful. We are interested in real-world performance of VMs whose data store is on the NAS and which is mounted via iSCSI.
 
@@ -295,6 +298,7 @@ For comparison we have added the performance of our external USB hard drive (the
 ### 1. L2ARC
 L2ARC is ZFS's secondary cache (there is a price to pay: using L2ARC reduces the RAM available for the ARC (primary cache)). Typically an SSD drive is used as secondary storage; we use a [Crucial MX100 512GB SSD](http://www.crucial.com/usa/en/ct512mx100ssd1).
 
+#### 1.1 Determine Size of L2ARC
 ```
 ssh root@nas.nono.com
  # determine the amount of RAM available
@@ -307,6 +311,7 @@ We see we have 5GB RAM at our disposal for our L2ARC (32GB total - 1GB Operating
 
 We use a combination of `sysctl` and `diskinfo` to determine our disks:
 
+#### 1.2 Create L2ARC Partition
 ```
 foreach DISK ( `sysctl -b kern.disks` )
   diskinfo $DISK
@@ -332,6 +337,7 @@ gpart add -s 190G -t freebsd-zfs -a 4k da4
   da4p1 added
 ```
 
+#### 1.3 Add L2ARC to ZFS Pool
 We add our new partition as L2ARC:
 
 ```
@@ -339,7 +345,7 @@ zpool add tank cache da4p1
 zpool status
 ```
 
-#### L2ARC Results
+#### 1.4 L2ARC Results
 We perform 7 runs and take the median values for each metric (e.g. Sequential Write). The L2ARC provides us a 14% increase in write speed, a 4% *decrease* in read speed, and a 46% increase in IOPS.
 
 <table>
@@ -349,7 +355,7 @@ We perform 7 runs and take the median values for each metric (e.g. Sequential Wr
 <th>Untuned<br /></th><td>59</td><td>74</td><td>99.8</td>
 </tr><tr>
 <th>200G L2ARC</th><td>67</td><td>71</td><td>145.7</td>
-</tr></tr><tr>
+</tr><tr>
 <th>Theoretical<br />Maximum</th><td>111</td><td>111</td><td>8,600</td>
 </tr>
 </table>
@@ -357,6 +363,7 @@ We perform 7 runs and take the median values for each metric (e.g. Sequential Wr
 ### 2. Experimental Kernel-based iSCSI
 FreeNAS 9.2.1.6 includes an [experimental kernel-based iSCSI target](http://download.freenas.org/9.2.1.6/RELEASE/ReleaseNotes). We enable the target and reboot our machine.
 
+#### 2.1 Configure Experimental iSCSI Target
 * We browse to our FreeNAS server: [https://nas.nono.com](https://nas.nono.com)
 * log in
 * click the **Services** icon at the top
@@ -368,8 +375,38 @@ FreeNAS 9.2.1.6 includes an [experimental kernel-based iSCSI target](http://down
 
 [caption id="attachment_31318" align="alignnone" width="630"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/Kernel-Target.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/Kernel-Target-630x410.png" alt="Check the &quot;Enable experimental target&quot; to activate the kernel-based iSCSI target " width="630" height="410" class="size-large wp-image-31318" /></a> Check the "Enable experimental target" to activate the kernel-based iSCSI target [/caption]
 
-* Reboot FreeNAS: click the **Reboot** icon in the lefthand navbar
+* click **Save**
+* we see a message: **Enabling experimental target requires a reboot. Do you want to proceed?**. Click **Yes**
+* our FreeNAS server reboots
 
-### 3. Adding ZIL's SLOG
+#### 2.2 Re-enable iSCSI
+After reboot we notice that our iSCSI service has been disabled (bug?). We re-enable it:
+
+* We browse to our FreeNAS server: [https://nas.nono.com](https://nas.nono.com)
+* log in
+* click the **Services** icon at the top
+* click the **iSCSI** slider so it turns on
+
+#### 2.3 Kernel iSCSI Results
+We perform 9 runs and take the median values for each metric (e.g. Sequential Write). The experimental iSCSI target provides us a 67% increase in write speed (*hitting the theoretical limit*), a 45% *decrease* in read speed, and a 334% increase in IOPS.
+
+The decrease in read speed is curious; we are hoping that it's a bug that will be addressed in a future release.
+
+<table>
+<tr>
+<th></th><th>Sequential Write<br />(MB/s)</th><th>Sequential Read<br />(MB/s)</th><th>IOPS</th>
+</tr><tr>
+<th>Untuned<br /></th><td>59</td><td>74</td><td>99.8</td>
+</tr><tr>
+<th>200G L2ARC</th><td>67</td><td>71</td><td>145.7</td>
+</tr><tr>
+<th>Experimental<br />kernel-based<br />iSCSI target</th><td>112</td><td>39</td><td>633.0</td>
+</tr><tr>
+<th>Theoretical<br />Maximum</th><td>111</td><td>111</td><td>8,600</td>
+</tr>
+</table>
+
+### 3. L2ARC Tuning
+
 
 
