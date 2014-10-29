@@ -257,7 +257,7 @@ Calomel.org has one of the [most comprehensive set of ZFS benchmarks](https://ca
 
 # A High-performing Mid-range NAS Server
 ## Part 2: Performance Tuning for iSCSI
-This blog post describes how, with judicious use of ZFS's L2ARC (read cache) and ZIL SLOG (synchronous write cache) and a consumer-grade SSD, we tuned our FreeNAS fileserver to increase its performance.
+This blog post describes how, with judicious use of ZFS's L2ARC (read cache) and ZIL SLOG (synchronous write cache) and a consumer-grade SSD, we tuned our FreeNAS fileserver to increase its performance. In particular, we were able to increase its IOPS over xxx% from 99.8 to 373
 
 ### Write, Read, and IOPS
 We use [bonnie++](http://www.coker.com.au/bonnie++/) to measure disk performance. `bonnie++` produces many performance metrics (e.g. "Sequential Output Rewrite Latency"); we focus on three of them:
@@ -266,10 +266,18 @@ We use [bonnie++](http://www.coker.com.au/bonnie++/) to measure disk performance
 2. Sequential Read ("Sequential Input Block")
 3. IOPS ("Random Seeks")
 
+We use an 80G file for our `bonnie++` tests.
+
 ### Measurement over iSCSI
 Although we have measured the native performance of our NAS (i.e. we have run `bonnie++` directly on our NAS, bypassing the limitation of our 1Gbe interface), we don't find those numbers terribly meaningful. We are interested in real-world performance of VMs whose data store is on the NAS and which is mounted via iSCSI.
 
-#### Current (Untuned) Numbers, Theoretical Maximums
+#### Untuned Numbers, Theoretical Maximums
+We want to know what our theoretical maximums are; this will be important as we progress in our tuning&mdash;once we hit an upper bound for a given metric, there's no point in additional tuning for that metric.
+
+The 1Gb ethernet interface places a hard limit on our sequential read and write performance: 111MB/s.
+
+Similarly, a reasonable upper-bound for IOPS would be the performance of a native SSD (in this example, the Intel X25-M G2 (MLC), which clocks in at [~8,600](Intel X25-M G2 (MLC) IOPS). The IOPS upper bound is a "soft" upper bound, more a goal than a limit.
+
 For comparison we have added the performance of our external USB hard drive (the performance numbers are from a VM whose data store resided on a USB hard drive). Note that the external USB hard drive is not limited by gigabit ethernet throughput, and thus is able to post a Sequential Read benchmark that exceeds the theoretical maximum.
 
 <table>
@@ -284,8 +292,8 @@ For comparison we have added the performance of our external USB hard drive (the
 </tr>
 </table>
 
-### Adding L2ARC
-L2ARC is ZFS's secondary storage
+### 1. L2ARC
+L2ARC is ZFS's secondary cache (there is a price to pay: using L2ARC reduces the RAM available for the ARC (primary cache)). Typically an SSD drive is used as secondary storage; we use a [Crucial MX100 512GB SSD](http://www.crucial.com/usa/en/ct512mx100ssd1).
 
 ```
 ssh root@nas.nono.com
@@ -295,12 +303,12 @@ Mem: 250M Active, 3334M Inact, 26G Wired, 236M Cache, 467M Buf, 929M Free
   ARC: 24G Total, 2073M MFU, 20G MRU, 120K Anon, 1303M Header, 574M Other
   Swap: 14G Total, 23M Used, 14G Free
 ```
-We see we have 5GB RAM at our disposal for our L2ARC (32GB total - 1GB Operating System - 24GB ARC = 5GB L2ARC). We know that approximately 40GB L2ARC requires 1 GB of RAM, so we can make a 200GB L2ARC partition.
+We see we have 5GB RAM at our disposal for our L2ARC (32GB total - 1GB Operating System - 24GB ARC = 5GB L2ARC). We know that approximately 38GB L2ARC requires 1 GB of RAM, so we can make a 190GB L2ARC partition.
 
 We use a combination of `sysctl` and `diskinfo` to determine our disks:
 
 ```
-foreach DISK ( `sysctl -b kern.disks`)
+foreach DISK ( `sysctl -b kern.disks` )
   diskinfo $DISK
 end
 da8	512	16008609792	31266816	0	0	1946	255	63
@@ -315,12 +323,12 @@ da0	512	4000787030016	7814037168	4096	0	486401	255	63
 ```
 We see that **da4** is our 512G SSD (and **da8** is our 16GB bootable USB stick and the remaining disks are our 4TB Seagates which make up our RAID Z2).
 
-We use `gpart` to initialize **da4**. Then we create a 200GB partition which we align on 4kB boundaries (`-a 4k`):
+We use `gpart` to initialize **da4**. Then we create a 190GB partition which we align on 4kB boundaries (`-a 4k`):
 
 ```
 gpart create -s GPT da4
   da4 created
-gpart add -s 200G -t freebsd-zfs -a 4k da4
+gpart add -s 190G -t freebsd-zfs -a 4k da4
   da4p1 added
 ```
 
@@ -330,3 +338,38 @@ We add our new partition as L2ARC:
 zpool add tank cache da4p1
 zpool status
 ```
+
+#### L2ARC Results
+We perform 7 runs and take the median values for each metric (e.g. Sequential Write). The L2ARC provides us a 14% increase in write speed, a 4% *decrease* in read speed, and a 46% increase in IOPS.
+
+<table>
+<tr>
+<th></th><th>Sequential Write<br />(MB/s)</th><th>Sequential Read<br />(MB/s)</th><th>IOPS</th>
+</tr><tr>
+<th>Untuned<br /></th><td>59</td><td>74</td><td>99.8</td>
+</tr><tr>
+<th>200G L2ARC</th><td>67</td><td>71</td><td>145.7</td>
+</tr></tr><tr>
+<th>Theoretical<br />Maximum</th><td>111</td><td>111</td><td>8,600</td>
+</tr>
+</table>
+
+### 2. Experimental Kernel-based iSCSI
+FreeNAS 9.2.1.6 includes an [experimental kernel-based iSCSI target](http://download.freenas.org/9.2.1.6/RELEASE/ReleaseNotes). We enable the target and reboot our machine.
+
+* We browse to our FreeNAS server: [https://nas.nono.com](https://nas.nono.com)
+* log in
+* click the **Services** icon at the top
+* click the "wrench" icon
+
+[caption id="attachment_31317" align="alignnone" width="564"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/wrench_icon.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/wrench_icon.png" alt="To modify the iSCSI services settings and enable the experimental kernel driver, click the wrench icon" width="564" height="451" class="size-full wp-image-31317" /></a> To modify the iSCSI services settings and enable the experimental kernel driver, click the wrench icon[/caption]
+
+* check the **Enable experimental target** checkbox
+
+[caption id="attachment_31318" align="alignnone" width="630"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/Kernel-Target.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/Kernel-Target-630x410.png" alt="Check the &quot;Enable experimental target&quot; to activate the kernel-based iSCSI target " width="630" height="410" class="size-large wp-image-31318" /></a> Check the "Enable experimental target" to activate the kernel-based iSCSI target [/caption]
+
+* Reboot FreeNAS: click the **Reboot** icon in the lefthand navbar
+
+### 3. Adding ZIL's SLOG
+
+
