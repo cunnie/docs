@@ -257,9 +257,10 @@ Calomel.org has one of the [most comprehensive set of ZFS benchmarks](https://ca
 
 # A High-performing Mid-range NAS Server
 ## Part 2: Performance Tuning for iSCSI
-This blog post describes how, with judicious use of ZFS's L2ARC (read cache) and ZIL SLOG (synchronous write cache) and a consumer-grade SSD, we tuned our FreeNAS fileserver to increase its performance. In particular, we were able to increase its IOPS over xxx% from 99.8 to 373
+This blog post describes how we tuned our ZFS to improve our sequential write speeds by xxx% (capped by the speed of our ethernet connection) to 112MB/s, our sequential read speeds by yyy% to 46MB/S, and our IOPS by using ZFS L2ARC (secondary SSD cache), an experimental kernel-based iSCSI target, and kernel tuning.
 
-### Write, Read, and IOPS
+### 0. Background
+#### 0.0 Metrics and Tools
 We use [bonnie++](http://www.coker.com.au/bonnie++/) to measure disk performance. `bonnie++` produces many performance metrics (e.g. "Sequential Output Rewrite Latency"); we focus on three of them:
 
 1. Sequential Write ("Sequential Output Block")
@@ -268,14 +269,14 @@ We use [bonnie++](http://www.coker.com.au/bonnie++/) to measure disk performance
 
 We use an 80G file for our `bonnie++` tests.
 
-### Background / Setup
+#### 0.1 iSCSI Setup
 Our FreeNAS server provides storage (data store) via iSCSI to VMs running on our ESXi server. This post does not cover setting up iSCSI and accessing it from ESXi; however, Steve Erdman has written such a blog post, "[Connecting FreeNAS 9.2 iSCSI to ESXi 5.5 Hypervisor and performing VM Guest Backups](http://www.erdmanor.com/blog/connecting-freenas-9-2-iscsi-esxi-5-5-hypervisor-performing-vm-guest-backups/)"
 
-### Measurement over iSCSI
+#### 0.2 iSCSI and the exclusion of Native Performance
 Although we have measured the native performance of our NAS (i.e. we have run `bonnie++` directly on our NAS, bypassing the limitation of our 1Gbe interface), we don't find those numbers terribly meaningful. We are interested in real-world performance of VMs whose data store is on the NAS and which is mounted via iSCSI.
 
-#### Untuned Numbers, Theoretical Maximums
-We want to know what our theoretical maximums are; this will be important as we progress in our tuning&mdash;once we hit an upper bound for a given metric, there's no point in additional tuning for that metric.
+#### 0.3 Untuned Numbers and Upper Bounds
+We want to know what our upper bounds are; this will be important as we progress in our tuning&mdash;once we hit an theoretical maximum for a given metric, there's no point in additional tuning for that metric.
 
 The 1Gb ethernet interface places a hard limit on our sequential read and write performance: 111MB/s.
 
@@ -296,9 +297,9 @@ For comparison we have added the performance of our external USB hard drive (the
 </table>
 
 ### 1. L2ARC
-L2ARC is ZFS's secondary cache (there is a price to pay: using L2ARC reduces the RAM available for the ARC (primary cache)). Typically an SSD drive is used as secondary storage; we use a [Crucial MX100 512GB SSD](http://www.crucial.com/usa/en/ct512mx100ssd1).
+[L2ARC](https://blogs.oracle.com/brendan/entry/test) is ZFS's secondary cache (ARC, the primary cache, is RAM-based). Typically an SSD drive is used as secondary cache; we use a [Crucial MX100 512GB SSD](http://www.crucial.com/usa/en/ct512mx100ssd1).
 
-#### 1.1 Determine Size of L2ARC
+#### 1.0 Determine Size of L2ARC
 ```
 ssh root@nas.nono.com
  # determine the amount of RAM available
@@ -307,11 +308,11 @@ Mem: 250M Active, 3334M Inact, 26G Wired, 236M Cache, 467M Buf, 929M Free
   ARC: 24G Total, 2073M MFU, 20G MRU, 120K Anon, 1303M Header, 574M Other
   Swap: 14G Total, 23M Used, 14G Free
 ```
-We see we have 5GB RAM at our disposal for our L2ARC (32GB total - 1GB Operating System - 24GB ARC = 5GB L2ARC). We know that approximately 38GB L2ARC requires 1 GB of RAM, so we can make a 190GB L2ARC partition.
+We see we have 5GB RAM at our disposal for our L2ARC (32GB total - 3GB Operating System - 24GB ARC = 5GB L2ARC). We know that approximately 38GB L2ARC requires 1 GB of RAM, so we can make a 190GB L2ARC partition.
 
 We use a combination of `sysctl` and `diskinfo` to determine our disks:
 
-#### 1.2 Create L2ARC Partition
+#### 1.1 Create L2ARC Partition
 ```
 foreach DISK ( `sysctl -b kern.disks` )
   diskinfo $DISK
@@ -337,7 +338,7 @@ gpart add -s 190G -t freebsd-zfs -a 4k da4
   da4p1 added
 ```
 
-#### 1.3 Add L2ARC to ZFS Pool
+#### 1.2 Add L2ARC to ZFS Pool
 We add our new partition as L2ARC:
 
 ```
@@ -345,7 +346,7 @@ zpool add tank cache da4p1
 zpool status
 ```
 
-#### 1.4 L2ARC Results
+#### 1.3 L2ARC Results
 We perform 7 runs and take the median values for each metric (e.g. Sequential Write). The L2ARC provides us a 14% increase in write speed, a 4% *decrease* in read speed, and a 46% increase in IOPS.
 
 <table>
@@ -363,7 +364,7 @@ We perform 7 runs and take the median values for each metric (e.g. Sequential Wr
 ### 2. Experimental Kernel-based iSCSI
 FreeNAS 9.2.1.6 includes an [experimental kernel-based iSCSI target](http://download.freenas.org/9.2.1.6/RELEASE/ReleaseNotes). We enable the target and reboot our machine.
 
-#### 2.1 Configure Experimental iSCSI Target
+#### 2.0 Configure Experimental iSCSI Target
 * We browse to our FreeNAS server: [https://nas.nono.com](https://nas.nono.com)
 * log in
 * click the **Services** icon at the top
@@ -379,7 +380,7 @@ FreeNAS 9.2.1.6 includes an [experimental kernel-based iSCSI target](http://down
 * we see a message: **Enabling experimental target requires a reboot. Do you want to proceed?**. Click **Yes**
 * our FreeNAS server reboots
 
-#### 2.2 Re-enable iSCSI
+#### 2.1 Re-enable iSCSI
 After reboot we notice that our iSCSI service has been disabled (bug?). We re-enable it:
 
 * We browse to our FreeNAS server: [https://nas.nono.com](https://nas.nono.com)
@@ -387,10 +388,10 @@ After reboot we notice that our iSCSI service has been disabled (bug?). We re-en
 * click the **Services** icon at the top
 * click the **iSCSI** slider so it turns on
 
-#### 2.3 Kernel iSCSI Results
+#### 2.2 Kernel iSCSI Results
 We perform 9 runs and take the median values for each metric (e.g. Sequential Write). The experimental iSCSI target provides us a 67% increase in write speed (*hitting the theoretical limit*), a 45% *decrease* in read speed, and a 334% increase in IOPS.
 
-The decrease in read speed is curious; we are hoping that it's a bug that will be addressed in a future release.
+The decrease in read speed is curious; we are hoping that it's a FreeBSD bug that has been addressed in 10.0.
 
 <table>
 <tr>
@@ -400,13 +401,48 @@ The decrease in read speed is curious; we are hoping that it's a bug that will b
 </tr><tr>
 <th>200G L2ARC</th><td>67</td><td>71</td><td>145.7</td>
 </tr><tr>
-<th>Experimental<br />kernel-based<br />iSCSI target</th><td>112</td><td>39</td><td>633.0</td>
+<th>L2ARC +<br />Experimental<br />kernel-based<br />iSCSI target</th><td>112</td><td>39</td><td>633.0</td>
 </tr><tr>
 <th>Theoretical<br />Maximum</th><td>111</td><td>111</td><td>8,600</td>
 </tr>
 </table>
 
 ### 3. L2ARC Tuning
+We want to aggressively use the L2ARC. The [FreeBSD ZFS Tuning Guide](https://wiki.freebsd.org/ZFSTuningGuide) suggests focusing on 3 tunables:
+
+1. `vfs.zfs.l2arc_write_boost`
+2. `vfs.zfs.l2arc_write_max`
+3. `vfs.zfs.l2arc_noprefetch`
+
+```
+ssh root@nas.nono.com
+sysctl -a | egrep -i "l2arc_write_max|l2arc_write_boost|l2arc_noprefetch"
+  vfs.zfs.l2arc_noprefetch: 1
+  vfs.zfs.l2arc_write_boost: 8388608
+  vfs.zfs.l2arc_write_max: 8388608
+```
+#### 3.0 l2arc_write_max and l2arc_write_boost
+The ZFS Tuning Guide states, "Modern L2ARC devices (SSDs) can handle an order of magnitude higher than the default". We increase those values by an order of magnitude (more than twenty)
+
+* on the left hand navbar, navigate to **System &rarr; Sysctls &rarr; Add Sysctl**
+    * Variable: **vfs.zfs.l2arc_write_max**
+    * Value: **201001001**
+    * Comment: **more than twenty times the default amount**
+    * click **OK**
+* click **Add Sysctl**
+    * Variable: **vfs.zfs.l2arc_write_boost**
+    * Value: **201001001**
+    * Comment: **more than twenty times the default amount**
+    * click **OK**
 
 
+#### 3.1 l2arc_no_prefetch
+`vfs.zfs.l2arc_noprefetch` is an interesting one: it allows us to cache streaming data. Unfortunately, it must be set *before* the ZFS pool is imported (i.e. it can't be set in `/etc/sysctl.conf`; it must be set in `/boot/loader.conf`). That means we must set this variable as a *tunable* rather than as a *sysctl*:
 
+* on the left hand navbar, navigate to **System &rarr; Tunables &rarr; Add Tunable**
+    * Variable: **vfs.zfs.l2arc_noprefetch**
+    * Value: **0**
+    * Comment: **disable no_prefetch (enable prefetch)**
+    * click **OK**
+
+Reboot (browse the lefthand navbar of the web interface and click **Reboot**). Click **Reboot** when prompted.
