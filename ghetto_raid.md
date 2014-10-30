@@ -267,7 +267,7 @@ We use [bonnie++](http://www.coker.com.au/bonnie++/) to measure disk performance
 2. Sequential Read ("Sequential Input Block")
 3. IOPS ("Random Seeks")
 
-We use an 80G file for our `bonnie++` tests.
+We use an 80G file for our `bonnie++` tests. We store the raw output of our benchmarks in a GitHub [gist](https://gist.github.com/cunnie/9ee194654f0f37348140).
 
 #### 0.1 iSCSI Setup
 Our FreeNAS server provides storage (data store) via iSCSI to VMs running on our ESXi server. This post does not cover setting up iSCSI and accessing it from ESXi; however, Steve Erdman has written such a blog post, "[Connecting FreeNAS 9.2 iSCSI to ESXi 5.5 Hypervisor and performing VM Guest Backups](http://www.erdmanor.com/blog/connecting-freenas-9-2-iscsi-esxi-5-5-hypervisor-performing-vm-guest-backups/)"
@@ -296,6 +296,7 @@ For comparison we have added the performance of our external USB hard drive (the
 </tr>
 </table>
 
+For those interested in the raw benchmark data, that can be seen [here](https://gist.github.com/cunnie/9ee194654f0f37348140); look for the for the test "iSCSI_80G".
 ### 1. L2ARC
 [L2ARC](https://blogs.oracle.com/brendan/entry/test) is ZFS's secondary cache (ARC, the primary cache, is RAM-based). Typically an SSD drive is used as secondary cache; we use a [Crucial MX100 512GB SSD](http://www.crucial.com/usa/en/ct512mx100ssd1).
 
@@ -361,6 +362,7 @@ We perform 7 runs and take the median values for each metric (e.g. Sequential Wr
 </tr>
 </table>
 
+For those interested in the raw benchmark data, that can be seen [here](https://gist.github.com/cunnie/9ee194654f0f37348140); look for the for the test "iSCSI_L2_80G".
 ### 2. Experimental Kernel-based iSCSI
 FreeNAS 9.2.1.6 includes an [experimental kernel-based iSCSI target](http://download.freenas.org/9.2.1.6/RELEASE/ReleaseNotes). We enable the target and reboot our machine.
 
@@ -407,6 +409,7 @@ The decrease in read speed is curious; we are hoping that it's a FreeBSD bug tha
 </tr>
 </table>
 
+For those interested in the raw benchmark data, that can be seen [here](https://gist.github.com/cunnie/9ee194654f0f37348140); look for the for the test "iSCSI_K_L2_80GB".
 ### 3. L2ARC Tuning
 We want to aggressively use the L2ARC. The [FreeBSD ZFS Tuning Guide](https://wiki.freebsd.org/ZFSTuningGuide) suggests focusing on 3 tunables:
 
@@ -446,3 +449,21 @@ The ZFS Tuning Guide states, "Modern L2ARC devices (SSDs) can handle an order of
     * click **OK**
 
 Reboot (browse the lefthand navbar of the web interface and click **Reboot**). Click **Reboot** when prompted.
+
+#### 3.2 L2ARC Tuning Results
+
+<table>
+<tr>
+<th></th><th>Sequential Write<br />(MB/s)</th><th>Sequential Read<br />(MB/s)</th><th>IOPS</th>
+</tr><tr>
+<th>Untuned<br /></th><td>59</td><td>74</td><td>99.8</td>
+</tr><tr>
+<th>200G L2ARC</th><td>67</td><td>71</td><td>145.7</td>
+</tr><tr>
+<th>L2ARC +<br />Experimental<br />kernel-based<br />iSCSI target</th><td>112</td><td>39</td><td>633.0</td>
+</tr><tr>
+<th>L2ARC +<br />Experimental<br />kernel-based<br />iSCSI target<br />+ tuning</th><td>xxx</td><td>xx</td><td>xxxx</td>
+</tr><tr>
+<th>Theoretical<br />Maximum</th><td>111</td><td>111</td><td>8,600</td>
+</tr>
+</table>
