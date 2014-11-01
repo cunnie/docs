@@ -266,7 +266,18 @@ Calomel.org has one of the [most comprehensive set of ZFS benchmarks](https://ca
 This blog post describes how we tuned our ZFS to improve our sequential write speeds by xxx% (capped by the speed of our ethernet connection) to 112MB/s, our sequential read speeds by yyy% to 46MB/S, and our IOPS by using ZFS L2ARC (secondary SSD cache), an experimental kernel-based iSCSI target, and kernel tuning.
 
 ### 0. Background
-#### 0.0 Metrics and Tools
+#### 0.0 Hardware Configuration
+We describe the hardware and software configuration in a previous post, [A High-performing Mid-range NAS Server](http://pivotallabs.com/high-performing-mid-range-nas-server/). Highlights:
+
+* FreeNAS 9.2.1.8
+* Intel 8-core Avoton C2750
+* 32GiB RAM
+* 7 x 4TB disks
+* RAIDZ2
+* 512GB SSD (unused)
+* 4 x 1Gbe
+
+#### 0.1 Metrics and Tools
 We use [bonnie++](http://www.coker.com.au/bonnie++/) to measure disk performance. `bonnie++` produces many performance metrics (e.g. "Sequential Output Rewrite Latency"); we focus on three of them:
 
 1. Sequential Write ("Sequential Output Block")
@@ -275,13 +286,13 @@ We use [bonnie++](http://www.coker.com.au/bonnie++/) to measure disk performance
 
 We use an 80G file for our `bonnie++` tests. We store the raw output of our benchmarks in a GitHub [gist](https://gist.github.com/cunnie/9ee194654f0f37348140).
 
-#### 0.1 iSCSI Setup
+#### 0.2 iSCSI Setup
 Our FreeNAS server provides storage (data store) via iSCSI to VMs running on our ESXi server. This post does not cover setting up iSCSI and accessing it from ESXi; however, Steve Erdman has written such a blog post, "[Connecting FreeNAS 9.2 iSCSI to ESXi 5.5 Hypervisor and performing VM Guest Backups](http://www.erdmanor.com/blog/connecting-freenas-9-2-iscsi-esxi-5-5-hypervisor-performing-vm-guest-backups/)"
 
-#### 0.2 iSCSI and the exclusion of Native Performance
+#### 0.3 iSCSI and the exclusion of Native Performance
 Although we have measured the native performance of our NAS (i.e. we have run `bonnie++` directly on our NAS, bypassing the limitation of our 1Gbe interface), we don't find those numbers terribly meaningful. We are interested in real-world performance of VMs whose data store is on the NAS and which is mounted via iSCSI.
 
-#### 0.3 Untuned Numbers and Upper Bounds
+#### 0.4 Untuned Numbers and Upper Bounds
 We want to know what our upper bounds are; this will be important as we progress in our tuning&mdash;once we hit an theoretical maximum for a given metric, there's no point in additional tuning for that metric.
 
 The 1Gb ethernet interface places a hard limit on our sequential read and write performance: 111MB/s.
@@ -302,11 +313,22 @@ For comparison we have added the performance of our external USB hard drive (the
 </tr>
 </table>
 
-For those interested in the raw benchmark data, that can be seen [here](https://gist.github.com/cunnie/9ee194654f0f37348140); look for the for the test "iSCSI_80G".
-### 1. L2ARC
-[L2ARC](https://blogs.oracle.com/brendan/entry/test) is ZFS's secondary cache (ARC, the primary cache, is RAM-based). Typically an SSD drive is used as secondary cache; we use a [Crucial MX100 512GB SSD](http://www.crucial.com/usa/en/ct512mx100ssd1).
+The raw benchmark data is available [here](https://gist.github.com/cunnie/9ee194654f0f37348140); look for the for the test "iSCSI_80G".
+### 1. L2ARC and ZIL SLOG
+[L2ARC](https://blogs.oracle.com/brendan/entry/test) is ZFS's secondary read cache (ARC, the primary cache, is RAM-based).
 
-#### 1.0 Determine Size of L2ARC
+Using an L2ARC can increase our IOPS "[8.4x faster than with disks alone.](https://blogs.oracle.com/brendan/entry/test)"
+
+[ZIL (ZFS Intent Log) SLOG (Separate Intent Log)](https://pthree.org/2012/12/06/zfs-administration-part-iii-the-zfs-intent-log/) is a "&hellip; separate logging device that caches the synchronous parts of the ZIL before flushing them to slower disk".
+
+Typically an SSD drive is used as secondary cache; we use a [Crucial MX100 512GB SSD](http://www.crucial.com/usa/en/ct512mx100ssd1).
+
+We will implement L2ARC and SLOG and determine the improvement.
+#### 1.0 Determine Size of L2ARC (190GB)
+L2ARC sizing is dependent upon available RAM (L2ARC exacts a price in RAM), available disk (we have a 512GB SSD), and average buffer size (the L2ARC requires [40bytes of RAM](http://osdir.com/ml/zfs-discuss/2014-05/msg00050.html) for each buffer. Buffer sizes vary).
+
+We first determine the amount of RAM we have available:
+
 ```
 ssh root@nas.nono.com
  # determine the amount of RAM available
@@ -315,11 +337,24 @@ Mem: 250M Active, 3334M Inact, 26G Wired, 236M Cache, 467M Buf, 929M Free
   ARC: 24G Total, 2073M MFU, 20G MRU, 120K Anon, 1303M Header, 574M Other
   Swap: 14G Total, 23M Used, 14G Free
 ```
-We see we have 5GB RAM at our disposal for our L2ARC (32GB total - 3GB Operating System - 24GB ARC = 5GB L2ARC). We know that approximately 38GB L2ARC requires 1 GB of RAM, so we can make a 190GB L2ARC partition.
+We see we have **5GiB** RAM at our disposal for our L2ARC (32GiB total - 1GiB Operating System - 26GiB "Wired" = 5GiB L2ARC).
 
-We use a combination of `sysctl` and `diskinfo` to determine our disks:
+We arrive at our L2ARC sizing experimentally: we note that when we use a 200GB L2ARC, we see that ~200MiB of swap is used. We prefer not to use swap at all, so we know that we want to reduce our L2ARC RAM footprint by 200MiB (i.e. instead of 5GiB RAM, we only want to use 4.8GiB). We find that a 190GB L2ARC meets that need.
+
+For our configuration, we need **1GiB of RAM for every 38GB of L2ARC**
+#### 1.1 Determine Size of SLOG (12GB)
+We use this [forum post](https://forums.freenas.org/index.php?threads/some-insights-into-slog-zil-with-zfs-on-freenas.13633/) to determine the size of our SLOG:
+
+* The SLOG "must be large enough to hold a minimum of two transaction groups"
+* A transaction group is sized by either RAM or time, i.e. "In FreeNAS, the default size is 1/8th your system's memory" or 5 seconds
+* Based on 32GiB RAM, our transaction group is 4GiB
+* We will triple that amount to 12GB and use that to size our SLOG (i.e. our SLOG will be able to store 3 transaction groups)
+
+We note that we most likely over-spec'ed our SLOG by a factor of 12, "[I can't imagine what sort of workload you would need to get your ZIL north of 1 GB of used space](http://osdir.com/ml/zfs-discuss/2014-05/msg00050.html)"
 
 #### 1.1 Create L2ARC Partition
+We use a combination of `sysctl` and `diskinfo` to determine our disks:
+
 ```
 foreach DISK ( `sysctl -b kern.disks` )
   diskinfo $DISK
@@ -345,11 +380,18 @@ gpart add -s 190G -t freebsd-zfs -a 4k da4
   da4p1 added
 ```
 
+Create a 12GB SLOG:
+
+```
+gpart add -s 12G -t freebsd-zfs -a 4k da4
+```
+
 #### 1.2 Add L2ARC to ZFS Pool
-We add our new partition as L2ARC:
+We add our new L2ARC and SLOG partitions::
 
 ```
 zpool add tank cache da4p1
+zpool add tank log da4p2
 zpool status
 ```
 
