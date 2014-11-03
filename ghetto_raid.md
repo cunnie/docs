@@ -249,7 +249,7 @@ FreeNAS does the right thing: it creates 4kB-aligned pools by default (instead o
 1. The individual benchmarks weren't synchronized&mdash;benchmarks finished as much as ten seconds apart.  While one benchmark was finishing up its rewriting portion, another had already moved on to the reading portion, causing a distortion in the usage pattern.
 2. The numbers weren't derived by summing the numbers from a single run of 8 benchmarks. Instead, *all* the benchmark results were aggregated, and the median 8 values were taken and summed.
 
-For those interested in the raw benchmark data, they can be seen [here](https://gist.github.com/cunnie/9ee194654f0f37348140#file-raidz2-txt).
+For those interested in the raw benchmark data, they can be seen [here](https://https://github.com/cunnie/freenas_benchmarks/blob/master/file-raidz2-txt).
 
 <a name="raid6"><sup>2</sup></a> We feel that [double-parity RAID](http://en.wikipedia.org/wiki/Standard_RAID_levels#RAID_6) is a safer approach than single-parity (e.g. RAID 5). Adam Leventhal, in his [article for the ACM](http://queue.acm.org/detail.cfm?id=1670144), describes the challenges that large capacity disks pose to a RAID 5 solution. A [NetApp paper](http://synergy-ds.com/netapp/wp-7005.pdf) states, "&hellip; in the event of a drive failure, utilizing a
 SATA RAID 5 group (using 2TB disk drives) can mean
@@ -263,7 +263,17 @@ Calomel.org has one of the [most comprehensive set of ZFS benchmarks](https://ca
 
 # A High-performing Mid-range NAS Server
 ## Part 2: Performance Tuning for iSCSI
-This blog post describes how we tuned our ZFS to improve our sequential write speeds by xxx% (capped by the speed of our ethernet connection) to 112MB/s, our sequential read speeds by yyy% to 46MB/S, and our IOPS by using ZFS L2ARC (secondary SSD cache), an experimental kernel-based iSCSI target, and kernel tuning.
+This blog post describes how we tuned and benchmarked our FreeNAS fileserver for optimal iSCSI performance. Of particular interest is the experimental iSCSI driver, which increased **our IOPS 334%** and increased our sequential write performance to its maximum, **112MB/s** (capped by the speed of our ethernet connection). On the downside, there was a **45%** *decrease* in sequential read speed.
+
+Using an L2ARC also improved performance (IOPS increased 46%, sequential write improved 13%, and sequential read *decreased* 4%).
+
+We also experimented with three ZFS sysctl variables, but they were a mixed bag (they improved some metrics to the detriment of others).
+
+Here is the summary of our results in a chart format:
+
+[caption id="attachment_31381" align="alignnone" width="630"]<a href="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/FreeNAS-9.2.1.8-Benchmarks.png"><img src="http://pivotallabs.com/wordpress/wp-content/uploads/2014/10/FreeNAS-9.2.1.8-Benchmarks-630x417.png" alt="Summary of Benchmark results. Note that Sequential Write and Read use the left axis (MB/s), and that IOPS is measured against the logarithmic right axis." width="630" height="417" class="size-large wp-image-31381" /></a> Summary of Benchmark results. Note that Sequential Write and Read use the left axis (MB/s), and that IOPS is measured against the logarithmic right axis.[/caption]
+
+There is no optimal configuration; rather, FreeNAS can be configured to suit a particular workload (e.g. if IOPS is all-important, than kernel iSCSI + L2ARC + prefetch will provide the most benefit)
 
 ### 0. Background
 #### 0.0 Hardware Configuration
@@ -284,7 +294,7 @@ We use [bonnie++](http://www.coker.com.au/bonnie++/) to measure disk performance
 2. Sequential Read ("Sequential Input Block")
 3. IOPS ("Random Seeks")
 
-We use an 80G file for our `bonnie++` tests. We store the raw output of our benchmarks in a GitHub [gist](https://gist.github.com/cunnie/9ee194654f0f37348140).
+We use an 80G file for our `bonnie++` tests. We store the raw output of our benchmarks in a GitHub [repo](https://github.com/cunnie/freenas_benchmarks).
 
 #### 0.2 iSCSI Setup
 Our FreeNAS server provides storage (data store) via iSCSI to VMs running on our ESXi server. This post does not cover setting up iSCSI and accessing it from ESXi; however, Steve Erdman has written such a blog post, "[Connecting FreeNAS 9.2 iSCSI to ESXi 5.5 Hypervisor and performing VM Guest Backups](http://www.erdmanor.com/blog/connecting-freenas-9-2-iscsi-esxi-5-5-hypervisor-performing-vm-guest-backups/)"
@@ -297,8 +307,6 @@ We want to know what our upper bounds are; this will be important as we progress
 
 The 1Gb ethernet interface places a hard limit on our sequential read and write performance: 111MB/s.
 
-Similarly, a reasonable upper-bound for IOPS would be the performance of a native SSD (in this example, the Intel X25-M G2 (MLC), which clocks in at [~8,600](Intel X25-M G2 (MLC) IOPS). The IOPS upper bound is a "soft" upper bound, more a goal than a limit.
-
 For comparison we have added the performance of our external USB hard drive (the performance numbers are from a VM whose data store resided on a USB hard drive). Note that the external USB hard drive is not limited by gigabit ethernet throughput, and thus is able to post a Sequential Read benchmark that exceeds the theoretical maximum.
 
 <table>
@@ -307,13 +315,13 @@ For comparison we have added the performance of our external USB hard drive (the
 </tr><tr>
 <th>Untuned<br /></th><td>59</td><td>74</td><td>99.8</td>
 </tr><tr>
-<th>Theoretical<br />Maximum</th><td>111</td><td>111</td><td>8,600</td>
+<th>Theoretical<br />Maximum</th><td>111</td><td>111</td><td></td>
 </tr><tr>
 <th>External<br />4TB USB3<br />7200 RPM</th><td>33</td><td>159</td><td>121.8</td>
 </tr>
 </table>
 
-The raw benchmark data is available [here](https://gist.github.com/cunnie/9ee194654f0f37348140); look for the for the test "iSCSI_80G".
+The raw benchmark data is available [here](https://github.com/cunnie/freenas_benchmarks/blob/master/iSCSI_80G).
 ### 1. L2ARC and ZIL SLOG
 [L2ARC](https://blogs.oracle.com/brendan/entry/test) is ZFS's secondary read cache (ARC, the primary cache, is RAM-based).
 
@@ -410,7 +418,7 @@ We perform 7 runs and take the median values for each metric (e.g. Sequential Wr
 </tr>
 </table>
 
-For those interested in the raw benchmark data, that can be seen [here](https://gist.github.com/cunnie/9ee194654f0f37348140); look for the for the test "iSCSI_L2_80G".
+For those interested in the raw benchmark data, that can be seen [here](https://github.com/cunnie/freenas_benchmarks/blob/master/iSCSI_L2_80G.txt).
 ### 2. Experimental Kernel-based iSCSI
 FreeNAS 9.2.1.6 includes an [experimental kernel-based iSCSI target](http://download.freenas.org/9.2.1.6/RELEASE/ReleaseNotes). We enable the target and reboot our machine.
 
@@ -465,6 +473,8 @@ We want to aggressively use the L2ARC. The [FreeBSD ZFS Tuning Guide](https://wi
 2. `vfs.zfs.l2arc_write_max`
 3. `vfs.zfs.l2arc_noprefetch`
 
+We ssh into our NAS to determine the current settings:
+
 ```
 ssh root@nas.nono.com
 sysctl -a | egrep -i "l2arc_write_max|l2arc_write_boost|l2arc_noprefetch"
@@ -473,17 +483,18 @@ sysctl -a | egrep -i "l2arc_write_max|l2arc_write_boost|l2arc_noprefetch"
   vfs.zfs.l2arc_write_max: 8388608
 ```
 #### 3.0 l2arc_write_max and l2arc_write_boost
-The ZFS Tuning Guide states, "Modern L2ARC devices (SSDs) can handle an order of magnitude higher than the default". We increase those values by an order of magnitude (more than twenty)
+The FreeBSD ZFS Tuning Guide states, "Modern L2ARC devices (SSDs) can handle an order of magnitude higher than the default".
+
 
 * on the left hand navbar, navigate to **System &rarr; Sysctls &rarr; Add Sysctl**
     * Variable: **vfs.zfs.l2arc_write_max**
-    * Value: **201001001**
-    * Comment: **more than twenty times the default amount**
+    * Value: **193560094**
+    * Comment: **193 MB/s**
     * click **OK**
 * click **Add Sysctl**
     * Variable: **vfs.zfs.l2arc_write_boost**
-    * Value: **201001001**
-    * Comment: **more than twenty times the default amount**
+    * Value: **193560094**
+    * Comment: **193 MB/s**
     * click **OK**
 
 
@@ -499,6 +510,11 @@ The ZFS Tuning Guide states, "Modern L2ARC devices (SSDs) can handle an order of
 Reboot (browse the lefthand navbar of the web interface and click **Reboot**). Click **Reboot** when prompted.
 
 #### 3.2 L2ARC Tuning Results
+We run our tests and note the following results:
+
+* Sequential write performance drops 35% from 112 MB/s to 73
+* Sequential read performance *increases* 35% from 39 MB/s to 53
+* IOPS performance more than doubles (120%) from 633 to 1392.
 
 <table>
 <tr>
@@ -510,8 +526,65 @@ Reboot (browse the lefthand navbar of the web interface and click **Reboot**). C
 </tr><tr>
 <th>L2ARC +<br />Experimental<br />kernel-based<br />iSCSI target</th><td>112</td><td>39</td><td>633.0</td>
 </tr><tr>
-<th>L2ARC +<br />Experimental<br />kernel-based<br />iSCSI target<br />+ tuning</th><td>xxx</td><td>xx</td><td>xxxx</td>
-</tr><tr>
-<th>Theoretical<br />Maximum</th><td>111</td><td>111</td><td>8,600</td>
+<th>L2ARC +<br />Experimental<br />kernel-based<br />iSCSI target<br />+ tuning</th><td>73</td><td>53</td><td>1392</td>
 </tr>
 </table>
+
+The raw benchmark data can be seen [here](https://https://github.com/cunnie/freenas_benchmarks/blob/master/file-iscsi_k_l2_80gb_tune_prefetch-txt). The results are a mixed bag&mdash;we like the improved read and IOPS performance, but we're dismayed by the drop in the write performance, which is our most important metric (our setup is write-intensive)
+
+#### 3.2 L2ARC Tuning Results Round 2 (worse all-around)
+We disable pre-fetch.
+
+* vfs.zfs.l2arc_noprefetch=1
+
+This requires us to reboot our NAS to take effect.
+
+We also use a more rigorous approach to setting the two remaining variables by determining the write throughput of the SSD by copying a large file to a raw partition; we see that the SSD can sustain a write throughput of 193 MB/s:
+
+```
+ssh root@nas.nono.com
+ # add a 20G for benchmark testing
+gpart add -s 20G -t freebsd-zfs -a 4k da4
+  da4p3 added
+ # let's copy an 11G file to benchmark the SSD raw write speed
+dd if=/mnt/tank/big/iso/ML_2012-08-27_18-51.i386.hfs.dmg of=/dev/da4p3 bs=1024k
+  dd: /dev/da4p3: Invalid argument
+  11460+1 records in
+  11460+0 records out
+  12016680960 bytes transferred in 62.082430 secs (193560094 bytes/sec)
+ # our SSD write throughput is 193 MB/s
+ # remove the unneeded device
+gpart delete -i 3 da4
+```
+
+* vfs.zfs.l2arc_write_max=193560094
+* vfs.zfs.l2arc_write_boost=193560094
+
+<table>
+<tr>
+<th></th><th>Sequential Write<br />(MB/s)</th><th>Sequential Read<br />(MB/s)</th><th>IOPS</th>
+</tr><tr>
+<th>Untuned<br /></th><td>59</td><td>74</td><td>99.8</td>
+</tr><tr>
+<th>200G L2ARC</th><td>67</td><td>71</td><td>145.7</td>
+</tr><tr>
+<th>L2ARC +<br />Experimental<br />kernel-based<br />iSCSI target</th><td>112</td><td>39</td><td>633.0</td>
+</tr><tr>
+<th>L2ARC +<br />Experimental<br />kernel-based<br />iSCSI target<br />+ tuning</th><td>73</td><td>53</td><td>1392</td>
+</tr><tr>
+<th>L2ARC +<br />Experimental<br />kernel-based<br />iSCSI target<br />+ tuning<br />Round 2</th><td>65</td><td>35</td><td>1178</td>
+</tr>
+</table>
+
+This has been a step backwards for us&mdash;every metric performed worse.
+
+### 4. Conclusion
+
+
+#### 4.1 Test Shortcomings
+
+* Subtle inconsistencies: some tests were run with a 200GB L2ARC and no SLOG, and later tests were run with a 190GB L2ARC and a 12GB SLOG
+* Not completely-dedicated NAS: the NAS was not completely dedicated to running benchmarks&mdash;it was also acting as a Time Machine backup during the majority of the testing. It is possible that some of the numbers would be slightly higher if it was completely dedicated
+* The size of the test file (80G) was very specific: it was meant to exceed the ARC but not exceed the L2ARC. We ran three tests with file sizes *smaller* than the ARC, and the results (unsurprisingly) were excellent ([4GB file](https://github.com/cunnie/freenas_benchmarks/blob/master/iSCSI_L2_4G.txt), [8GB](https://github.com/cunnie/freenas_benchmarks/blob/master/iSCSI_L2_8G.txt),  and [16GB file](https://github.com/cunnie/freenas_benchmarks/blob/master/iSCSI_L2_16G))
+* The test took almost 24 hours to run; this impeded our ability to run as many tests as we would have liked
+* The scope of the tests were very narrow (e.g. iSCSI-only, a very specific server hardware configuration). It might be overreaching to generalize these numbers to all ZFS fileservers.
