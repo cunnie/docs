@@ -263,7 +263,11 @@ Calomel.org has one of the [most comprehensive set of ZFS benchmarks](https://ca
 
 # A High-performing Mid-range NAS Server
 ## Part 2: Performance Tuning for iSCSI
-This blog post describes how we tuned and benchmarked our FreeNAS fileserver for optimal iSCSI performance. Of particular interest is the experimental iSCSI driver, which increased **our IOPS 334%** and increased our sequential write performance to its maximum, **112MB/s** (capped by the speed of our ethernet connection). On the downside, there was a **45%** *decrease* in sequential read speed.
+This blog post describes how we tuned and benchmarked our FreeNAS fileserver for optimal iSCSI performance.
+
+For most workloads (except ones that are extremely sequential-read intensive) we recommend using L2ARC, SLOG, and the experimental iSCSI kernel target.
+
+Of particular interest is the experimental iSCSI driver, which increased **our IOPS 334%** and increased our sequential write performance to its maximum, **112MB/s** (capped by the speed of our ethernet connection). On the downside, there was a **45%** *decrease* in sequential read speed.
 
 Using an L2ARC also improved performance (IOPS increased 46%, sequential write improved 13%, and sequential read *decreased* 4%).
 
