@@ -212,21 +212,21 @@ end
 The raw bonnie++ output is available on [GitHub](https://github.com/cunnie/freenas_benchmarks/blob/master/RAIDZ2_8C.txt). The summary (median scores): (w=993MB/s, r=1882MB/s, IOPS=884)
 
 ### 9. Summary
-#### IOPS could be improved
+#### 9.1 IOPS could be improved
 The IOPS (~884) are respectable. Although well more than four times as fast as a 15k RPM SAS Drive ([~175-210 IOPS](http://en.wikipedia.org/wiki/IOPS#Examples)), it's still much lower than a high-end SSD offers (e.g. an Intel X25-M G2 (MLC) posts ~8,600). We feel that using the SSD as a second-level cache could improve our numbers dramatically.
 
-#### No SSD
+#### 9.2 No SSD
 We never put the SSD to use. We plan to use the SSD as both a [L2ARC](https://blogs.oracle.com/brendan/entry/test) (ZFS read cache) and a [ZIL SLOG](https://pthree.org/2012/12/06/zfs-administration-part-iii-the-zfs-intent-log/) (a ZFS write cache for synchronous writes).
 
-#### Gigabit Bottleneck
+#### 9.3 Gigabit Bottleneck
 Our NAS's performance is *severely limited by the throughput of its gigabit interface* on its sequential reads and writes. Our ethernet interface is limited to [~111 MB/s](http://www.tomshardware.com/reviews/gigabit-ethernet-bandwidth,2321-7.html), but our sequential reads can reach almost six times that (629MB/s).
 
 We can partly address that by using [LACP](http://en.wikipedia.org/wiki/Link_aggregation) (aggregating the throughput of the 4 available ethernet interfaces).
 
-#### Noise
+#### 9.4 Noise
 The fans in the case were noiser than expected, Not clicking or tapping, but a discernible hum.
 
-#### Heat
+#### 9.5 Heat
 The system runs cool. With a room temperature of 23.3&deg;C (74&deg; Fahrenheit), these are the readings we recorded after the machine being powered on for 12 hours:
 
 * CPU: **30&deg;C**
@@ -239,11 +239,14 @@ The system runs cool. With a room temperature of 23.3&deg;C (74&deg; Fahrenheit)
 
 No component is warmer than body temperature. We are especially impressed with the low CPU temperature, doubly so that it's passively cooled.
 
-#### No Hot Swap
+#### 9.6 No Hot Swap
 It would be nice if the system had a hot-swap feature. It doesn't. In the event we need to replace a drive, we'll be powering the system down.
 
-#### Pool Alignment
+#### 9.7 Pool Alignment
 FreeNAS does the right thing: it creates 4kB-aligned pools by default (instead of a 512B-aligned pools). This *should* be  more efficient, though results vary. See Calomel.org's section, [Performance of 512b versus 4K aligned pools](https://calomel.org/zfs_raid_speed_capacity.html) for an in-depth discussion and benchmarks.
+
+### 10. More Extensive Benchmarking
+In our follow-on [post](http://pivotallabs.com/high-performing-mid-range-nas-server-part-2-performance-tuning-iscsi/), we tune our ZFS fileserver for optimal iSCSI performance.
 
 ---
 ### Footnotes
