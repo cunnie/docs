@@ -180,9 +180,6 @@ We use a file size of 80GiB to eliminate the RAM cache (ARC) skewing the numbers
 
 ```
 ssh root@nas.nono.com
- # we prefer the bash shell; for those we prefer csh syntax,
- # adjust the for-loop syntax further down
-bash
  # we remount the root filesystem as read-write so that we
  # can install bonnie++
 mount -o rw /
@@ -196,17 +193,27 @@ EOF
  # scratch files
 mkdir /mnt/tank/tmp
 chmod 1777 !$
- # run 3 times, take the median values
-for i in $(seq 1 3); do
-  sudo -u nobody bonnie++ -m "raidz2_no_l2arc_no_slog" -r 8192 -s 81920 -d /mnt/tank/tmp/ -f -b -n 1 >> /mnt/tank/tmp/bonnie.out
+ # 9 series of runs, 8 jobs in parallel, median value
+ # kick off 8 jobs (8 cores) to minimize CPU-bottleneck
+foreach I (0 1 2 3 4 5 6 7 8)
+  ( sudo -u nobody bonnie++ -m "RAIDZ2_8C" -r 8192 -s 81920 -d /mnt/tank/tmp/ -f -b -n 1; date ) >> /mnt/tank/tmp/bonnie.txt &
+  ( sudo -u nobody bonnie++ -m "RAIDZ2_8C" -r 8192 -s 81920 -d /mnt/tank/tmp/ -f -b -n 1; date ) >> /mnt/tank/tmp/bonnie.txt &
+  ( sudo -u nobody bonnie++ -m "RAIDZ2_8C" -r 8192 -s 81920 -d /mnt/tank/tmp/ -f -b -n 1; date ) >> /mnt/tank/tmp/bonnie.txt &
+  ( sudo -u nobody bonnie++ -m "RAIDZ2_8C" -r 8192 -s 81920 -d /mnt/tank/tmp/ -f -b -n 1; date ) >> /mnt/tank/tmp/bonnie.txt &
+  ( sudo -u nobody bonnie++ -m "RAIDZ2_8C" -r 8192 -s 81920 -d /mnt/tank/tmp/ -f -b -n 1; date ) >> /mnt/tank/tmp/bonnie.txt &
+  ( sudo -u nobody bonnie++ -m "RAIDZ2_8C" -r 8192 -s 81920 -d /mnt/tank/tmp/ -f -b -n 1; date ) >> /mnt/tank/tmp/bonnie.txt &
+  ( sudo -u nobody bonnie++ -m "RAIDZ2_8C" -r 8192 -s 81920 -d /mnt/tank/tmp/ -f -b -n 1; date ) >> /mnt/tank/tmp/bonnie.txt &
+  ( sudo -u nobody bonnie++ -m "RAIDZ2_8C" -r 8192 -s 81920 -d /mnt/tank/tmp/ -f -b -n 1; date ) >> /mnt/tank/tmp/bonnie.txt &
+  wait
   sleep 60
-done
+end
+#
 ```
-The raw bonnie++ output is available as a [gist](https://gist.github.com/cunnie/9ee194654f0f37348140). The summary (median scores): (w=304MB/s, rw=186MB/s, r=629MB/s, IOPS=497)
+The raw bonnie++ output is available on [GitHub](https://github.com/cunnie/freenas_benchmarks/blob/master/RAIDZ2_8C.txt). The summary (median scores): (w=993MB/s, r=1882MB/s, IOPS=884)
 
 ### 9. Summary
 #### IOPS could be improved
-The IOPS (~497) are respectable. Although well more than twice as fast as a 15k RPM SAS Drive ([~175-210 IOPS](http://en.wikipedia.org/wiki/IOPS#Examples)), it's still much lower than a high-end SSD offers (e.g. an Intel X25-M G2 (MLC) posts ~8,600). we feel that using the SSD as a second-level cache could improve our numbers dramatically.
+The IOPS (~884) are respectable. Although well more than four times as fast as a 15k RPM SAS Drive ([~175-210 IOPS](http://en.wikipedia.org/wiki/IOPS#Examples)), it's still much lower than a high-end SSD offers (e.g. an Intel X25-M G2 (MLC) posts ~8,600). We feel that using the SSD as a second-level cache could improve our numbers dramatically.
 
 #### No SSD
 We never put the SSD to use. We plan to use the SSD as both a [L2ARC](https://blogs.oracle.com/brendan/entry/test) (ZFS read cache) and a [ZIL SLOG](https://pthree.org/2012/12/06/zfs-administration-part-iii-the-zfs-intent-log/) (a ZFS write cache for synchronous writes).
@@ -215,9 +222,6 @@ We never put the SSD to use. We plan to use the SSD as both a [L2ARC](https://bl
 Our NAS's performance is *severely limited by the throughput of its gigabit interface* on its sequential reads and writes. Our ethernet interface is limited to [~111 MB/s](http://www.tomshardware.com/reviews/gigabit-ethernet-bandwidth,2321-7.html), but our sequential reads can reach almost six times that (629MB/s).
 
 We can partly address that by using [LACP](http://en.wikipedia.org/wiki/Link_aggregation) (aggregating the throughput of the 4 available ethernet interfaces).
-
-#### CPU Bottleneck
-We notice that our CPU usage was above 90% on the sequential reads and writes, and that Calomel.org, with similar disk hardware and RAID controller (but much faster CPUs), was able to post sequential read speeds almost 3 times as fast as ours (i.e. 1532MB/s versus our 629MB/s). We suspect that the compression/decompression routines are only running on one core instead of eight, but we have no proof.
 
 #### Noise
 The fans in the case were noiser than expected, Not clicking or tapping, but a discernible hum.
