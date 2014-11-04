@@ -219,7 +219,7 @@ The IOPS (~884) are respectable. Although well more than four times as fast as a
 We never put the SSD to use. We plan to use the SSD as both a [L2ARC](https://blogs.oracle.com/brendan/entry/test) (ZFS read cache) and a [ZIL SLOG](https://pthree.org/2012/12/06/zfs-administration-part-iii-the-zfs-intent-log/) (a ZFS write cache for synchronous writes).
 
 #### 9.3 Gigabit Bottleneck
-Our NAS's performance is *severely limited by the throughput of its gigabit interface* on its sequential reads and writes. Our ethernet interface is limited to [~111 MB/s](http://www.tomshardware.com/reviews/gigabit-ethernet-bandwidth,2321-7.html), but our sequential reads can reach almost six times that (629MB/s).
+Our NAS's performance is *severely limited by the throughput of its gigabit interface* on its sequential reads and writes. Our ethernet interface is limited to [~111 MB/s](http://www.tomshardware.com/reviews/gigabit-ethernet-bandwidth,2321-7.html), but our sequential reads can reach almost seventeen times that (1882MB/s).
 
 We can partly address that by using [LACP](http://en.wikipedia.org/wiki/Link_aggregation) (aggregating the throughput of the 4 available ethernet interfaces).
 
