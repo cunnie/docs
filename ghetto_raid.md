@@ -256,7 +256,7 @@ In our follow-on [post](http://pivotallabs.com/high-performing-mid-range-nas-ser
 1. The individual benchmarks weren't synchronized&mdash;benchmarks finished as much as ten seconds apart.  While one benchmark was finishing up its rewriting portion, another had already moved on to the reading portion, causing a distortion in the usage pattern.
 2. The numbers weren't derived by summing the numbers from a single run of 8 benchmarks. Instead, *all* the benchmark results were aggregated, and the median 8 values were taken and summed.
 
-For those interested in the raw benchmark data, they can be seen [here](https://https://github.com/cunnie/freenas_benchmarks/blob/master/file-raidz2-txt).
+For those interested in the raw benchmark data, they can be seen [here](https://github.com/cunnie/freenas_benchmarks/blob/master/RAIDZ2_8C.txt).
 
 <a name="raid6"><sup>2</sup></a> We feel that [double-parity RAID](http://en.wikipedia.org/wiki/Standard_RAID_levels#RAID_6) is a safer approach than single-parity (e.g. RAID 5). Adam Leventhal, in his [article for the ACM](http://queue.acm.org/detail.cfm?id=1670144), describes the challenges that large capacity disks pose to a RAID 5 solution. A [NetApp paper](http://synergy-ds.com/netapp/wp-7005.pdf) states, "&hellip; in the event of a drive failure, utilizing a
 SATA RAID 5 group (using 2TB disk drives) can mean
