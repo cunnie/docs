@@ -284,7 +284,7 @@ We also experimented with three ZFS sysctl variables, but they were a mixed bag 
 
 Here is the summary of our results in a chart format:
 
-[caption id="attachment_31381" align="alignnone" width="630"]<a href="https://lh3.googleusercontent.com/-u5wTbZ_eWx8/VFuRWFijShI/AAAAAAAAJ0s/D-Jh625S8N8/w704-h569-no/FreeNAS%2B9.2.1.8%2BBenchmarks.png"><img src="https://lh3.googleusercontent.com/-u5wTbZ_eWx8/VFuRWFijShI/AAAAAAAAJ0s/D-Jh625S8N8/w704-h569-no/FreeNAS%2B9.2.1.8%2BBenchmarks.png" alt="Summary of Benchmark results. Note that Sequential Write and Read use the left axis (MB/s), and that IOPS is measured against the logarithmic right axis." width="704" height="569" class="size-large wp-image-31381" /></a> Summary of Benchmark results. Note that Sequential Write and Read use the left axis (MB/s), and that IOPS is measured against the logarithmic right axis.[/caption]
+[caption id="attachment_31381" align="alignnone" width="630"]<a href="https://lh3.googleusercontent.com/-u5wTbZ_eWx8/VFuRWFijShI/AAAAAAAAJ0s/D-Jh625S8N8/w704-h569-no/FreeNAS%2B9.2.1.8%2BBenchmarks.png"><img src="https://lh3.googleusercontent.com/-u5wTbZ_eWx8/VFuRWFijShI/AAAAAAAAJ0s/D-Jh625S8N8/w704-h569-no/FreeNAS%2B9.2.1.8%2BBenchmarks.png" alt="Summary of Benchmark results. Note that Sequential Write and Read use the left axis (MB/s), and that IOPS is measured against the logarithmic right axis." width="704" height="569" class="size-large wp-image-31381" /></a> Summary of Benchmark results. Note that Sequential Write and Read use the left axis (MB/s), and that IOPS is measured against the logarithmic right axis. Higher is better.[/caption]
 
 There is no optimal configuration; rather, FreeNAS can be configured to suit a particular workload:
 
@@ -328,7 +328,7 @@ For comparison we have added the performance of our external USB hard drive (the
 
 <table>
 <tr>
-<th></th><th>Sequential Write<br />(MB/s)</th><th>Sequential Read<br />(MB/s)</th><th>IOPS</th>
+<th></th><th>Sequential Write<br />(MB/s)<br /><i>(higher is better)</i></th><th>Sequential Read<br />(MB/s)<br /><i>(higher is better)</i></th><th>IOPS<br /><i>(higher is better)</i></th>
 </tr><tr>
 <th>Untuned<br /></th><td>59</td><td>74</td><td>99.8</td>
 </tr><tr>
@@ -425,7 +425,7 @@ We perform 7 runs and take the median values for each metric (e.g. Sequential Wr
 
 <table>
 <tr>
-<th></th><th>Sequential Write<br />(MB/s)</th><th>Sequential Read<br />(MB/s)</th><th>IOPS</th>
+<th></th><th>Sequential Write<br />(MB/s)<br /><i>(higher is better)</i></th><th>Sequential Read<br />(MB/s)<br /><i>(higher is better)</i></th><th>IOPS<br /><i>(higher is better)</i></th>
 </tr><tr>
 <th>Untuned<br /></th><td>59</td><td>74</td><td>99.8</td>
 </tr><tr>
@@ -470,7 +470,7 @@ The decrease in read speed is curious; we hope it's a FreeBSD bug that has been 
 
 <table>
 <tr>
-<th></th><th>Sequential Write<br />(MB/s)</th><th>Sequential Read<br />(MB/s)</th><th>IOPS</th>
+<th></th><th>Sequential Write<br />(MB/s)<br /><i>(higher is better)</i></th><th>Sequential Read<br />(MB/s)<br /><i>(higher is better)</i></th><th>IOPS<br /><i>(higher is better)</i></th>
 </tr><tr>
 <th>Untuned<br /></th><td>59</td><td>74</td><td>99.8</td>
 </tr><tr>
@@ -534,7 +534,7 @@ We run our tests and note the following results:
 
 <table>
 <tr>
-<th></th><th>Sequential Write<br />(MB/s)</th><th>Sequential Read<br />(MB/s)</th><th>IOPS</th>
+<th></th><th>Sequential Write<br />(MB/s)<br /><i>(higher is better)</i></th><th>Sequential Read<br />(MB/s)<br /><i>(higher is better)</i></th><th>IOPS<br /><i>(higher is better)</i></th>
 </tr><tr>
 <th>Untuned<br /></th><td>59</td><td>74</td><td>99.8</td>
 </tr><tr>
@@ -578,7 +578,7 @@ gpart delete -i 3 da4
 
 <table>
 <tr>
-<th></th><th>Sequential Write<br />(MB/s)</th><th>Sequential Read<br />(MB/s)</th><th>IOPS</th>
+<th></th><th>Sequential Write<br />(MB/s)<br /><i>(higher is better)</i></th><th>Sequential Read<br />(MB/s)<br /><i>(higher is better)</i></th><th>IOPS<br /><i>(higher is better)</i></th>
 </tr><tr>
 <th>Untuned<br /></th><td>59</td><td>74</td><td>99.8</td>
 </tr><tr>
@@ -610,7 +610,7 @@ We run our benchmark again:
 
 <table>
 <tr>
-<th></th><th>Sequential Write<br />(MB/s)</th><th>Sequential Read<br />(MB/s)</th><th>IOPS</th>
+<th></th><th>Sequential Write<br />(MB/s)<br /><i>(higher is better)</i></th><th>Sequential Read<br />(MB/s)<br /><i>(higher is better)</i></th><th>IOPS<br /><i>(higher is better)</i></th>
 </tr><tr>
 <th>Untuned<br /></th><td>59</td><td>74</td><td>99.8</td>
 </tr><tr>
