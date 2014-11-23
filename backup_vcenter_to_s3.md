@@ -5,9 +5,7 @@ The Cloud Foundry Development Teams use a heavily-customized VMware vCenter Serv
 
 This blog post describes how we configured our VCSA to backup its databases nightly to Amazon S3 (Amazon's cloud storage service).
 
-***2014-11-23 We strongly encourage everyone to increase the size of their root filesystem before implementing the backup described here. To assist, we have written a blog post, "[Increasing the Size of a VCSA Root Filesystem](http://pivotallabs.com/increasing-size-vcsa-root-filesystem/)".***
-
-***2014-10-04 Owners of medium and large vCenter installations (> 1000 VMs) should expand the vCenter's root filesystem to avoid exhausting the available disk space. We experienced this firsthand on 2014-10-02; we subsequently increased our vCenter's root filesystem from 9.8GB to 84GB.***
+***2014-11-23 We strongly encourage everyone to increase the size of their root filesystem before implementing the backup described here. To assist, we have written a blog post, "[Increasing the Size of a VCSA Root Filesystem](http://pivotallabs.com/increasing-size-vcsa-root-filesystem/)". Owners of medium and large vCenter installations (> 1000 VMs) should expand the vCenter's root filesystem to avoid exhausting the available disk space. We experienced this firsthand on 2014-10-02.***
 
 ***2014-09-07 this blog post has been updated:***
 
@@ -15,7 +13,6 @@ This blog post describes how we configured our VCSA to backup its databases nigh
 * ***we updated the S3 storage costs,***
 * ***the backup script `vcenter_db_bkup.sh` accepts the S3 bucket name as an argument***
 * ***we added a reference to a blog post describing the restoration of the databases***
-
 
 The cost for offsite storage of the databases? Pennies. <sup>[[1]](#s3_prices)</sup>
 
