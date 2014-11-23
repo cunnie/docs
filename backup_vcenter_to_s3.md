@@ -10,9 +10,7 @@ This blog post describes how we configured our VCSA to backup its databases nigh
 ***2014-09-07 this blog post has been updated:***
 
 * ***we modified the manner in which the backup is kicked off (`/etc/crontab` instead of `/etc/cron.daily`)***
-* ***we updated the S3 storage costs,***
 * ***the backup script `vcenter_db_bkup.sh` accepts the S3 bucket name as an argument***
-* ***we added a reference to a blog post describing the restoration of the databases***
 
 The cost for offsite storage of the databases? Pennies. <sup>[[1]](#s3_prices)</sup>
 
