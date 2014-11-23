@@ -1,4 +1,12 @@
 # Backing up VCSA 5.5 DBs to S3: Part 1
+
+
+The Cloud Foundry Development Teams use a heavily-customized VMware vCenter Server Appliance (VCSA) 5.5. We needed to architect an offsite backup solution of the VCSA's databases to avoid days of lost developer time in the event of a catastrophic failure.
+
+This blog post describes how we configured our VCSA to backup its databases nightly to Amazon S3 (Amazon's cloud storage service).
+
+***2014-11-23 We have written a blog post, "[Increasing the Size of a VCSA Root Filesystem]()". We strongly encourage everyone to increase the size of their root filesystem before implementing the backup described here.***
+
 ***2014-10-04 Owners of medium and large vCenter installations (> 1000 VMs) should expand the vCenter's root filesystem to avoid exhausting the available disk space. We experienced this firsthand on 2014-10-02; we subsequently increased our vCenter's root filesystem from 9.8GB to 84GB.***
 
 ***2014-09-07 this blog post has been updated:***
@@ -8,9 +16,6 @@
 * ***the backup script `vcenter_db_bkup.sh` accepts the S3 bucket name as an argument***
 * ***we added a reference to a blog post describing the restoration of the databases***
 
-The Cloud Foundry Development Teams use a heavily-customized VMware vCenter Server Appliance (VCSA) 5.5. We needed to architect an offsite backup solution of the VCSA's databases to avoid days of lost developer time in the event of a catastrophic failure.
-
-This blog post describes how we configured our VCSA to backup its databases nightly to Amazon S3 (Amazon's cloud storage service).
 
 The cost for offsite storage of the databases? Pennies. <sup>[[1]](#s3_prices)</sup>
 
@@ -83,6 +88,7 @@ Interestingly, it's not the *name* of the user that is important; is is the *cre
 * **User Actions &rarr; Add User to Groups**
 * select **s3-uploaders**; click **Add to Groups**
 
+
 ### 2. Configuring the VCSA for Backups
 
 #### 2.1 Install &amp; Configure s3cmd
@@ -152,6 +158,177 @@ VMware Knowledge Base has two excellent articles regarding the backup of VCSAs:
 
 1. *[Backing up and restoring the vCenter Server Appliance vPostgres database](http://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=2034505)*.
 2. *[Backing up and restoring the vCenter Server Appliance Inventory Service database](http://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=2062682)*
+
+# Increasing the Size of a VCSA Root Filesystem
+In this blog post we describe the procedure to increase the size of the root filesystem of a VCSA (VMware vCenter Server Appliance). This is not normally needed and is only necessary when there is uncommon storage pressure on the VCSA's root filesystem, e.g. as in the case of the backup procedure described [here](http://pivotallabs.com/backing-vcsa-5-5-dbs-s3/).
+
+In this example, we increase the size of our vCenter's (*vcenter.cf.nono.com*) root partition that is hosted on *esxi.cf.nono.com* from 25GB to 125GB.
+
+### 0. Increase the Size of the VCSA's .vmdk
+
+* browse to the vCenter: [https://vcenter.cf.nono.com:9443/vsphere-client/](https://vcenter.cf.nono.com:9443/vsphere-client/)
+* log in as root
+* **Hosts and Clusters &rarr; esxi.cf.nono.com &rarr; Related Objects &rarr; Virtual Machines**
+* click **VMware vCenter Server Appliance**
+* **Summary &rarr; Edit Settings**
+    * Hard Disk 1: **125** GB
+    * click **OK**
+
+[caption id="attachment_37337" align="alignnone" width="638"]<a href="https://lh6.googleusercontent.com/-ccwUBwVvGJU/VHI2wlLmQgI/AAAAAAAAJ-k/3hgS6uHHgVI/w638-h623-no/VCSA_125GB.png"><img src="https://lh6.googleusercontent.com/-ccwUBwVvGJU/VHI2wlLmQgI/AAAAAAAAJ-k/3hgS6uHHgVI/w638-h623-no/VCSA_125GB.png" alt="We save our credentials. If we lose them, we will be unable to backup to S3, we will need to delete the user and create a new one with the same permissions (admittedly not a burdensome task, but one that&#039;s easily avoidable)." width="638" height="623" class="size-large wp-image-29882" /></a> We increase the size of our disk from 25GB to 125GB. The VM does not need to be powered down to increase the disk; however, we will need to reboot the VM so that it picks up the larger disk size.[/caption]
+
+We were kicked out of our vCenter browser session when we clicked **OK**, but we logged back in and confirmed that the VCSA disk was the newer 125GB size.
+
+### 1. Increase the Size of the Root Partition
+
+* ssh in as root
+
+```
+ssh root@vcenter.cf.nono.com
+VMware vCenter Server Appliance
+root@vcenter.cf.nono.com's password:
+Last login: Thu Nov 20 03:55:23 2014 from 10.9.9.30
+vcenter:~ #
+```
+* confirm that the size of the disk on which the root filesystem resides is the original size (26.8GB not 125GB):
+
+```
+fdisk -l /dev/sda
+
+Disk /dev/sda: 26.8 GB, 26843545600 bytes
+...
+```
+* reboot
+
+```
+sudo shutdown -r now
+```
+
+* ssh in after reboot
+
+```
+ssh root@vcenter.cf.nono.com
+```
+* determine the partition on which the root filesystem resides by using `df`
+
+```
+df -h
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda3       9.8G  3.7G  5.7G  40% /
+...
+```
+
+* we see that the root filesystem resides on `/dev/sda3`
+
+* confirm the disk is now the correct size (134.2GB).  Also, **save the partition information** of the root filesystem&mdash;we will destroy and re-create the root partition, and we need to make sure we use the correct parameters:
+
+```
+fdisk -l /dev/sda
+
+Disk /dev/sda: 134.2 GB, 134217728000 bytes
+255 heads, 63 sectors/track, 16317 cylinders, total 262144000 sectors
+Units = sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disk identifier: 0x000ad6cf
+
+   Device Boot      Start         End      Blocks   Id  System
+/dev/sda1            2048      272383      135168   83  Linux
+/dev/sda2          272384    31743999    15735808   82  Linux swap / Solaris
+/dev/sda3   *    31744000    52428799    10342400   83  Linux
+```
+
+* The next step is dangerous; if we make a mistake or are unsure of anything, we hit ctrl-C and start over. We use `fdisk` to delete and re-create the root filesystem's partition, but with a much larger size. First we delete:
+
+```
+fdisk /dev/sda
+
+Command (m for help): d
+Partition number (1-4): 3
+```
+* now we re-create. The defaults do the right thing; we don't need to override them:
+
+```
+Command (m for help): n
+Command action
+   e   extended
+   p   primary partition (1-4)
+p
+Partition number (1-4, default 3): 3
+First sector (31744000-262143999, default 31744000):
+Using default value 31744000
+Last sector, +sectors or +size{K,M,G} (31744000-262143999, default 262143999):
+Using default value 262143999
+```
+* we next set the newly-recreated partition bootable. This is an important step: if we skip it, our VCSA *will not boot!*
+
+```
+Command (m for help): a
+Partition number (1-4): 3
+```
+* we print the partition table a final time; we make sure that the third partition has a '\*' in the *Boot* column:
+
+```
+Command (m for help): p
+
+Disk /dev/sda: 134.2 GB, 134217728000 bytes
+255 heads, 63 sectors/track, 16317 cylinders, total 262144000 sectors
+Units = sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disk identifier: 0x000ad6cf
+
+   Device Boot      Start         End      Blocks   Id  System
+/dev/sda1            2048      272383      135168   83  Linux
+/dev/sda2          272384    31743999    15735808   82  Linux swap / Solaris
+/dev/sda3   *    31744000   262143999   115200000   83  Linux
+```
+* save and quit:
+
+```
+Command (m for help): w
+The partition table has been altered!
+
+Calling ioctl() to re-read partition table.
+
+WARNING: Re-reading the partition table failed with error 16: Device or resource busy.
+The kernel still uses the old table. The new table will be used at
+the next reboot or after you run partprobe(8) or kpartx(8)
+Syncing disks.
+```
+* reboot to make the new partition table take effect
+
+```
+sudo shutdown -r now
+```
+
+### 2. Resize the Filesystem
+
+* ssh in as root and resize the filesystem using `resize2fs`:
+
+```
+ssh root@vcenter.cf.nono.com
+VMware vCenter Server Appliance
+root@vcenter.cf.nono.com's password:
+Last login: Thu Nov 20 04:01:49 UTC 2014 from 10.9.9.30 on pts/1
+Last login: Thu Nov 20 04:33:14 2014 from 10.9.9.30
+vcenter:~ # resize2fs /dev/sda3
+resize2fs 1.41.9 (22-Aug-2009)
+Filesystem at /dev/sda3 is mounted on /; on-line resizing required
+old desc_blocks = 1, new_desc_blocks = 7
+Performing an on-line resize of /dev/sda3 to 28800000 (4k) blocks.
+The filesystem on /dev/sda3 is now 28800000 blocks long.
+```
+* use `df` to check the new size:
+
+```
+df -h /dev/sda3
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda3       109G  3.7G  100G   4% /
+```
+### References
+VMware has a [related KB article](http://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=2056764) which describes how to increase the size of the database filesystem (`/storage/db`).
+
+Christian Stankowic has a [blog post](http://blog.christian-stankowic.de/?p=5889&lang=en) that describes migrating the database portions to LVM.
 
 # Backing up VCSA 5.5 DBs to S3: Part 2: Restoration
 <div style="text-align: center; font-style: italic;">
