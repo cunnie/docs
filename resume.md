@@ -11,27 +11,23 @@
 
 ### Skills
 
-**Operating Systems**: OS X, Linux (Ubuntu, Red Hat)), FreeBSD, MS Windows (7, Vista, 2008 Server, 2003 Server)
+**Operating Systems**: OS X, ESXi, Linux (Ubuntu, Red Hat), FreeBSD, MS Windows (7, Vista, 2008 Server, 2003 Server)
 
-**Programming Languages**: Ruby, Perl(/Tk), C, C++, Ruby, PHP, APL, Assembler
+**Programming Languages**: Ruby, Python, Perl(/Tk), C, C++, PHP, APL, Assembler
 
-**Scripting, Miscellaneous Languages, and Tools**: bash, ksh, sh, HTML
+**Scripting, Declarative Languages, and Tools**: git, bash, RubyMine, Chef, CSS, HTML, Jenkins, ZFS, MySQL, DD-WRT, svn (subversion), OpenVPN (+OATH TOTP), Google Apps, NetApp, VMWare (Fusion, vCenter Server)
 
-**Network Protocols & Services**: TCP/IP (static routes, subnet masks, ping, traceroute, tcpdump/wireshark), NFS (servers, clients, automount/amd/autofs, tuning), DNS/bind/named (SOA, NS, A, MX, PTR, CNAME), DHCP/dhcpd (ISC), OpenLDAP 2.x (slapd), Sendmail (8.12+, m4, domain masquerading, etc.), Apache webserver (1.3+, 2.x, virtual nameservers, ssl, cgi), pop3 & imap (qpopper, cyrus-imapd), NIS (master server, clients), Samba 3, SquirrelMail, ssh/ssl
-
-**Firewalls**: FreeBSD (pf), Linux (iptables)
-
-**Miscellaneous**: MySQL, ZFS, DD-WRT, git, svn (subversion), OpenVPN (+OATH TOTP), Google Apps, NetApp, VMWare (Fusion, vSphere)
+**Network Protocols & Services**: TCP/IP (static routes, subnet masks, ping, traceroute, tcpdump/wireshark), NFS (servers, clients, automount/amd/autofs, tuning), DNS/bind/named (SOA, NS, A, MX, PTR, CNAME), DHCP, OpenLDAP 2.x (slapd), Sendmail (8.12+, m4, domain masquerading, etc.), Apache webserver (1.3+, 2.x, virtual nameservers, SSL, CGI), pop3 & imap (qpopper, cyrus-imapd), NIS (master server, clients), Samba 3, SquirrelMail, firewalls (FreeBSD (pf), Linux (iptables))
 
 ### Experience
 
 **Pivot, [Pivotal Labs](http://pivotallabs.com/), San Francisco, CA<br />
 6/11 to present**
 
-* Maintained vSphere environments (vCenter (5.x) and ESXi (5.x)) used by the development team (VCE Vblock 340, 12 &times; Cisco C220 M3, 5 &times; Dell R720 located in German cool)
-* Helped write the tooling that tested the final release of the software (Ruby, RubyMine IDE)
-* Used Jenkins
-
+* Maintained vSphere environments (vCenter (5.x) and ESXi (5.x)) used by the development team (VCE Vblock 340, 12 &times; Cisco C220 M3, 5 &times; Dell R720 located in German colo)
+* Helped write the tooling that tested the final release of the Cloud Foundry software (Ruby)
+* Architected and implemented an OS X-based VPN solution for all Pivotal offices using single sign-on (i.e. Open Directory (OpenLDAP))
+* Used Chef to create/update a set of recipes to build an OS X workstation to suit the developers' needs (note: this is now an open source project at GitHub ([1](https://github.com/pivotal-sprout)))
 
 **Systems Administrator, [Arda Technologies](http://www.ardatech.com/) (acquired by Google), Mountain View, CA<br />
 12/07 to 6/11**
@@ -63,12 +59,10 @@ Provided computer support for an IC Design Startup.
     * 2 HPUX machines (offline Agilent 8k testers).
 * Coded the chip-testing GUI in Perl/Tk for eval kits for our chips to the customers, modified to accommodate new product lines and new features.
 * Hand-built the external mail server using a combination of cyrus-imapd, sendmail, Apache, SquirrelMail, and OpenLDAP. Also implemented a calendar server using Apache, MySQL, OpenLDAP, and PHP.
-* Maintained DNS, YP/NIS, NFS system internally; used Samba server as internal Windows Domain Controller.
+* Maintained DNS, YP/NIS, NFS system internally.
 * Implemented a fairly complex backup system (arkeia for Linux, amanda for solaris, BackupPC for windows, custom scripts using rsync for miscellaneous items).
 * Configured firewalls (Cisco Pix 501 and hardened Linux)
 * Configured redundant Internet connections (Nextweb 5.8MHz wireless and AT&T T1)
-* Used Dreamweaver and vi and CSS to completely revamp the company website.
-* Used VMWare to reduce proliferation of machines in server room and to liberate key Windows machines from hardware dependencies.
 * Troubleshot and tuned as needed. Spec'ed and purchased equipment as needed.
 
 **Systems Administrator, [Skymoon Ventures](http://www.skymoon.com/), Palo Alto, CA<br />
@@ -106,7 +100,30 @@ National Merit Scholar
 
 ### Interests
 
-Open water swimming, rugby
+I [blog](http://pivotallabs.com/author/cunnie/). Topics include setting up and benchmarking the iSCSI performance of a ZFS fileserver
+([1](http://pivotallabs.com/high-performing-mid-range-nas-server/),
+[2](http://pivotallabs.com/high-performing-mid-range-nas-server-part-2-performance-tuning-iscsi/)),
+installing Cloud Foundry in a home lab
+([1](http://pivotallabs.com/worlds-smallest-iaas-part-1/),
+[2](http://pivotallabs.com/worlds-smallest-iaas-part-2/),
+[3](http://pivotallabs.com/worlds-smallest-iaas-part-3-paas/), and
+[4](http://pivotallabs.com/worlds-smallest-iaas-part-4-hello-world/)), setting up a DNS, NTP and nginx server in the cloud
+([1](http://pivotallabs.com/set-freebsd-server-hetzner-part-1/),
+[2](http://pivotallabs.com/part-2-configure-secondary-dns-ns-server/), [3](http://pivotallabs.com/server-participated-large-scale-attack/), [4](http://pivotallabs.com/setting-freebsd-server-hetzner-part-4-nginx/), and
+[5](http://pivotallabs.com/setting-freebsd-server-hetzner-part-4-php-ssi-ssl-redirects/)),
+configuring and troubleshooting an IPv6 firewall
+([1](http://pivotallabs.com/configuring-freebsd-9-1-as-an-ipv6-firewallrouter/),
+[2](http://pivotallabs.com/how-i-grabbed-18-quintillion-ip-addresses-from-comcast-and-they-didnt-even-care/),
+[3](http://pivotallabs.com/configuring-freebsd-9-1-as-an-ipv6-dhcp-client/), and
+[4](http://pivotallabs.com/made-ipv6-router-unreachable-overly-aggressive-firewall-rules/)),
+using Ruby Expect to control network appliances ([1](http://pivotallabs.com/using-ruby-expect-library-to-reboot-ruckus-wireless-access-points-via-ssh/)),
+using DNS-SD to make printing easier ([1](http://pivotallabs.com/moving-printers-and-common-resources-to-a-separate-network-and-making-them-easily-available-via-bonjour-and-dns-sd/)), locking down an ethernet network ([1](http://pivotallabs.com/shunting-ethernet-guests-to-a-safe-network/)), and much more. I am currently the all-time most popular blogger at Pivotal Labs (based on number of page views).
+
+I contribute to open source projects ([1](https://github.com/cunnie?tab=contributions)).
+
+I keep my skills current (Python ([1](https://www.coursera.org/account/accomplishments/records/AtLtgPSJcMQjkQa7)), Ruby on Rails ([1](https://www.coursera.org/account/accomplishments/records/X9Xm4MFX7xhyMZZG))).
+
+I enjoy open water swimming and rugby.
 
 ### A Casual Description of What I Do
 
