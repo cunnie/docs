@@ -11,24 +11,27 @@
 
 ### Skills
 
+**Operating Systems**: OS X, Linux (Ubuntu, Red Hat)), FreeBSD, MS Windows (7, Vista, 2008 Server, 2003 Server)
 
-**Operating Systems**: OS X, Linux (Ubuntu, Red Hat (RHEL5, RHEL4, Fedora)), FreeBSD, MS Windows (7, Vista, XP Pro, 2008 Server, 2003 Server)
+**Programming Languages**: Ruby, Perl(/Tk), C, C++, Ruby, PHP, APL, Assembler
 
-**Programming Languages**: Ruby
-    Perl(/Tk), C, C++, Ruby, PHP, APL, Assembler
-
-**Scripting & Miscellaneous Languages**: bash, ksh, sh, HTML
+**Scripting, Miscellaneous Languages, and Tools**: bash, ksh, sh, HTML
 
 **Network Protocols & Services**: TCP/IP (static routes, subnet masks, ping, traceroute, tcpdump/wireshark), NFS (servers, clients, automount/amd/autofs, tuning), DNS/bind/named (SOA, NS, A, MX, PTR, CNAME), DHCP/dhcpd (ISC), OpenLDAP 2.x (slapd), Sendmail (8.12+, m4, domain masquerading, etc.), Apache webserver (1.3+, 2.x, virtual nameservers, ssl, cgi), pop3 & imap (qpopper, cyrus-imapd), NIS (master server, clients), Samba 3, SquirrelMail, ssh/ssl
 
-**Firewalls**: FreeBSD (ipnat/ipfilter), Linux (iptables), Cisco (Pix 501, IOS)
+**Firewalls**: FreeBSD (pf), Linux (iptables)
 
-**Miscellaneous**: MySQL, ZFS, dd-wrt, git, svn (subversion), OpenVPN (+OATH TOTP), Google Apps, NetApp, VMWare (Fusion, vSphere)
+**Miscellaneous**: MySQL, ZFS, DD-WRT, git, svn (subversion), OpenVPN (+OATH TOTP), Google Apps, NetApp, VMWare (Fusion, vSphere)
 
 ### Experience
 
 **Pivot, [Pivotal Labs](http://pivotallabs.com/), San Francisco, CA<br />
 6/11 to present**
+
+* Maintained vSphere environments (vCenter (5.x) and ESXi (5.x)) used by the development team (VCE Vblock 340, 12 &times; Cisco C220 M3, 5 &times; Dell R720 located in German cool)
+* Helped write the tooling that tested the final release of the software (Ruby, RubyMine IDE)
+* Used Jenkins
+
 
 **Systems Administrator, [Arda Technologies](http://www.ardatech.com/) (acquired by Google), Mountain View, CA<br />
 12/07 to 6/11**
@@ -40,14 +43,13 @@ Provided computer support for an IC Design Startup.
     * 20 Windows machines (mostly laptops, Windows 7, Vista),
     * 3 FreeBSD machines (2 firewalls, 1 backup),
     * 1 NetApp,
-    * 3 dd-wrt WiFi access points
+    * 3 DD-WRT WiFi access points
 * Maintained DNS, LDAP, NFS
 * Implemented a fairly complex backup system (using a combination of perl scripts, rsync, cron, svnadmin dump, ZFS snapshots)
 * Configured firewalls (FreeBSD) and VPN (OpenVPN)
 * Configured redundant Internet connections (Comcast Cable and AT&T DSL)
 * Hand-crafted two iterations of the corporate website (using XHTML, PHP, and CSS)
 * Troubleshot and tuned as needed. Spec'ed and purchased equipment as needed
-
 
 **Systems Administrator, [Aeluros](http://www.aeluros.com/) (acquired by Broadcom), Mountain View, CA<br />
 3/02 to 12/07**
