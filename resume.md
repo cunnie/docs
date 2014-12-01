@@ -7,7 +7,7 @@
 
 ### Objective
 
-**I am not looking for work**; I have a job. If I were looking, it would be for a four-day workweek sysadmin/developer position in the San Francisco Bay Area, one accessible by public transportation.
+A four-day workweek sysadmin/developer position in the San Francisco Bay Area, one accessible by public transportation.
 
 ### Skills
 
@@ -27,7 +27,7 @@
 * Maintained vSphere environments (vCenter (5.x) and ESXi (5.x)) used by the development team (VCE Vblock 340, 12 &times; Cisco C220 M3, 5 &times; Dell R720 located in German colo)
 * Helped write the tooling that tested the final release of the Cloud Foundry software (Ruby)
 * Architected and implemented an OS X-based VPN solution for all Pivotal offices using single sign-on (i.e. Open Directory (OpenLDAP))
-* Used Chef to create/update a set of recipes to build an OS X workstation to suit the developers' needs (note: this is now an open source project at GitHub ([1](https://github.com/pivotal-sprout)))
+* Used Chef to create/update a set of recipes to build an OS X workstation to suit the developers' needs (an open source project at GitHub ([1](https://github.com/pivotal-sprout)))
 
 **Systems Administrator, [Arda Technologies](http://www.ardatech.com/) (acquired by Google), Mountain View, CA<br />
 12/07 to 6/11**
@@ -73,7 +73,6 @@ Provided computer support for a Venture Capital incubator and its various startu
 * Physical Layer: Cabling, patch-panels, HP ProCurve switches, toning, crimping, racking
 * Network Layer: Netopia DSL router, Cisco 2650 & 1720 routers, Subnet’ing, NAT’ing, Firewall’ing, VPN’s, Apache
 * Application Layer: DNS, email (MS-Exchange & sendmail, qmail (secondary MX, alternate location))
-* Phoneswitches (Shoreline’s Shoreware system)
 * Troubleshot and tuned as needed. Spec'ed and purchased equipment as needed
 * Maintained websites
 
@@ -131,4 +130,4 @@ I am a good systems administrator. Really good. I have worked for three CTOs at 
 
 I know how to do my job: I can set my own budget, work within extremely frugal constraints, and keep things running. There has been almost no downtime at the companies at which I have worked, and that’s not because I’m lucky: it’s because I had put thought and effort into making sure that, when things failed, we were prepared.
 
-I see the bigger picture. I'll happily outsource webhosting and email although I am quite capable of bringing them in-house. I purchased a commercial firewall even though I could have built a better one from that old laptop in the corner. I don’t insist that everyone runs Linux. I step in when vendors fail: I spent a week working with Marketing on the new website launch after their web designer had told them that he couldn’t help them anymore.
+I see the bigger picture. I'll happily outsource webhosting and email although I am quite capable of bringing them in-house. I purchased a commercial firewall even though I could have built a better one from that old laptop in the corner. I don’t insist that everyone runs Linux. I step in when vendors fail: I spent a week working with Marketing on the new website launch after their web designer told them that he couldn’t help them anymore.
