@@ -849,7 +849,7 @@ Note: before you decided to purchase your own wildcard cert, you must be sure th
 	4. Process your Certificate Signing Request (CSR). For this you can contact you Host Provider or System Administrator or Click here to follow the steps to generate a CSR for yourself.***[These are the commands we used to generate our CSR:]***
 
 ```
-$ openssl req -out wildcard.cf.nono.com.csr -new -newkey rsa:2048 -nodes -keyout wildcard.cf.nono.com.key
+$ openssl req -out wildcard.cf.nono.com.csr -new -newkey rsa:2048 -nodes -keyout wildcard.cf.nono.com.key -sha256
   US
 Generating a 2048 bit RSA private key
 .............................+++
