@@ -850,7 +850,6 @@ Note: before you decided to purchase your own wildcard cert, you must be sure th
 
 ```
 $ openssl req -out wildcard.cf.nono.com.csr -new -newkey rsa:2048 -nodes -keyout wildcard.cf.nono.com.key -sha256
-  US
 Generating a 2048 bit RSA private key
 .............................+++
 ......................................+++
