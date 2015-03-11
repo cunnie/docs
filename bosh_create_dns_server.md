@@ -120,6 +120,42 @@ Create the *bind* package; we include the version number (*9.10.2*).
 ```
 bosh generate package bind-9-9.10.2
 ```
+<!--
+Create the spec file
+
+```
+vim packages/bind-9-9.10.2/spec
+```
+It should look like this:
+
+```
+```
+-->
+
+Create the *bind-9* backage script:
+
+```
+vim packages/bind-9-9.10.2/packaging
+```
+It should look like this:
+
+```
+# abort script on any command that exits with a non zero value
+set -e
+
+curl -OL ftp://ftp.isc.org/isc/bind9/9.10.2/bind-9.10.2.tar.gz
+tar xvzf bind-9.10.2.tar.gz
+cd bind-9.10.2
+./configure --prefix=${BOSH_INSTALL_TARGET}
+make
+make check
+make install
+```
+
+#### Configure a blobstore
+We skip this section because we're not using the blobstore&mdash;we're downloading the source and building from it.
+
+#### Create Job Properties
 
 ### 2. <a name="deploy">Using BOSH to Deploy BIND 9 Release</a>
 
