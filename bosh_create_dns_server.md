@@ -1,5 +1,124 @@
+## How Do I Deploy BOSH?
+[BOSH](http://bosh.io/) is a tool that (among other things) deploys VMs. But how does one deploy BOSH itself? This blog post covers an easy way to deploy BOSH on the local subnet.
+
+Specifically, we'll cover using [Vagrant](https://www.vagrantup.com/) and [VirtualBox](https://www.virtualbox.org/) to deploy [BOSH Lite](https://github.com/cloudfoundry/bosh-lite) (BOSH Lite is not a "lesser" BOSH, rather, it's most frequently used in conjunction with deploying VMs to Linux containers rather than to heavyweight IAASes such as vSphere or AWS). A *BOSH Lite* is a full-blown BOSH that can be used to deploy to vSphere or AWS.
+
+### Procedure
+
+* Install [VirtualBox](https://www.virtualbox.org/)
+* Install [Vagrant](https://www.vagrantup.com/)
+* Clone the BOSH Lite GitHub repo:
+
+```
+mkdir ~/workspace
+cd ~/workspace
+git clone https://github.com/cloudfoundry/bosh-lite
+```
+
+If you see `command not found` when you attempt to clone, you need to install Apple's *Command Line Tools* by typing `xcode-select --install`.
+
+We follow these [instructions](https://github.com/cloudfoundry/bosh-lite/blob/master/README.md), but with some slight variations.
+
+We install the BOSH Ruby Gem (users of Ruby version managers such as `rvm`, `rbenv`, or `chruby` should omit `sudo` from the following command):
+
+```
+sudo gem install bosh_cli
+```
+Install [VirtualBox](https://www.virtualbox.org/).
+
+Install [Vagrant](https://www.vagrantup.com/).
+
+```
+cd ~/workspace
+git clone https://github.com/cloudfoundry/bosh-lite
+```
+
+At this point we veer off from the instructions because we want the BOSH we're installing to be accessible from the local network, not just from the machine it's installed in. We edit the Vagrantfile:
+
+```
+cd bosh-lite
+vim Vagrantfile
+```
+We modify the *virtualbox* stanza:
+
+```
+  config.vm.provider :virtualbox do |v, override|
+    override.vm.box_version = '2811'
+    # To use a different IP address for the bosh-lite director, uncomment this line:
+    # override.vm.network :private_network, ip: '192.168.59.4', id: :local
+    config.vm.network :public_network, bridge: 'en0: Ethernet 1', ip: '10.9.9.130',
+  end
+```
+
+
+```
+  config.vm.provider :virtualbox do |v, override|
+    override.vm.box_version = '2811'
+    # To use a different IP address for the bosh-lite director, uncomment this line:
+    # override.vm.network :private_network, ip: '192.168.59.4', id: :local
+    config.vm.network :public_network, bridge: 'en0: Ethernet 1', mac: '0200424f5348', use_dhcp_assigned_default_route: true
+  end
+```
+
+
+---
+
+#### Acknowledgements
+
+Some of the ESXi and vCenter configuration was drawn from internal Cloud Foundry documents.
+
+#### Footnotes
+
+<a name="d500"><sup>1</sup></a> Note: purchasing the D500 over the less-expensive D300 has nothing to do with Cloud Foundry; anyone purchasing a Mac Pro to run Cloud Foundry *should opt for the D300 Graphics Card*, which is currently $400 less expensive than the D500. The decision to purchase a D500 was related to gaming, which is not an appropriate topic for a blog post, even though the D500 is quite adequate to play ESO at 1920x1200 with ultra-high settings, easily delivering over 30fps (frames per second).
+
+
 ## How to Deploy a DNS Server with BOSH 
 [BOSH](http://bosh.io/) is a tool that (among other things) deploys VMs. In this blog post we cover the procedure to create a BOSH release for a DNS server, customizing our release with a manifest, and then deploying the customized release to Amazon AWS.
+
+### 0. Install BOSH Lite
+BOSH runs on its own VM. We will install BOSH in the VirtualBox hypervisor. The BOSH that is installed under VirtualBox (or, alternatively, under VMware Fusion) is called [BOSH Lite](https://github.com/cloudfoundry/bosh-lite).
+
+We follow these [instructions](https://github.com/cloudfoundry/bosh-lite/blob/master/README.md)
+
+We install the BOSH Ruby Gem (users of Ruby version managers such as `rvm`, `rbenv`, or `chruby` should omit `sudo` from the following command):
+
+```
+sudo gem install bosh_cli
+```
+Install [VirtualBox](https://www.virtualbox.org/).
+
+Install [Vagrant](https://www.vagrantup.com/).
+
+```
+cd ~/workspace
+git clone https://github.com/cloudfoundry/bosh-lite
+```
+
+At this point we veer off from the instructions because we want the BOSH we're installing to be accessible from the local network, not just from the machine it's installed in. We edit the Vagrantfile:
+
+```
+cd bosh-lite
+vim Vagrantfile
+```
+We modify the *virtualbox* stanza:
+
+```
+  config.vm.provider :virtualbox do |v, override|
+    override.vm.box_version = '2811'
+    # To use a different IP address for the bosh-lite director, uncomment this line:
+    # override.vm.network :private_network, ip: '192.168.59.4', id: :local
+    config.vm.network :public_network, bridge: 'en0: Ethernet 1', mac: '0200424f5348', use_dhcp_assigned_default_route: true
+  end
+```
+
+We're configuring the BOSH's ethernet address to be placed on the VirtualBox host's public network. Rather than assigning it an IP address, we're configuring it to query DHCP address. We configure the BOSH to have an ethernet MAC address 02:00:42:4f:53:48 (note that the locally-administered bit is set, guaranteeing that we won't collide with an existing MAC address, and note the the hexadecimal )
+
+We bring up BOSH:
+
+```
+vagrant up
+```
+
 
 ### 1. Create a BOSH Release for a DNS Server
 A *BOSH release* is a package, analogous to Microsoft Windows's *.msi*, Apple OS X's *.app*, RedHat's *.rpm*.
