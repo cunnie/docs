@@ -1,15 +1,15 @@
 ## Deploying BOSH Lite in a Subnet-Accessible Manner
 [BOSH](http://bosh.io/) is a tool that (among other things) deploys VMs. [BOSH Lite](https://github.com/cloudfoundry/bosh-lite) is a user-friendly means of installing BOSH using [Vagrant](https://www.vagrantup.com/).
 
-A shortcoming of BOSH Lite is that the resulting BOSH VM can only be accessed from the host which is running the VM (i.e. `bosh target` from another workstation does not succeed). <sup>[[1]](#accessibility)</sup> 
+A shortcoming of BOSH Lite is that the resulting BOSH VM can only be accessed from the host which is running the VM (i.e. `bosh target` from another workstation does not succeed). <sup>[[1]](#accessibility)</sup>
 
 This blog post describes three techniques to make BOSH Lite  accessible from workstations other than the one running the VM. This would be useful in cases where a development team would need a single BOSH and find it convenient to access it from any development workstation.
 
-We'll describe three scenarios:
+We'll describe three scenarios. If you're not sure which one is right for you, **choose the first scenario (port-forwarding)**:
 
 1. [enable port-forwarding to the BOSH VM](#port-forward)
-2. [assign the BOSH VM a static IP address](#static)
-3. [configure the BOSH VM to use DHCP](#dhcp)
+2. [configure the BOSH VM to use DHCP](#dhcp)
+3. [assign the BOSH VM a static IP address](#static)
 
 Specifically, we'll cover using [Vagrant](https://www.vagrantup.com/) to deploy [BOSH Lite](https://github.com/cloudfoundry/bosh-lite) to [VirtualBox](https://www.virtualbox.org/) (i.e. we won't discuss deploying BOSH Lite to Amazon AWS or VMware Fusion).
 
@@ -52,8 +52,22 @@ Trying 10.9.9.30...
 Connected to tara.nono.com.
 Escape character is '^]'.
 ```
-#### 2. <a name="static">Assign the BOSH VM a Static IP Address</a>
+
+#### 2. <a name="dhcp">Configure the BOSH VM To Use DHCP</a>
+
+
+
+##### Caveats
+
+If the network is hard-wired and uses [VMPS](https://en.wikipedia.org/wiki/VLAN_Management_Policy_Server), you may need to register the MAC address with IT to ensure network mayhem doesn't ensue. For example, Pivotal in San Francisco uses VMPS, and when the ethernet switch detects unknown MAC address on one of its ports, it will configure that ports VLAN to be that of the guest network's; however, this will also affect the workstation that is hosting the BOSH VM. In practical terms, the workstation's ethernet connection will ping-pong (switching approximately every 30 seconds from one VLAN to the other), effectively rendering the BOSH VM and the workstation host unusable.
+
+#### 3. <a name="static">Assign the BOSH VM a Static IP Address</a>
 The procedure follows the BOSH Lite README, stopping at the section, *[Using the Virtualbox Provider](https://github.com/cloudfoundry/bosh-lite/blob/master/README.md#using-the-virtualbox-provider)* (i.e. we have already cloned the BOSH Lite repository to `~/workspace/bosh-lite`)
+
+In this example, we set the BOSH with the following parameters:
+
+* IP: **10.9.9.130**
+* Subnet: **255.255.255.0**
 
 ```
 cd ~/workspace/bosh-lite
@@ -63,26 +77,23 @@ Edit the Vagrantfile to enable port-forwarding:
 ```
 vim Vagrantfile
 ```
-Add the following line ([this](https://github.com/cunnie/bosh-lite/commit/5fdc1a92a8febc72707240ccca27a72c20e6b882?diff=unified) is what the changes look from *git*'s viewpoint):
+Add the following line ([this](https://github.com/cunnie/bosh-lite/commit/79b0dcaaa38da27a58aeeaf5822a693e1b7705e5) is what the changes look from *git*'s viewpoint):
 
 ```
-  override.vm.network "forwarded_port", guest: 25555, host: 25555
+  override.vm.network :public_network, bridge: 'en0: Ethernet 1', ip: '10.9.9.130', subnet: '255.255.255.0'
 ```
 
 We now continue with the remainder of the *BOSH Lite's* README's instructions (e.g. `vagrant up`).
 
 We are now able to `bosh target` from other machines. For example, let us say we installed BOSH Lite on the workstation *tara.nono.com*, and we want to access the BOSH from the laptop *hope.nono.com*. On *hope*, we type the command `bosh target tara.nono.com`, and we can log in with the user *admin* and password *admin*.
 
+##### Caveats
 
+Only machines on the local subnet are able to target the BOSH VM (e.g. in this case, machines whose IP address starts with "10.9.9"). (The BOSH VM's default route is the host VM, which will in turn NAT the traffic). Static IP is not a good solution for geographically distributed teams, e.g. if the host machine is in San Francisco but some team members are located in Toronto.
 
-```
-  config.vm.provider :virtualbox do |v, override|
-    override.vm.box_version = '2811'
-    # To use a different IP address for the bosh-lite director, uncomment this line:
-    # override.vm.network :private_network, ip: '192.168.59.4', id: :local
-    config.vm.network :public_network, bridge: 'en0: Ethernet 1', ip: '10.9.9.130',
-  end
-```
+If the network is hard-wired and uses [VMPS](https://en.wikipedia.org/wiki/VLAN_Management_Policy_Server), you may need to register the MAC address with IT to ensure network mayhem doesn't ensue. For example, Pivotal in San Francisco uses VMPS, and when the ethernet switch detects unknown MAC address on one of its ports, it will configure that ports VLAN to be that of the guest network's; however, this will also affect the workstation that is hosting the BOSH VM. In practical terms, the workstation's ethernet connection will ping-pong (switching approximately every 30 seconds from one VLAN to the other), effectively rendering the BOSH VM and the workstation host unusable.
+
+---
 
 
 ```
