@@ -1,45 +1,79 @@
-## How Do I Deploy BOSH?
-[BOSH](http://bosh.io/) is a tool that (among other things) deploys VMs. But how does one deploy BOSH itself? This blog post covers an easy way to deploy BOSH on the local subnet.
+## Deploying BOSH Lite in a Subnet-Accessible Manner
+[BOSH](http://bosh.io/) is a tool that (among other things) deploys VMs. [BOSH Lite](https://github.com/cloudfoundry/bosh-lite) is a user-friendly means of installing BOSH using [Vagrant](https://www.vagrantup.com/).
 
-Specifically, we'll cover using [Vagrant](https://www.vagrantup.com/) and [VirtualBox](https://www.virtualbox.org/) to deploy [BOSH Lite](https://github.com/cloudfoundry/bosh-lite) (BOSH Lite is not a "lesser" BOSH, rather, it's most frequently used in conjunction with deploying VMs to Linux containers rather than to heavyweight IAASes such as vSphere or AWS). A *BOSH Lite* is a full-blown BOSH that can be used to deploy to vSphere or AWS.
+A shortcoming of BOSH Lite is that the resulting BOSH VM can only be accessed from the host which is running the VM (i.e. `bosh target` from another workstation does not succeed). <sup>[[1]](#accessibility)</sup> 
+
+This blog post describes three techniques to make BOSH Lite  accessible from workstations other than the one running the VM. This would be useful in cases where a development team would need a single BOSH and find it convenient to access it from any development workstation.
+
+We'll describe three scenarios:
+
+1. [enable port-forwarding to the BOSH VM](#port-forward)
+2. [assign the BOSH VM a static IP address](#static)
+3. [configure the BOSH VM to use DHCP](#dhcp)
+
+Specifically, we'll cover using [Vagrant](https://www.vagrantup.com/) to deploy [BOSH Lite](https://github.com/cloudfoundry/bosh-lite) to [VirtualBox](https://www.virtualbox.org/) (i.e. we won't discuss deploying BOSH Lite to Amazon AWS or VMware Fusion).
 
 ### Procedure
 
-* Install [VirtualBox](https://www.virtualbox.org/)
-* Install [Vagrant](https://www.vagrantup.com/)
-* Clone the BOSH Lite GitHub repo:
+#### 1. <a name="port-forward">Enable Port-Forwarding to BOSH VM</a>
+The procedure follows the BOSH Lite README, stopping at the section, *[Using the Virtualbox Provider](https://github.com/cloudfoundry/bosh-lite/blob/master/README.md#using-the-virtualbox-provider)* (i.e. we have already cloned the BOSH Lite repository to `~/workspace/bosh-lite`)
 
 ```
-mkdir ~/workspace
-cd ~/workspace
-git clone https://github.com/cloudfoundry/bosh-lite
+cd ~/workspace/bosh-lite
 ```
-
-If you see `command not found` when you attempt to clone, you need to install Apple's *Command Line Tools* by typing `xcode-select --install`.
-
-We follow these [instructions](https://github.com/cloudfoundry/bosh-lite/blob/master/README.md), but with some slight variations.
-
-We install the BOSH Ruby Gem (users of Ruby version managers such as `rvm`, `rbenv`, or `chruby` should omit `sudo` from the following command):
+Edit the Vagrantfile to enable port-forwarding:
 
 ```
-sudo gem install bosh_cli
-```
-Install [VirtualBox](https://www.virtualbox.org/).
-
-Install [Vagrant](https://www.vagrantup.com/).
-
-```
-cd ~/workspace
-git clone https://github.com/cloudfoundry/bosh-lite
-```
-
-At this point we veer off from the instructions because we want the BOSH we're installing to be accessible from the local network, not just from the machine it's installed in. We edit the Vagrantfile:
-
-```
-cd bosh-lite
 vim Vagrantfile
 ```
-We modify the *virtualbox* stanza:
+Add the following line ([this](https://github.com/cunnie/bosh-lite/commit/5fdc1a92a8febc72707240ccca27a72c20e6b882?diff=unified) is what the changes look from *git*'s viewpoint):
+
+```
+  override.vm.network "forwarded_port", guest: 25555, host: 25555
+```
+
+We now continue with the remainder of the *BOSH Lite's* README's instructions (e.g. `vagrant up`).
+
+We are now able to `bosh target` from other machines. For example, let us say we installed BOSH Lite on the workstation *tara.nono.com*, and we want to access the BOSH from the laptop *hope.nono.com*. On *hope*, we type the command `bosh target tara.nono.com`, and we can log in with the user *admin* and password *admin*.
+
+##### Caveats
+
+Although you can access the BOSH from other workstations via the BOSH CLI, you will not be able to access other services (e.g. you will not be able to SSH into the BOSH VM from a workstation other than the host workstation).
+
+IPv6: For dual-stack systems, don't target the IPv6 address; target the IPv4 address. For example, the host *tara.nono.com* has both IPv4 (10.9.9.30) and IPv6 addresses, so when targeting *tara.nono.com*, explicitly use the IPv4 address (e.g. `bosh target 10.9.9.30`). If you mistakenly target the IPv6 address, you will see the message `[WARNING] cannot access director, trying 4 more times...`
+
+This type (dual-stack) problem can also be troubleshot by attempting to connect directly to the BOSH port (note that telnet falls back to IPv4 when IPv6 fails):
+
+```
+telnet tara.nono.com 25555
+Trying 2601:9:8480:3:23e:e1ff:fec2:e1a...
+telnet: connect to address 2601:9:8480:3:23e:e1ff:fec2:e1a: Connection refused
+Trying 10.9.9.30...
+Connected to tara.nono.com.
+Escape character is '^]'.
+```
+#### 2. <a name="static">Assign the BOSH VM a Static IP Address</a>
+The procedure follows the BOSH Lite README, stopping at the section, *[Using the Virtualbox Provider](https://github.com/cloudfoundry/bosh-lite/blob/master/README.md#using-the-virtualbox-provider)* (i.e. we have already cloned the BOSH Lite repository to `~/workspace/bosh-lite`)
+
+```
+cd ~/workspace/bosh-lite
+```
+Edit the Vagrantfile to enable port-forwarding:
+
+```
+vim Vagrantfile
+```
+Add the following line ([this](https://github.com/cunnie/bosh-lite/commit/5fdc1a92a8febc72707240ccca27a72c20e6b882?diff=unified) is what the changes look from *git*'s viewpoint):
+
+```
+  override.vm.network "forwarded_port", guest: 25555, host: 25555
+```
+
+We now continue with the remainder of the *BOSH Lite's* README's instructions (e.g. `vagrant up`).
+
+We are now able to `bosh target` from other machines. For example, let us say we installed BOSH Lite on the workstation *tara.nono.com*, and we want to access the BOSH from the laptop *hope.nono.com*. On *hope*, we type the command `bosh target tara.nono.com`, and we can log in with the user *admin* and password *admin*.
+
+
 
 ```
   config.vm.provider :virtualbox do |v, override|
@@ -63,13 +97,10 @@ We modify the *virtualbox* stanza:
 
 ---
 
-#### Acknowledgements
-
-Some of the ESXi and vCenter configuration was drawn from internal Cloud Foundry documents.
 
 #### Footnotes
 
-<a name="d500"><sup>1</sup></a> Note: purchasing the D500 over the less-expensive D300 has nothing to do with Cloud Foundry; anyone purchasing a Mac Pro to run Cloud Foundry *should opt for the D300 Graphics Card*, which is currently $400 less expensive than the D500. The decision to purchase a D500 was related to gaming, which is not an appropriate topic for a blog post, even though the D500 is quite adequate to play ESO at 1920x1200 with ultra-high settings, easily delivering over 30fps (frames per second).
+<a name="accessibility"><sup>1</sup></a> We acknowledge that there are technical workarounds: the teams working on other workstations can ssh into the workstation that is running the BOSH and execute all BOSH-related commands there. Another example is ssh port-forwarding (port 25555). Yet another, modifying VirtualBox to port-forward port 25555 to the BOSH VM. We find these workarounds clunky.
 
 
 ## How to Deploy a DNS Server with BOSH 
