@@ -54,7 +54,7 @@ Edit the Vagrantfile to enable DHCP:
 ```
 vim Vagrantfile
 ```
-Add the following line ([this]() is what the changes look from *git*'s viewpoint):
+Add the following line ([this](https://github.com/cunnie/bosh-lite/commit/fb3a73dec4e719509d0df494da2e8e0b920b625e) is what the changes look from *git*'s viewpoint):
 
 ```
   config.vm.network :public_network, bridge: 'en0: Ethernet 1', mac: '0200424f5348', use_dhcp_assigned_default_route: true
@@ -79,7 +79,9 @@ We are now able to `bosh target` from other machines. For example, let us say we
 ##### Caveats
 
 If the network is hard-wired and uses [VMPS](https://en.wikipedia.org/wiki/VLAN_Management_Policy_Server), you may need to register the MAC address with IT <sup>[[4]](#vmps)</sup>.
+
 #### Scenario 3: <a name="static">Assign the BOSH VM a Static IP Address</a>
+
 The procedure follows the BOSH Lite README, stopping at the section, *[Using the Virtualbox Provider](https://github.com/cloudfoundry/bosh-lite/blob/master/README.md#using-the-virtualbox-provider)* (i.e. we have already cloned the BOSH Lite repository to `~/workspace/bosh-lite`)
 
 In this example, we set the BOSH with the following parameters:
@@ -107,7 +109,7 @@ We are now able to `bosh target` from other machines. For example, let us say we
 
 ##### Caveats
 
-Only machines on the local subnet are able to target the BOSH VM (e.g. in this case, machines whose IP address starts with "10.9.9"). (The BOSH VM's default route is the host VM, which will in turn NAT the traffic). Static IP is not a good solution for geographically distributed teams, e.g. if the host machine is in San Francisco but some team members are located in Toronto.
+Only machines on the local subnet are able to target the BOSH VM (e.g. in this case, machines whose IP address starts with "10.9.9"). (The BOSH VM's default route is the host VM, which will in turn NAT the traffic, which will break any TCP connection outside the local subnet to 10.9.9.130). This scenario (static IP) is not a good solution for geographically distributed teams, e.g. if the host machine is in San Francisco but some team members are located in Toronto.
 
 If the network is hard-wired and uses [VMPS](https://en.wikipedia.org/wiki/VLAN_Management_Policy_Server), you may need to register the MAC address with IT <sup>[[4]](#vmps)</sup>.
 
@@ -115,9 +117,9 @@ If the network is hard-wired and uses [VMPS](https://en.wikipedia.org/wiki/VLAN_
 
 #### Footnotes
 
-<a name="accessibility"><sup>1</sup></a> We acknowledge that there are technical workarounds: the teams working on other workstations can ssh into the workstation that is running the BOSH and execute all BOSH-related commands there. Another example is ssh port-forwarding (port 25555). Yet another, modifying VirtualBox to port-forward port 25555 to the BOSH VM. We find these workarounds clunky.
+<a name="accessibility"><sup>1</sup></a> We acknowledge that there are technical workarounds: the teams working on other workstations can ssh into the workstation that is running the BOSH and execute all BOSH-related commands there. Another example is ssh port-forwarding (port 25555). We find these workarounds clunky.
 
-<a name="ipv6"><sup>2</sup></a> For example, the host *tara.nono.com* has both IPv4 (10.9.9.30) and IPv6 addresses, so when targeting *tara.nono.com*, explicitly use the IPv4 address (e.g. `bosh target 10.9.9.30`). If you mistakenly target the IPv6 address, you will see the message `[WARNING] cannot access director, trying 4 more times...`
+<a name="ipv6"><sup>2</sup></a> BOSH doesn't listen on IPv6 interfaces. For example, the host *tara.nono.com* has both IPv4 (10.9.9.30) and IPv6 addresses, so when targeting *tara.nono.com*, explicitly use the IPv4 address (e.g. `bosh target 10.9.9.30`). If you mistakenly target the IPv6 address, you will see the message `[WARNING] cannot access director, trying 4 more times...`
 
 This type (dual-stack) problem can also be troubleshot by attempting to connect directly to the BOSH port (note that telnet falls back to IPv4 when IPv6 fails):
 
@@ -130,13 +132,13 @@ Connected to tara.nono.com.
 Escape character is '^]'.
 ```
 
-<a name="mac_addr"><sup>3</sup></a> We chose an arbitrary MAC address ('0200424f5348'), first setting the [locally-administered bit](https://en.wikipedia.org/wiki/MAC_address#Address_details) (the second least-significant bit of the most significant byte), i.e. the leading "02".
+<a name="mac_addr"><sup>3</sup></a> We chose a MAC address ('0200424f5348') by first setting the [locally-administered bit](https://en.wikipedia.org/wiki/MAC_address#Address_details) (the second least-significant bit of the most significant byte), i.e. the leading "02".
 
 We chose "00" as the next byte.
 
 We chose the last four bytes by using the hex representation of the ASCII code for "BOSH" (i.e. `echo -n BOSH | od -t x1`, i.e. '42:4f:53:48')
 
-<a name="vmps"><sup>4</sup></a>  to ensure network mayhem doesn't ensue. For example, Pivotal in San Francisco uses VMPS, and when the ethernet switch detects unknown MAC address on one of its ports, it will configure that ports VLAN to be that of the guest network's; however, this will also affect the workstation that is hosting the BOSH VM. In practical terms, the workstation's ethernet connection will ping-pong (switching approximately every 30 seconds from one VLAN to the other), effectively rendering the BOSH VM and the workstation host unusable.
+<a name="vmps"><sup>4</sup></a> When VMPS has been deployed, all MAC addresses must be registered with the local IT organization to avoid knocking the host VM off the network. For example, Pivotal in San Francisco uses VMPS, and when the ethernet switch detects unknown MAC address on one of its ports, it will configure that port's VLAN to be that of the guest network's; however, this will also affect the workstation that is hosting the BOSH VM. In practical terms, the workstation's ethernet connection will ping-pong (switching approximately every 30 seconds from one VLAN to the other), effectively rendering the BOSH VM and the workstation host unusable.
 
 
 ## How to Deploy a DNS Server with BOSH 
