@@ -15,7 +15,7 @@ Specifically, we'll cover using [Vagrant](https://www.vagrantup.com/) to deploy 
 
 ### Procedure
 
-#### 1. <a name="port-forward">Enable Port-Forwarding to BOSH VM</a>
+#### Scenario 1: <a name="port-forward">Enable Port-Forwarding to BOSH VM</a>
 The procedure follows the BOSH Lite README, stopping at the section, *[Using the Virtualbox Provider](https://github.com/cloudfoundry/bosh-lite/blob/master/README.md#using-the-virtualbox-provider)* (i.e. we have already cloned the BOSH Lite repository to `~/workspace/bosh-lite`)
 
 ```
@@ -40,28 +40,46 @@ We are now able to `bosh target` from other machines. For example, let us say we
 
 Although you can access the BOSH from other workstations via the BOSH CLI, you will not be able to access other services (e.g. you will not be able to SSH into the BOSH VM from a workstation other than the host workstation).
 
-IPv6: For dual-stack systems, don't target the IPv6 address; target the IPv4 address. For example, the host *tara.nono.com* has both IPv4 (10.9.9.30) and IPv6 addresses, so when targeting *tara.nono.com*, explicitly use the IPv4 address (e.g. `bosh target 10.9.9.30`). If you mistakenly target the IPv6 address, you will see the message `[WARNING] cannot access director, trying 4 more times...`
+IPv6: For dual-stack systems, don't target the IPv6 address; target the IPv4 address. <sup>[[2]](#ipv6)</sup>
 
-This type (dual-stack) problem can also be troubleshot by attempting to connect directly to the BOSH port (note that telnet falls back to IPv4 when IPv6 fails):
+#### Scenario 2: <a name="dhcp">Configure the BOSH VM To Use DHCP</a>
+
+The procedure follows the BOSH Lite README, stopping at the section, *[Using the Virtualbox Provider](https://github.com/cloudfoundry/bosh-lite/blob/master/README.md#using-the-virtualbox-provider)* (i.e. we have already cloned the BOSH Lite repository to `~/workspace/bosh-lite`)
 
 ```
-telnet tara.nono.com 25555
-Trying 2601:9:8480:3:23e:e1ff:fec2:e1a...
-telnet: connect to address 2601:9:8480:3:23e:e1ff:fec2:e1a: Connection refused
-Trying 10.9.9.30...
-Connected to tara.nono.com.
-Escape character is '^]'.
+cd ~/workspace/bosh-lite
 ```
+Edit the Vagrantfile to enable DHCP:
 
-#### 2. <a name="dhcp">Configure the BOSH VM To Use DHCP</a>
+```
+vim Vagrantfile
+```
+Add the following line ([this]() is what the changes look from *git*'s viewpoint):
 
+```
+  config.vm.network :public_network, bridge: 'en0: Ethernet 1', mac: '0200424f5348', use_dhcp_assigned_default_route: true
+```
+Note:
 
+* Do **not** choose the same MAC address we did ('0200424f5348' <sup>[[3]](#mac_addr)</sup> ). To choose a mac address, set the first byte to "02" and the remaining 5 bytes with random values (i.e. `dd if=/dev/random bs=1 count=5 | od -t x1`)
+
+We need to create a DNS hostname and assign an IP address for the BOSH VM. In this example we've assigned the hostname *bosh.nono.com* and assigned the IP address *10.9.9.130*
+
+We need to create an entry in our DHCP configuration file to reflect the MAC address and IP address; this is a snippet from our ISC DHCP server's configuration file, *dhcpd.conf*:
+
+```
+  host bosh	{ hardware ethernet 02:00:42:4f:53:48; fixed-address 10.9.9.130; }
+```
+ISC's DHCP daemon requires a restart for the new configuration to take effect.
+
+We now continue with the remainder of the *BOSH Lite's* README's instructions (e.g. `vagrant up`).
+
+We are now able to `bosh target` from other machines. For example, let us say we installed BOSH Lite on the workstation *tara.nono.com*, and we want to access the BOSH from the laptop *hope.nono.com*. On *hope*, we type the command `bosh target bosh.nono.com`, and we can log in with the user *admin* and password *admin*.
 
 ##### Caveats
 
-If the network is hard-wired and uses [VMPS](https://en.wikipedia.org/wiki/VLAN_Management_Policy_Server), you may need to register the MAC address with IT to ensure network mayhem doesn't ensue. For example, Pivotal in San Francisco uses VMPS, and when the ethernet switch detects unknown MAC address on one of its ports, it will configure that ports VLAN to be that of the guest network's; however, this will also affect the workstation that is hosting the BOSH VM. In practical terms, the workstation's ethernet connection will ping-pong (switching approximately every 30 seconds from one VLAN to the other), effectively rendering the BOSH VM and the workstation host unusable.
-
-#### 3. <a name="static">Assign the BOSH VM a Static IP Address</a>
+If the network is hard-wired and uses [VMPS](https://en.wikipedia.org/wiki/VLAN_Management_Policy_Server), you may need to register the MAC address with IT <sup>[[4]](#vmps)</sup>.
+#### Scenario 3: <a name="static">Assign the BOSH VM a Static IP Address</a>
 The procedure follows the BOSH Lite README, stopping at the section, *[Using the Virtualbox Provider](https://github.com/cloudfoundry/bosh-lite/blob/master/README.md#using-the-virtualbox-provider)* (i.e. we have already cloned the BOSH Lite repository to `~/workspace/bosh-lite`)
 
 In this example, we set the BOSH with the following parameters:
@@ -85,33 +103,40 @@ Add the following line ([this](https://github.com/cunnie/bosh-lite/commit/79b0dc
 
 We now continue with the remainder of the *BOSH Lite's* README's instructions (e.g. `vagrant up`).
 
-We are now able to `bosh target` from other machines. For example, let us say we installed BOSH Lite on the workstation *tara.nono.com*, and we want to access the BOSH from the laptop *hope.nono.com*. On *hope*, we type the command `bosh target tara.nono.com`, and we can log in with the user *admin* and password *admin*.
+We are now able to `bosh target` from other machines. For example, let us say we installed BOSH Lite on the workstation *tara.nono.com*, and we want to access the BOSH from the laptop *hope.nono.com*. On *hope*, we type the command `bosh target 10.9.9.130`, and we can log in with the user *admin* and password *admin*.
 
 ##### Caveats
 
 Only machines on the local subnet are able to target the BOSH VM (e.g. in this case, machines whose IP address starts with "10.9.9"). (The BOSH VM's default route is the host VM, which will in turn NAT the traffic). Static IP is not a good solution for geographically distributed teams, e.g. if the host machine is in San Francisco but some team members are located in Toronto.
 
-If the network is hard-wired and uses [VMPS](https://en.wikipedia.org/wiki/VLAN_Management_Policy_Server), you may need to register the MAC address with IT to ensure network mayhem doesn't ensue. For example, Pivotal in San Francisco uses VMPS, and when the ethernet switch detects unknown MAC address on one of its ports, it will configure that ports VLAN to be that of the guest network's; however, this will also affect the workstation that is hosting the BOSH VM. In practical terms, the workstation's ethernet connection will ping-pong (switching approximately every 30 seconds from one VLAN to the other), effectively rendering the BOSH VM and the workstation host unusable.
+If the network is hard-wired and uses [VMPS](https://en.wikipedia.org/wiki/VLAN_Management_Policy_Server), you may need to register the MAC address with IT <sup>[[4]](#vmps)</sup>.
 
 ---
-
-
-```
-  config.vm.provider :virtualbox do |v, override|
-    override.vm.box_version = '2811'
-    # To use a different IP address for the bosh-lite director, uncomment this line:
-    # override.vm.network :private_network, ip: '192.168.59.4', id: :local
-    config.vm.network :public_network, bridge: 'en0: Ethernet 1', mac: '0200424f5348', use_dhcp_assigned_default_route: true
-  end
-```
-
-
----
-
 
 #### Footnotes
 
 <a name="accessibility"><sup>1</sup></a> We acknowledge that there are technical workarounds: the teams working on other workstations can ssh into the workstation that is running the BOSH and execute all BOSH-related commands there. Another example is ssh port-forwarding (port 25555). Yet another, modifying VirtualBox to port-forward port 25555 to the BOSH VM. We find these workarounds clunky.
+
+<a name="ipv6"><sup>2</sup></a> For example, the host *tara.nono.com* has both IPv4 (10.9.9.30) and IPv6 addresses, so when targeting *tara.nono.com*, explicitly use the IPv4 address (e.g. `bosh target 10.9.9.30`). If you mistakenly target the IPv6 address, you will see the message `[WARNING] cannot access director, trying 4 more times...`
+
+This type (dual-stack) problem can also be troubleshot by attempting to connect directly to the BOSH port (note that telnet falls back to IPv4 when IPv6 fails):
+
+```
+telnet tara.nono.com 25555
+Trying 2601:9:8480:3:23e:e1ff:fec2:e1a...
+telnet: connect to address 2601:9:8480:3:23e:e1ff:fec2:e1a: Connection refused
+Trying 10.9.9.30...
+Connected to tara.nono.com.
+Escape character is '^]'.
+```
+
+<a name="mac_addr"><sup>3</sup></a> We chose an arbitrary MAC address ('0200424f5348'), first setting the [locally-administered bit](https://en.wikipedia.org/wiki/MAC_address#Address_details) (the second least-significant bit of the most significant byte), i.e. the leading "02".
+
+We chose "00" as the next byte.
+
+We chose the last four bytes by using the hex representation of the ASCII code for "BOSH" (i.e. `echo -n BOSH | od -t x1`, i.e. '42:4f:53:48')
+
+<a name="vmps"><sup>4</sup></a>  to ensure network mayhem doesn't ensue. For example, Pivotal in San Francisco uses VMPS, and when the ethernet switch detects unknown MAC address on one of its ports, it will configure that ports VLAN to be that of the guest network's; however, this will also affect the workstation that is hosting the BOSH VM. In practical terms, the workstation's ethernet connection will ping-pong (switching approximately every 30 seconds from one VLAN to the other), effectively rendering the BOSH VM and the workstation host unusable.
 
 
 ## How to Deploy a DNS Server with BOSH 
