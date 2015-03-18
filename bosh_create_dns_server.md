@@ -205,63 +205,19 @@ We chose the last four bytes by using the hex representation of the ASCII code f
 [BOSH](http://bosh.io/) is a tool that (among other things) deploys VMs. In this blog post we cover the procedure to create a BOSH release for a DNS server, customizing our release with a manifest, and then deploying the customized release to Amazon AWS.
 
 ### 0. Install BOSH Lite
-BOSH runs on its own VM. We will install BOSH in the VirtualBox hypervisor. The BOSH that is installed under VirtualBox (or, alternatively, under VMware Fusion) is called [BOSH Lite](https://github.com/cloudfoundry/bosh-lite).
+BOSH runs in a special VM. We will install a BOSH VM in VirtualBox using [BOSH Lite](https://github.com/cloudfoundry/bosh-lite), an easy-to-use tool to install BOSH under VirtualBox.
 
-We follow these [instructions](https://github.com/cloudfoundry/bosh-lite/blob/master/README.md)
-
-We install the BOSH Ruby Gem (users of Ruby version managers such as `rvm`, `rbenv`, or `chruby` should omit `sudo` from the following command):
-
-```
-sudo gem install bosh_cli
-```
-Install [VirtualBox](https://www.virtualbox.org/).
-
-Install [Vagrant](https://www.vagrantup.com/).
-
-```
-cd ~/workspace
-git clone https://github.com/cloudfoundry/bosh-lite
-```
-
-At this point we veer off from the instructions because we want the BOSH we're installing to be accessible from the local network, not just from the machine it's installed in. We edit the Vagrantfile:
-
-```
-cd bosh-lite
-vim Vagrantfile
-```
-We modify the *virtualbox* stanza:
-
-```
-  config.vm.provider :virtualbox do |v, override|
-    override.vm.box_version = '2811'
-    # To use a different IP address for the bosh-lite director, uncomment this line:
-    # override.vm.network :private_network, ip: '192.168.59.4', id: :local
-    config.vm.network :public_network, bridge: 'en0: Ethernet 1', mac: '0200424f5348', use_dhcp_assigned_default_route: true
-  end
-```
-
-We're configuring the BOSH's ethernet address to be placed on the VirtualBox host's public network. Rather than assigning it an IP address, we're configuring it to query DHCP address. We configure the BOSH to have an ethernet MAC address 02:00:42:4f:53:48 (note that the locally-administered bit is set, guaranteeing that we won't collide with an existing MAC address, and note the the hexadecimal )
-
-We bring up BOSH:
-
-```
-vagrant up
-```
-
+We follow the [BOSH Lite installation instructions](https://github.com/cloudfoundry/bosh-lite/blob/master/README.md). We follow the instructions up to and including executing the `bosh login` command.
 
 ### 1. Create a BOSH Release for a DNS Server
 A *BOSH release* is a package, analogous to Microsoft Windows's *.msi*, Apple OS X's *.app*, RedHat's *.rpm*.
 
+<!--
 Note: if you're only interested in using BOSH to deploy a BIND 9 server (i.e. you are *not* interested in learning how to create a BOSH release), you do *not* need to follow these steps. Instead, you can skip to [Using BOSH to Deploy BIND 9 Release](#deploy)
+-->
 
-We will create a BOSH release for [ISC](https://www.isc.org/)'s *[Bind 9](https://www.isc.org/downloads/BIND/)* <sup>[[1]](#bind_9)</sup> .
+We will create a BOSH release of [ISC](https://www.isc.org/)'s *[Bind 9](https://www.isc.org/downloads/BIND/)* <sup>[[1]](#bind_9)</sup> .
 
-#### Install BOSH Ruby Gem
-We install the BOSH Ruby Gem (users of Ruby version managers such as `rvm`, `rbenv`, or `chruby` should omit `sudo` from the following command):
-
-```
-sudo gem install bosh_cli
-```
 #### Initialize Release
 We follow these [instructions](http://bosh.io/docs/create-release.html#prep). We name our release *bind-9* because *BIND 9* <sup>[[2]](#nine)</sup> is a the DNS server daemon for which we are creating a release.
 
@@ -368,17 +324,34 @@ Create the *bind* package; we include the version number (*9.10.2*).
 ```
 bosh generate package bind-9-9.10.2
 ```
-<!--
-Create the spec file
 
+Create the spec file. We need to create an empty placeholder file to avoid this error:
+
+```
+/Users/cunnie/.gem/ruby/2.1.4/gems/bosh_cli-1.2865.0/lib/cli/resources/package.rb:122:in `resolve_globs': undefined method `each' for nil:NilClass (NoMethodError)
+```
+
+BOSH expects us to place source files within the BOSH package; however, we are deviating slightly from that model in that our package downloads the source from the ISC, so we don't bundle sources with our release, but we need at least one file to placate BOSH, hence the *placeholder* file.
 ```
 vim packages/bind-9-9.10.2/spec
 ```
 It should look like this:
 
 ```
+---
+name: bind-9-9.10.2
+
+dependencies:
+
+files:
+- bind/placeholder
 ```
--->
+then we need to create the placeholder:
+
+```
+mkdir src/bind
+touch src/bind/placeholder
+```
 
 Create the *bind-9* backage script:
 
@@ -405,7 +378,42 @@ We skip this section because we're not using the blobstore&mdash;we're downloadi
 
 #### Create Job Properties
 
-### 2. <a name="deploy">Using BOSH to Deploy BIND 9 Release</a>
+edit jobs/bind/templates/named.conf.erb
+
+```
+<%= p('config_file') %>
+```
+
+edit jobs/dhcpd/spec
+
+
+```
+---
+name: bind
+templates:
+  ctl.sh: bin/ctl
+  named.conf.erb: etc/named.conf
+
+packages:
+- bind-9-9.10.2
+
+properties:
+  config_file:
+    description: 'The contents of named.conf'
+```
+
+#### Create a Dev Release
+
+```
+bosh create release --force
+[WARNING] Missing blobstore configuration, please update config/final.yml before making a final release
+Syncing blobs...
+Please enter development release name: bind-9
+...
+Release name: bind-9
+Release version: 0+dev.1
+Release manifest: /Users/cunnie/workspace/bind-9/dev_releases/bind-9/bind-9-0+dev.1.yml
+```
 
 ---
 
@@ -418,3 +426,5 @@ There are alternatives to the BIND 9 DNS server. One of my peers, [Michael Sierc
 <a name="nine"><sup>2</sup></a> The number *"9"* in *BIND 9* appears to be a version number, but it isn't: BIND 9 is a distinct codebase from BIND 4, BIND 8, and BIND 10. It's different software.
 
 This is an important distinction because version numbers, by convention, are not used in BOSH release names. For example, the version number of *BIND 9* that we are downloading is 9.10.2, but we don't name our release *bind-9-9.10.2-release*; instead we name it *bind-9-release*.
+
+### 2. <a name="deploy">Using BOSH to Deploy BIND 9 Release</a>
