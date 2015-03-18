@@ -11,7 +11,9 @@ We'll describe three scenarios. If you're not sure which one is right for you, *
 2. [configure the BOSH VM to use DHCP](#dhcp)
 3. [assign the BOSH VM a static IP address](#static)
 
-Specifically, we'll cover using [Vagrant](https://www.vagrantup.com/) to deploy [BOSH Lite](https://github.com/cloudfoundry/bosh-lite) to [VirtualBox](https://www.virtualbox.org/) (i.e. we won't discuss deploying BOSH Lite to Amazon AWS or VMware Fusion).
+**Make sure to [secure BOSH](#secure)** after we have made it subnet accessible; the default accounts and passwords are very weak.
+
+We limit our discussion to deploying to [VirtualBox](https://www.virtualbox.org/) (i.e. we won't discuss deploying BOSH Lite to Amazon AWS or VMware Fusion).
 
 ### Procedure
 
@@ -107,11 +109,69 @@ We now continue with the remainder of the *BOSH Lite's* README's instructions (e
 
 We are now able to `bosh target` from other machines. For example, let us say we installed BOSH Lite on the workstation *tara.nono.com*, and we want to access the BOSH from the laptop *hope.nono.com*. On *hope*, we type the command `bosh target 10.9.9.130`, and we can log in with the user *admin* and password *admin*.
 
+
 ##### Caveats
 
 Only machines on the local subnet are able to target the BOSH VM (e.g. in this case, machines whose IP address starts with "10.9.9"). (The BOSH VM's default route is the host VM, which will in turn NAT the traffic, which will break any TCP connection outside the local subnet to 10.9.9.130). This scenario (static IP) is not a good solution for geographically distributed teams, e.g. if the host machine is in San Francisco but some team members are located in Toronto.
 
 If the network is hard-wired and uses [VMPS](https://en.wikipedia.org/wiki/VLAN_Management_Policy_Server), you may need to register the MAC address with IT <sup>[[4]](#vmps)</sup>.
+
+### <a name="secure">Securing BOSH</a>
+After making BOSH available on the local subnet, we need to secure it (the default BOSH Lite credentials of admin/admin are not terribly secure).
+
+#### 1. Secure the BOSH user
+We create a new account *director* and delete the *admin* account:
+
+```
+# we target our BOSH
+#   scenario 1: target the host workstation (e.g. tara.nono.com)
+#   scenarios 2 & 3: target the BOSH VM directly (e.g. bosh.nono.com)
+# account is 'admin', password is 'admin'
+bosh target tara.nono.com
+  Target set to `Bosh Lite Director'
+  Your username: admin
+  Enter password:
+  Logged in as `admin'
+# create new account 'director' with hard-to-guess password
+bosh create user director
+  Enter new password: **************
+  Verify new password: **************
+  User `director' has been created
+# log in as newly-created account 'director'
+bosh login director
+  Enter password:
+  Logged in as `director'
+# delete the admin account
+bosh -n delete user admin
+  User `admin' has been deleted
+```
+
+#### 2. Secure the UNIX user
+This step only applies to scenarios 2 &amp; 3 (i.e. to scenarios where users on the local subnet can ssh to the BOSH VM). We need to change the password to the *vcap* account (default password is *c1oudc0w*) and to the *vagrant* account (default password is *vagrant*):
+
+```
+ # we ssh to the BOSH VM (e.g. bosh.nono.com) as the 'vcap' user
+ssh vcap@bosh.nono.com
+  Warning: Permanently added 'bosh.nono.com,10.9.9.130' (RSA) to the list of known hosts.
+vcap@bosh.nono.com's password: c1oudc0w
+  Welcome to Ubuntu 14.04 LTS (GNU/Linux 3.13.0-44-generic x86_64)
+  ...
+vcap@bosh-lite:~$ passwd
+  Changing password for vcap.
+  (current) UNIX password: c1oudc0w
+  Enter new UNIX password:
+  Retype new UNIX password:
+  passwd: password updated successfully
+ # we change the vagrant user's password, too
+sudo passwd vagrant
+  Enter new UNIX password:
+  Retype new UNIX password:
+  passwd: password updated successfully
+```
+#### 3. Secure other Services (e.g. PostgreSQl)
+This step only applies to scenarios 2 &amp; 3.
+
+We will not discuss securing *postgres* or other services, but be aware that those services are running and are only loosely secured. BOSH Lite should **not** be deployed in a hostile environment (i.e. on the Internet).
 
 ---
 
@@ -141,7 +201,7 @@ We chose the last four bytes by using the hex representation of the ASCII code f
 <a name="vmps"><sup>4</sup></a> When VMPS has been deployed, all MAC addresses must be registered with the local IT organization to avoid knocking the host workstation off the network. For example, Pivotal in San Francisco uses VMPS, and when the ethernet switch detects unknown MAC address on one of its ports, it will configure that port's VLAN to be that of the guest network's; however, this will also affect the workstation that is hosting the BOSH VM. In practical terms, the workstation's ethernet connection will ping-pong (switching approximately every 30 seconds from one VLAN to the other), effectively rendering the BOSH VM and the host workstation unusable.
 
 
-## How to Deploy a DNS Server with BOSH 
+## How to Deploy a DNS Server with BOSH
 [BOSH](http://bosh.io/) is a tool that (among other things) deploys VMs. In this blog post we cover the procedure to create a BOSH release for a DNS server, customizing our release with a manifest, and then deploying the customized release to Amazon AWS.
 
 ### 0. Install BOSH Lite
