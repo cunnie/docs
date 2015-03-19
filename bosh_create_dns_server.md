@@ -415,6 +415,9 @@ Release version: 0+dev.1
 Release manifest: /Users/cunnie/workspace/bind-9/dev_releases/bind-9/bind-9-0+dev.1.yml
 ```
 
+#### Addendum: Create a Sample Manifest
+We have created sample manifests in the *examples/* directory. When you're creating releases, please create at least one sample manifest.
+
 ---
 
 ### Footnotes
@@ -427,4 +430,73 @@ There are alternatives to the BIND 9 DNS server. One of my peers, [Michael Sierc
 
 This is an important distinction because version numbers, by convention, are not used in BOSH release names. For example, the version number of *BIND 9* that we are downloading is 9.10.2, but we don't name our release *bind-9-9.10.2-release*; instead we name it *bind-9-release*.
 
-### 2. <a name="deploy">Using BOSH to Deploy BIND 9 Release</a>
+### <a name="deploy">Using BOSH to Deploy BIND 9 Release</a>
+
+This blog post is the second of a two-part series; it picks up where the previous one, *[How to Deploy a DNS Server with BOSH]()*, leaves off. The first part described how to create a *BOSH release* (i.e. a BOSH software package) of the BIND 9 DNS server. This blog post discusses how to deploy the BIND 9 DNS server package.
+
+In this example we deploy our release with our previously-created BOSH Lite
+
+```
+cd ~/workspace/bind-9
+bosh target bosh.nono.com
+bosh login admin
+```
+Let's download the correct stemcell:
+
+```
+mkdir stemcells
+pushd stemcells
+curl -OL https://s3.amazonaws.com/bosh-warden-stemcells/bosh-stemcell-2776-warden-boshlite-centos-go_agent.tgz
+popd
+```
+Upload the stemcell:
+
+```
+bosh upload stemcell stemcells/bosh-stemcell-2776-warden-boshlite-centos-go_agent.tgz
+```
+Upload the release:
+
+```
+bosh upload dev_releases/bind-9/bind-9-0+dev.1.yml
+```
+
+Find the UUID of our director:
+
+```
+bosh status
+    Config
+                 /Users/cunnie/.bosh_config
+
+    Director
+      Name       Bosh Lite Director
+      URL        https://bosh.nono.com:25555
+      Version    1.2811.0 (00000000)
+      User       director
+      UUID       c6f166bd-ddac-4f7d-9c57-d11c6ad5133b
+      CPI        vsphere
+      dns        disabled
+      compiled_package_cache enabled (provider: local)
+      snapshots  enabled
+
+    Deployment
+      not set
+```
+
+We take the UUID, *c6f166bd-ddac-4f7d-9c57-d11c6ad5133b*, and change our manifest to include that UUID:
+
+```
+cp examples/bind-9-bosh-lite.yml config/
+perl -pi -e 's/PLACEHOLDER-DIRECTOR-UUID/c6f166bd-ddac-4f7d-9c57-d11c6ad5133b/' config/bind-9-bosh-lite.yml
+```
+Let's set our deployment:
+
+```
+bosh deployment config/bind-9-bosh-lite.yml
+```
+Let's deploy:
+
+```
+bosh -n deploy
+```
+
+
