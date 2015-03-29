@@ -173,6 +173,17 @@ This step only applies to scenarios 2 &amp; 3.
 
 We will not discuss securing *postgres* or other services, but be aware that those services are running and are only loosely secured. BOSH Lite should **not** be deployed in a hostile environment (i.e. on the Internet).
 
+#### Addendum
+
+If during your BOSH deploy you receive `Permission denied @ dir_s_mkdir - /vagrant/tmp`, then [this post](https://groups.google.com/a/cloudfoundry.org/forum/#!topic/bosh-users/xfbck9EC4AY) suggests adding the following to your Vagrantfile:
+
+```
+config.vm.provider :virtualbox do |v, override|
+  # ensure any VM user can create files in subfolders - eg, /vagrant/tmp
+  config.vm.synced_folder ".", "/vagrant", mount_options: ["dmode=777"]
+end
+```
+
 ---
 
 #### Footnotes
@@ -418,6 +429,16 @@ Release manifest: /Users/cunnie/workspace/bind-9/dev_releases/bind-9/bind-9-0+de
 #### Addendum: Create a Sample Manifest
 We have created sample manifests in the *examples/* directory. When you're creating releases, please create at least one sample manifest.
 
+### Conclusion
+
+#### 1. BOSH Directory Structure Differs from *Bind*'s
+
+The *BOSH* directory structure differs from *Bind*'s, and although it can be made to work, there was the sensation of hammering a round peg into a square hole. This was not a technical shortcoming of either product; it was more a conflict of design requirements.
+
+For example, *BOSH* prefers to keep the immutable items in the packages directory (e.g. the bind executable is located in `/var/vcap/packages/bind-9-9.10.2/sbin/named`) and the mutable items in the jobs directory (e.g. the bind configuration file is kept in `/var/vcap/jobs/bind/etc/named.conf`). This is an elegant solution that allows multiple instances (jobs) of the same package each with different configurations.
+
+*Bind* was designed to allow UNIX distributions to customize the layout of its configuration files and directories in order to accommodate different distributions (e.g. FreeBSD ports may choose to place *Bind*'s executable under `/usr/local/sbin/named` whereas Ubuntu might decide to place it in `/sbin/named`); however, running multiple versions of *Bind* was not a primary consideration&mdash;only one program could bind <sup>[[3]](#bind_system_call)</sup> to DNS's assigned port 53 <sup>[[4]](#multi_homed)</sup> , making it difficult to run more than one *Bind* job on a given VM.
+
 ---
 
 ### Footnotes
@@ -430,6 +451,14 @@ There are alternatives to the BIND 9 DNS server. One of my peers, [Michael Sierc
 
 This is an important distinction because version numbers, by convention, are not used in BOSH release names. For example, the version number of *BIND 9* that we are downloading is 9.10.2, but we don't name our release *bind-9-9.10.2-release*; instead we name it *bind-9-release*.
 
+<a name="bind_system_call"><sup>3</sup></a> We refer to the UNIX system call [bind](http://linux.die.net/man/2/bind) (e.g. "binding to port 53") and not the DNS nameserver *Bind*.
+
+<a name="multi_homed"><sup>4</sup></a> One could argue that a multi-homed host  could bind <sup>[[3]](#bind_system_call)</sup> different instances of *Bind* to distinct IP addresses. It's technically feasible though not common practice. And multi-homing is infrequently used in *BOSH*
+
+In an interesting side note, the aforementioned nameserver *djbdns* makes use of multi-homed hosts, for it runs several instances of its nameservers to accommodate different purposes, e.g. one server (*dnscache*) to handle general DNS queries, another server (*tinydns*) to handle authoritative queries, another server (*axfrdns*) to handle zone transfers.
+
+One might be tempted to think that *djbdns* would be a better fit to *BOSH*'s structure than *Bind*, but that would be a mistake: *djbdns* makes very specific decisions about the placement of its files
+
 ### <a name="deploy">Using BOSH to Deploy BIND 9 Release</a>
 
 This blog post is the second of a two-part series; it picks up where the previous one, *[How to Deploy a DNS Server with BOSH]()*, leaves off. The first part described how to create a *BOSH release* (i.e. a BOSH software package) of the BIND 9 DNS server. This blog post discusses how to deploy the BIND 9 DNS server package.
@@ -440,6 +469,9 @@ In this example we deploy our release with our previously-created BOSH Lite
 cd ~/workspace/bind-9
 bosh target bosh.nono.com
 bosh login admin
+ # if you followed our instructions on securing your bosh
+ # http://pivotallabs.com/deploying-bosh-lite-subnet-accessible-manner/
+ # then `bosh login director` instead of `bosh login admin`
 ```
 Let's download the correct stemcell:
 
@@ -457,7 +489,7 @@ bosh upload stemcell stemcells/bosh-stemcell-2776-warden-boshlite-centos-go_agen
 Upload the release:
 
 ```
-bosh upload dev_releases/bind-9/bind-9-0+dev.1.yml
+bosh upload release dev_releases/bind-9/bind-9-0+dev.1.yml
 ```
 
 Find the UUID of our director:
