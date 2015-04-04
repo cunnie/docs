@@ -227,7 +227,7 @@ A *BOSH release* is a package, analogous to Microsoft Windows's *.msi*, Apple OS
 Note: if you're only interested in using BOSH to deploy a BIND 9 server (i.e. you are *not* interested in learning how to create a BOSH release), you do *not* need to follow these steps. Instead, you can skip to [Using BOSH to Deploy BIND 9 Release](#deploy)
 -->
 
-We will create a BOSH release of [ISC](https://www.isc.org/)'s *[Bind 9](https://www.isc.org/downloads/BIND/)* <sup>[[1]](#bind_9)</sup> .
+We will create a BOSH release of [ISC](https://www.isc.org/)'s *[BIND 9](https://www.isc.org/downloads/BIND/)* <sup>[[1]](#bind_9)</sup> .
 
 #### Initialize Release
 We follow these [instructions](http://bosh.io/docs/create-release.html#prep). We name our release *bind-9* because *BIND 9* <sup>[[2]](#nine)</sup> is a the DNS server daemon for which we are creating a release.
@@ -378,7 +378,10 @@ set -e
 curl -OL ftp://ftp.isc.org/isc/bind9/9.10.2/bind-9.10.2.tar.gz
 tar xvzf bind-9.10.2.tar.gz
 cd bind-9.10.2
-./configure --prefix=${BOSH_INSTALL_TARGET}
+./configure \
+  --prefix=${BOSH_INSTALL_TARGET} \
+  --sysconfdir=/var/vcap/jobs/bind/etc \
+  --localstatedir=/var/vcap/sys
 make
 make check
 make install
@@ -431,13 +434,13 @@ We have created sample manifests in the *examples/* directory. When you're creat
 
 ### Conclusion
 
-#### 1. BOSH Directory Structure Differs from *Bind*'s
+#### 1. BOSH Directory Structure Differs from *BIND*'s
 
-The *BOSH* directory structure differs from *Bind*'s, and although it can be made to work, there was the sensation of hammering a round peg into a square hole. This was not a technical shortcoming of either product; it was more a conflict of design requirements.
+The *BOSH* directory structure differs from *BIND*'s, and although it can be made to work, there was the sensation of hammering a round peg into a square hole. This was not a technical shortcoming of either product; it was more a conflict of design requirements.
 
-For example, *BOSH* prefers to keep the immutable items in the packages directory (e.g. the bind executable is located in `/var/vcap/packages/bind-9-9.10.2/sbin/named`) and the mutable items in the jobs directory (e.g. the bind configuration file is kept in `/var/vcap/jobs/bind/etc/named.conf`). This is an elegant solution that allows multiple instances (jobs) of the same package each with different configurations.
+For example, *BOSH* prefers to keep the immutable items in the packages directory (e.g. the BIND executable is located in `/var/vcap/packages/bind-9-9.10.2/sbin/named`) and the mutable items in the jobs directory (e.g. the BIND configuration file is kept in `/var/vcap/jobs/bind/etc/named.conf`). This is an elegant solution that allows multiple instances (jobs) of the same package each with different configurations.
 
-*Bind* was designed to allow UNIX distributions to customize the layout of its configuration files and directories in order to accommodate different distributions (e.g. FreeBSD ports may choose to place *Bind*'s executable under `/usr/local/sbin/named` whereas Ubuntu might decide to place it in `/sbin/named`); however, running multiple versions of *Bind* was not a primary consideration&mdash;only one program could bind <sup>[[3]](#bind_system_call)</sup> to DNS's assigned port 53 <sup>[[4]](#multi_homed)</sup> , making it difficult to run more than one *Bind* job on a given VM.
+*BIND* was designed to allow UNIX distributions to customize the layout of its configuration files and directories in order to accommodate different distributions (e.g. FreeBSD ports may choose to place *BIND*'s executable under `/usr/local/sbin/named` whereas Ubuntu might decide to place it in `/sbin/named`); however, running multiple versions of *BIND* was not a primary consideration&mdash;only one program could bind <sup>[[3]](#bind_system_call)</sup> to DNS's assigned port 53 <sup>[[4]](#multi_homed)</sup> , making it difficult to run more than one *BIND* job on a given VM.
 
 ---
 
@@ -453,11 +456,11 @@ This is an important distinction because version numbers, by convention, are not
 
 <a name="bind_system_call"><sup>3</sup></a> We refer to the UNIX system call [bind](http://linux.die.net/man/2/bind) (e.g. "binding to port 53") and not the DNS nameserver *Bind*.
 
-<a name="multi_homed"><sup>4</sup></a> One could argue that a multi-homed host  could bind <sup>[[3]](#bind_system_call)</sup> different instances of *Bind* to distinct IP addresses. It's technically feasible though not common practice. And multi-homing is infrequently used in *BOSH*
+<a name="multi_homed"><sup>4</sup></a> One could argue that a multi-homed host  could bind <sup>[[3]](#bind_system_call)</sup> different instances of *BIND* to distinct IP addresses. It's technically feasible though not common practice. And multi-homing is infrequently used in *BOSH*
 
 In an interesting side note, the aforementioned nameserver *djbdns* makes use of multi-homed hosts, for it runs several instances of its nameservers to accommodate different purposes, e.g. one server (*dnscache*) to handle general DNS queries, another server (*tinydns*) to handle authoritative queries, another server (*axfrdns*) to handle zone transfers.
 
-One might be tempted to think that *djbdns* would be a better fit to *BOSH*'s structure than *Bind*, but that would be a mistake: *djbdns* makes very specific decisions about the placement of its files
+One might be tempted to think that *djbdns* would be a better fit to *BOSH*'s structure than *BIND*, but that would be a mistake: *djbdns* makes very specific decisions about the placement of its files and the manner in which the nameserver is started and stopped, decisions which don't quite dovetail with *BOSH*'s decisions (e.g. *BOSH* uses *[monit](https://en.wikipedia.org/wiki/Monit)* to supervise processes; *djbdns* assumes the use of *[daemontools](http://cr.yp.to/daemontools.html)*).
 
 ### <a name="deploy">Using BOSH to Deploy BIND 9 Release</a>
 
