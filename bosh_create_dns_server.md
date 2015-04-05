@@ -533,5 +533,144 @@ Let's deploy:
 ```
 bosh -n deploy
 ```
+Let's set a route to the deployment's 10.244.0.64/30 network via our BOSH Lite (we assume the BOSH Lite's IP address is 192.168.50.4) (you'll need to set the route every time you reboot your workstation) (the following command works for OS X):
 
+```
+sudo route add -net 10.244.0.64/30 192.168.50.4
+```
 
+### Troubleshooting the Deployment
+Here is an example of the steps we followed when our deployment didn't work:
+
+```
+bosh -n deploy
+
+Processing deployment manifest
+------------------------------
+Getting deployment properties from director...
+Compiling deployment manifest...
+
+Deploying
+---------
+Deployment name: `bind-9-bosh-lite.yml'
+Director name: `Bosh Lite Director'
+
+Director task 33
+  Started preparing deployment
+  Started preparing deployment > Binding deployment. Done (00:00:00)
+  Started preparing deployment > Binding releases. Done (00:00:00)
+  Started preparing deployment > Binding existing deployment. Failed: Timed out sending `get_state' to 45ae2115-e7b3-4668-9516-34a9129eb705 after 45 seconds (00:02:15)
+
+Error 450002: Timed out sending `get_state' to 45ae2115-e7b3-4668-9516-34a9129eb705 after 45 seconds
+
+Task 33 error
+
+For a more detailed error report, run: bosh task 33 --debug
+```
+
+We follow the suggestion:
+
+```
+bosh task 33 --debug
+...
+E, [2015-04-04 19:00:57 #2184] [task:33] ERROR -- DirectorJobRunner: Timed out sending `get_state' to 45ae2115-e7b3-4668-9516-34a9129eb705 after 45 seconds
+/var/vcap/packages/director/gem_home/ruby/2.1.0/gems/bosh-director-1.2811.0/lib/bosh/director/agent_client.rb:178:in `block in handle_method'
+/var/vcap/packages/ruby/lib/ruby/2.1.0/monitor.rb:211:in `mon_synchronize'
+...
+I, [2015-04-04 19:00:57 #2184] []  INFO -- DirectorJobRunner: Task took 2 minutes 15.042849130000008 seconds to process.
+999
+```
+
+Find out the VM that's running *named*:
+
+```
+bosh vms
+...
++-----------------+--------------------+---------------+-----+
+| Job/index       | State              | Resource Pool | IPs |
++-----------------+--------------------+---------------+-----+
+| unknown/unknown | unresponsive agent |               |     |
++-----------------+--------------------+---------------+-----+
+...
+```
+We tell BOSH to run an internal consistency check ("cck", i.e. "cloud check"):
+
+```
+bosh cck
+```
+
+BOSH cloud check discovers that a VM is missing; we tell BOSH to recreate it
+
+```
+Problem 1 of 1: VM with cloud ID `7e72c2bc-593d-42fb-5c69-9299d7ed47e8' missing.
+  1. Ignore problem
+  2. Recreate VM using last known apply spec
+  3. Delete VM reference (DANGEROUS!)
+Please choose a resolution [1 - 3]: 2
+```
+We ask for a listing of BOSH's VMs:
+
+```
+bosh vms
+...
++-----------+---------+---------------+-------------+
+| Job/index | State   | Resource Pool | IPs         |
++-----------+---------+---------------+-------------+
+| bind-9/0  | failing | bind-9_pool   | 10.244.0.66 |
++-----------+---------+---------------+-------------+
+...
+```
+
+We've gotten further: we have a VM that's running, but now the job is failing, and we need to fix that. We need to ssh to the VM to troubleshoot further. We use BOSH's ssh feature to ssh into the deployment's VM. Notice how we identify the VM to BOSH: we don't use the hostname or the IP address; instead, we use the job-name appended with the index (i.e. "bind-9 0") (note we remove the "/").
+
+```
+bosh ssh bind-9 0
+...
+Enter password (use it to sudo on remote host): *
+```
+
+We set the password to 'p'; we don't need the password to be terribly secure&mdash;BOSH will create a throw-away userid (e.g. *bosh_1viqpm7v5*) that lasts only the duration of the ssh session. Also, since this is BOSH Lite (BOSH in a VM that's only reachable from the hosting workstation), the VM is in essence behind a firewall.
+
+We become root (troubleshooting is easier as the *root* user):
+
+```
+sudo su -
+[sudo] password for bosh_1viqpm7v5:
+-bash-4.1#
+```
+We check the status of the job:
+
+```
+/var/vcap/bosh/bin/monit summary
+The Monit daemon 5.2.4 uptime: 3h 43m
+
+Process 'bind'                      Execution failed
+System 'system_64100128-c43d-4441-989d-b5726379f339' running
+```
+We tell monit to not try to restart the *BIND* daemon so we can start it manually to determine where it's failing:
+
+```
+/var/vcap/bosh/bin/monit stop bind
+bash -x /var/vcap/jobs/bind/bin/ctl start
+...
++ exec /var/vcap/packages/bind-9-9.10.2/sbin/named -u vcap -c /var/vcap/jobs/bind/etc/named.conf
+/var/vcap/packages/bind-9-9.10.2/sbin/named: error while loading shared libraries: libjson.so.0: cannot open shared object file: No such file or directory
+```
+We fix our release to install libjson.0, upload the release, and redeploy. Our `bosh vms` command shows the job as *failing*, so we again ssh into our VM and check *monit*'s status:
+
+```
+-bash-4.1# /var/vcap/bosh/bin/monit summary
+The Monit daemon 5.2.4 uptime: 16m
+
+Process 'bind'                      not monitored
+System 'system_64100128-c43d-4441-989d-b5726379f339' running
+```
+Now we check the logs. We were lazy&mdash;we let *named* default to logging to *syslog* using the *daemon* facility, so we check the local log to see why it failed:
+
+```
+tail /var/log/daemon.log
+...
+Apr  5 04:53:44 kejnssqb34o named[2819]: /var/vcap/jobs/bind/etc/named.conf:6: expected IP address near 'zone'
+Apr  5 04:53:44 kejnssqb34o named[2819]: loading configuration: unexpected token
+Apr  5 04:53:44 kejnssqb34o named[2819]: exiting (due to fatal error)
+```
