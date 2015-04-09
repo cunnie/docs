@@ -229,6 +229,12 @@ Note: if you're only interested in using BOSH to deploy a BIND 9 server (i.e. yo
 
 We will create a BOSH release of [ISC](https://www.isc.org/)'s *[BIND 9](https://www.isc.org/downloads/BIND/)* <sup>[[1]](#bind_9)</sup> .
 
+#### *BIND* versus *named*
+
+*BIND* is a [collection of software](https://www.isc.org/downloads/bind/) that includes, among other things, the *named* DNS daemon.
+
+You may find it convenient to think of *BIND* and *named* as synonyms insofar as this blog post is concerned. <sup>[[2]](#bind_named)</sup>
+
 #### Initialize Release
 We follow these [instructions](http://bosh.io/docs/create-release.html#prep). We name our release *bind-9* because *BIND 9* <sup>[[2]](#nine)</sup> is a the DNS server daemon for which we are creating a release.
 
@@ -251,12 +257,12 @@ Our release is available on [GitHub](https://github.com/cunnie/bosh-bind-9-relea
 Our release consists of one job, *bind*:
 
 ```
-bosh generate job bind
+bosh generate job named
 ```
 Let's create the control script:
 
 ```
-vim jobs/bind/templates/ctl.sh
+vim jobs/named/templates/ctl.sh
 ```
 It should look like this (patterned after the Ubuntu 13.04 *bind9* control script):
 
@@ -265,21 +271,31 @@ fixme: does the control need to be executable?
 ```
 #!/bin/bash
 
-RUN_DIR=/var/vcap/sys/run/bind
-LOG_DIR=/var/vcap/sys/log/bind
+# named logs to syslog, daemon facility
+# BOSH captures these in /var/log/daemon.log
+RUN_DIR=/var/vcap/sys/run/named
 PIDFILE=${RUN_DIR}/pid
 
 case $1 in
 
   start)
-    mkdir -p $RUN_DIR $LOG_DIR
-    chown -R vcap:vcap $RUN_DIR $LOG_DIR
+    # ugly way to install libjson.0 shared library dependency
+    if [ -f /etc/redhat-release ]; then
+      # Install libjson0 for CentOS stemcells.
+      # We first check if it's installed to prevent an
+      # an over-eager yum from contacting the Internet.
+      rpm -qi json-c > /dev/null || yum install -y json-c
+    elif [ -f /etc/lsb-release ]; then
+      # install libjson0 for Ubuntu stemcells (not tested)
+      apt-get install libjson0
+    fi
+
+    mkdir -p $RUN_DIR
+    chown -R vcap:vcap $RUN_DIR
 
     echo $$ >> $PIDFILE
 
-    cd /var/vcap/packages/bind
-
-    exec /var/vcap/packages/bin/bin/named -u vcap
+    exec /var/vcap/packages/bind-9-9.10.2/sbin/named -u vcap -c /var/vcap/jobs/named/etc/named.conf
 
     ;;
 
@@ -318,15 +334,15 @@ esac
 Edit the monit script
 
 ```
-vim jobs/bind/monit
+vim jobs/named/monit
 ```
 It should look like this:
 
 ```
-check process bind
-  with pidfile /var/vcap/sys/run/bind/pid
-  start program "/var/vcap/jobs/bind/bin/ctl start"
-  stop program "/var/vcap/jobs/bind/bin/ctl stop"
+check process named
+  with pidfile /var/vcap/sys/run/named/pid
+  start program "/var/vcap/jobs/named/bin/ctl start"
+  stop program "/var/vcap/jobs/named/bin/ctl stop"
   group vcap
 ```
 #### Create Package Skeletons
@@ -342,7 +358,8 @@ Create the spec file. We need to create an empty placeholder file to avoid this 
 /Users/cunnie/.gem/ruby/2.1.4/gems/bosh_cli-1.2865.0/lib/cli/resources/package.rb:122:in `resolve_globs': undefined method `each' for nil:NilClass (NoMethodError)
 ```
 
-BOSH expects us to place source files within the BOSH package; however, we are deviating slightly from that model in that our package downloads the source from the ISC, so we don't bundle sources with our release, but we need at least one file to placate BOSH, hence the *placeholder* file.
+BOSH expects us to place source files within the BOSH package; however, we are deviating from that model: we don't place the  source files withom our release; instead we configure our package to download the source from the ISC. But we need at least one source file to placate BOSH, hence the *placeholder* file.
+
 ```
 vim packages/bind-9-9.10.2/spec
 ```
@@ -375,15 +392,22 @@ It should look like this:
 # abort script on any command that exits with a non zero value
 set -e
 
+if [ -f /etc/redhat-release ]; then
+  # install libjson0 for CentOS stemcells
+  yum install -y json-c
+elif [ -f /etc/lsb-release ]; then
+  # install libjson0 for Ubuntu stemcells (not tested)
+  apt-get install libjson0
+fi
+
 curl -OL ftp://ftp.isc.org/isc/bind9/9.10.2/bind-9.10.2.tar.gz
 tar xvzf bind-9.10.2.tar.gz
 cd bind-9.10.2
 ./configure \
   --prefix=${BOSH_INSTALL_TARGET} \
-  --sysconfdir=/var/vcap/jobs/bind/etc \
+  --sysconfdir=/var/vcap/jobs/named/etc \
   --localstatedir=/var/vcap/sys
 make
-make check
 make install
 ```
 
@@ -392,13 +416,13 @@ We skip this section because we're not using the blobstore&mdash;we're downloadi
 
 #### Create Job Properties
 
-edit jobs/bind/templates/named.conf.erb
+edit jobs/named/templates/named.conf.erb
 
 ```
 <%= p('config_file') %>
 ```
 
-edit jobs/dhcpd/spec
+edit jobs/named/spec:
 
 
 ```
@@ -430,7 +454,7 @@ Release manifest: /Users/cunnie/workspace/bind-9/dev_releases/bind-9/bind-9-0+de
 ```
 
 #### Addendum: Create a Sample Manifest
-We have created sample manifests in the *examples/* directory. When you're creating releases, please create at least one sample manifest.
+We have created sample manifests in the *examples/* directory. When  creating releases, please create at least one sample manifest.
 
 ### Conclusion
 
@@ -450,17 +474,23 @@ For example, *BOSH* prefers to keep the immutable items in the packages director
 
 There are alternatives to the BIND 9 DNS server. One of my peers, [Michael Sierchio](https://www.linkedin.com/pub/michael-sierchio/5/129/33b), is a strong proponent of *[djbdns](http://cr.yp.to/djbdns.html)*, which was written with a focus on security.
 
+<a name="bind_named"><sup>2</sup></a> Although it is convenient to think of *BIND* and *named* as synonyms, they are different, though the differences are subtle.
+
+For example, the software is named *BIND*, so when creating our *BOSH* release, we  use the term *BIND* (e.g. *bind-9* is the name of the *BOSH* release)
+
+The daemon that runs is named *named*. We use the term *named* where we deem appropriate (e.g. *named* is the name of the *BOSH* job). Also, many of the job-related directories and files are named *named* (a systems administrator would expect to find the configuration file to be *named.conf*, not *bind.conf*, for that's what it's named in RedHat, FreeBSD, Ubuntu, *et al.*)
+
 <a name="nine"><sup>2</sup></a> The number *"9"* in *BIND 9* appears to be a version number, but it isn't: BIND 9 is a distinct codebase from BIND 4, BIND 8, and BIND 10. It's different software.
 
 This is an important distinction because version numbers, by convention, are not used in BOSH release names. For example, the version number of *BIND 9* that we are downloading is 9.10.2, but we don't name our release *bind-9-9.10.2-release*; instead we name it *bind-9-release*.
 
-<a name="bind_system_call"><sup>3</sup></a> We refer to the UNIX system call [bind](http://linux.die.net/man/2/bind) (e.g. "binding to port 53") and not the DNS nameserver *Bind*.
+<a name="bind_system_call"><sup>3</sup></a> We refer to the UNIX system call [bind](http://linux.die.net/man/2/bind) (e.g. "binding to port 53") and not the DNS nameserver *BIND*.
 
-<a name="multi_homed"><sup>4</sup></a> One could argue that a multi-homed host  could bind <sup>[[3]](#bind_system_call)</sup> different instances of *BIND* to distinct IP addresses. It's technically feasible though not common practice. And multi-homing is infrequently used in *BOSH*
+<a name="multi_homed"><sup>4</sup></a> One could argue that a multi-homed host  could bind <sup>[[3]](#bind_system_call)</sup> different instances of *BIND* to distinct IP addresses. It's technically feasible though not common practice. And multi-homing is infrequently used in *BOSH*.
 
 In an interesting side note, the aforementioned nameserver *djbdns* makes use of multi-homed hosts, for it runs several instances of its nameservers to accommodate different purposes, e.g. one server (*dnscache*) to handle general DNS queries, another server (*tinydns*) to handle authoritative queries, another server (*axfrdns*) to handle zone transfers.
 
-One might be tempted to think that *djbdns* would be a better fit to *BOSH*'s structure than *BIND*, but that would be a mistake: *djbdns* makes very specific decisions about the placement of its files and the manner in which the nameserver is started and stopped, decisions which don't quite dovetail with *BOSH*'s decisions (e.g. *BOSH* uses *[monit](https://en.wikipedia.org/wiki/Monit)* to supervise processes; *djbdns* assumes the use of *[daemontools](http://cr.yp.to/daemontools.html)*).
+One might be tempted to think that *djbdns* would be a better fit to *BOSH*'s structure than *BIND*, but one would be mistaken: *djbdns* makes very specific decisions about the placement of its files and the manner in which the nameserver is started and stopped, decisions which don't quite dovetail with *BOSH*'s decisions (e.g. *BOSH* uses *[monit](https://en.wikipedia.org/wiki/Monit)* to supervise processes; *djbdns* assumes the use of *[daemontools](http://cr.yp.to/daemontools.html)*).
 
 ### <a name="deploy">Using BOSH to Deploy BIND 9 Release</a>
 
@@ -668,9 +698,98 @@ System 'system_64100128-c43d-4441-989d-b5726379f339' running
 Now we check the logs. We were lazy&mdash;we let *named* default to logging to *syslog* using the *daemon* facility, so we check the local log to see why it failed:
 
 ```
+bosh ssh bind-9 0
+...
 tail /var/log/daemon.log
 ...
 Apr  5 04:53:44 kejnssqb34o named[2819]: /var/vcap/jobs/bind/etc/named.conf:6: expected IP address near 'zone'
 Apr  5 04:53:44 kejnssqb34o named[2819]: loading configuration: unexpected token
 Apr  5 04:53:44 kejnssqb34o named[2819]: exiting (due to fatal error)
+```
+
+In our haste we botched our deployment manifest (*bind-9-bosh-lite.yml*), and the section for the config_file was incomplete (the *forwarders* section was empty and lacked a closing brace ("};")):
+
+```
+...
+  properties:
+     config_file: |
+       options {
+         recursion yes;
+         forwarders {
+       zone "." in{
+...
+```
+We fix our manifest and redeploy, but it's still failing:
+
+```
+bosh -n deploy
+bosh vms
+...
++-----------+---------+---------------+-------------+
+| Job/index | State   | Resource Pool | IPs         |
++-----------+---------+---------------+-------------+
+| bind-9/0  | failing | bind-9_pool   | 10.244.0.66 |
++-----------+---------+---------------+-------------+
+...
+```
+We *ssh* in and troubleshoot:
+
+```
+bosh ssh bind-9
+...
+sudo su -
+/var/vcap/bosh/bin/monit summary
+...
+Process 'bind'                      not monitored
+...
+```
+We check the logs:
+
+```
+tail /var/log/daemon.log
+...
+Apr  9 02:54:53 kh2fp1cb3r7 named[1813]: the working directory is not writable
+Apr  9 02:54:53 kh2fp1cb3r7 named[1813]: managed-keys-zone: loaded serial 0
+Apr  9 02:54:53 kh2fp1cb3r7 named[1813]: all zones loaded
+Apr  9 02:54:53 kh2fp1cb3r7 named[1813]: running
+```
+*named* has seemed to start correctly. Let's double-check and make sure it's running:
+
+```
+ps auxwww | grep named
+...
+vcap      1813  0.0  0.2 239896 13820 ?        S<sl 02:54   0:00 /var/vcap/packages/bind-9-9.10.2/sbin/named -u vcap -c /var/vcap/jobs/bind/etc/named.conf
+vcap      1826  0.0  0.2 173580 12896 ?        S<sl 02:55   0:00 /var/vcap/packages/bind-9-9.10.2/sbin/named -u vcap -c /var/vcap/jobs/bind/etc/named.conf
+vcap      1838  0.5  0.2 239116 12888 ?        S<sl 02:56   0:00 /var/vcap/packages/bind-9-9.10.2/sbin/named -u vcap -c /var/vcap/jobs/bind/etc/named.conf
+```
+*monit* attempts to start *named*, which succeeds, but *monit* seems to think that it has failed (that's why we see three copies of *named*&mdash;*monit* has attempted to start *named* at least three times)
+
+We examine *monit*'s log file:
+
+```
+tail /var/vcap/monit/monit.log
+...
+[UTC Apr  9 02:50:53] info     : 'bind' start: /var/vcap/jobs/bind/bin/ctl
+[UTC Apr  9 02:51:23] error    : 'bind' failed to start
+[UTC Apr  9 02:51:33] error    : 'bind' process is not running
+[UTC Apr  9 02:51:33] info     : 'bind' trying to restart
+[UTC Apr  9 02:51:33] info     : 'bind' start: /var/vcap/jobs/bind/bin/ctl
+```
+We suspect the PID file is the problem; we notice that our *ctl.sh* template places the PID file in */var/vcap/sys/run/named/pid*, but that in *jobs/bind/monit* we specify a completely different location, i.e. */var/vcap/sys/run/named/pid*.
+
+We recreate our release, upload our release, and deploy it:
+
+```
+bosh -n deploy
+...
+  Started preparing package compilation > Finding packages to compile. Failed: Permission denied @ dir_s_mkdir - /vagrant/tmp (00:00:00)
+
+Error 100: Permission denied @ dir_s_mkdir - /vagrant/tmp
+```
+We need to fix our Vagrant permissions (described in [this thread](https://groups.google.com/a/cloudfoundry.org/forum/#!topic/bosh-users/xfbck9EC4AY)). The thread describes a permanent fix; our fix below is merely temporary (i.e. when the BOSH Lite VM is recreated you will need to run the commands below again):
+
+```
+pushd ~/workspace/bosh-lite/
+vagrant ssh -c "sudo chmod 777 /vagrant"
+popd
 ```
