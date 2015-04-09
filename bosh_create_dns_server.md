@@ -427,7 +427,7 @@ edit jobs/named/spec:
 
 ```
 ---
-name: bind
+name: named
 templates:
   ctl.sh: bin/ctl
   named.conf.erb: etc/named.conf
@@ -570,34 +570,15 @@ sudo route add -net 10.244.0.64/30 192.168.50.4
 ```
 
 ### Troubleshooting the Deployment
-Here is an example of the steps we followed when our deployment didn't work:
+Here is an example of the steps we followed when our deployment didn't work. Note that several of the problems stemmed from our decision to rename our job from *bind* to *named*.
 
 ```
 bosh -n deploy
-
-Processing deployment manifest
-------------------------------
-Getting deployment properties from director...
-Compiling deployment manifest...
-
-Deploying
----------
-Deployment name: `bind-9-bosh-lite.yml'
-Director name: `Bosh Lite Director'
-
-Director task 33
-  Started preparing deployment
-  Started preparing deployment > Binding deployment. Done (00:00:00)
-  Started preparing deployment > Binding releases. Done (00:00:00)
   Started preparing deployment > Binding existing deployment. Failed: Timed out sending `get_state' to 45ae2115-e7b3-4668-9516-34a9129eb705 after 45 seconds (00:02:15)
-
-Error 450002: Timed out sending `get_state' to 45ae2115-e7b3-4668-9516-34a9129eb705 after 45 seconds
-
-Task 33 error
-
-For a more detailed error report, run: bosh task 33 --debug
+  Error 450002: Timed out sending `get_state' to 45ae2115-e7b3-4668-9516-34a9129eb705 after 45 seconds
+  Task 33 error
+  For a more detailed error report, run: bosh task 33 --debug
 ```
-
 We follow the suggestion:
 
 ```
@@ -610,17 +591,16 @@ E, [2015-04-04 19:00:57 #2184] [task:33] ERROR -- DirectorJobRunner: Timed out s
 I, [2015-04-04 19:00:57 #2184] []  INFO -- DirectorJobRunner: Task took 2 minutes 15.042849130000008 seconds to process.
 999
 ```
-
 Find out the VM that's running *named*:
 
 ```
 bosh vms
 ...
-+-----------------+--------------------+---------------+-----+
-| Job/index       | State              | Resource Pool | IPs |
-+-----------------+--------------------+---------------+-----+
-| unknown/unknown | unresponsive agent |               |     |
-+-----------------+--------------------+---------------+-----+
+  +-----------------+--------------------+---------------+-----+
+  | Job/index       | State              | Resource Pool | IPs |
+  +-----------------+--------------------+---------------+-----+
+  | unknown/unknown | unresponsive agent |               |     |
+  +-----------------+--------------------+---------------+-----+
 ...
 ```
 We tell BOSH to run an internal consistency check ("cck", i.e. "cloud check"):
@@ -628,7 +608,6 @@ We tell BOSH to run an internal consistency check ("cck", i.e. "cloud check"):
 ```
 bosh cck
 ```
-
 BOSH cloud check discovers that a VM is missing; we tell BOSH to recreate it
 
 ```
@@ -643,11 +622,11 @@ We ask for a listing of BOSH's VMs:
 ```
 bosh vms
 ...
-+-----------+---------+---------------+-------------+
-| Job/index | State   | Resource Pool | IPs         |
-+-----------+---------+---------------+-------------+
-| bind-9/0  | failing | bind-9_pool   | 10.244.0.66 |
-+-----------+---------+---------------+-------------+
+  +-----------+---------+---------------+-------------+
+  | Job/index | State   | Resource Pool | IPs         |
+  +-----------+---------+---------------+-------------+
+  | bind-9/0  | failing | bind-9_pool   | 10.244.0.66 |
+  +-----------+---------+---------------+-------------+
 ...
 ```
 
@@ -656,26 +635,26 @@ We've gotten further: we have a VM that's running, but now the job is failing, a
 ```
 bosh ssh bind-9 0
 ...
-Enter password (use it to sudo on remote host): *
+  Enter password (use it to sudo on remote host): *
 ```
 
 We set the password to 'p'; we don't need the password to be terribly secure&mdash;BOSH will create a throw-away userid (e.g. *bosh_1viqpm7v5*) that lasts only the duration of the ssh session. Also, since this is BOSH Lite (BOSH in a VM that's only reachable from the hosting workstation), the VM is in essence behind a firewall.
 
-We become root (troubleshooting is easier as the *root* user):
+We become *root* (troubleshooting is easier as the *root* user):
 
 ```
 sudo su -
-[sudo] password for bosh_1viqpm7v5:
--bash-4.1#
+  [sudo] password for bosh_1viqpm7v5:
+  -bash-4.1#
 ```
 We check the status of the job:
 
 ```
 /var/vcap/bosh/bin/monit summary
-The Monit daemon 5.2.4 uptime: 3h 43m
+  The Monit daemon 5.2.4 uptime: 3h 43m
 
-Process 'bind'                      Execution failed
-System 'system_64100128-c43d-4441-989d-b5726379f339' running
+  Process 'bind'                      Execution failed
+  System 'system_64100128-c43d-4441-989d-b5726379f339' running
 ```
 We tell monit to not try to restart the *BIND* daemon so we can start it manually to determine where it's failing:
 
@@ -683,17 +662,14 @@ We tell monit to not try to restart the *BIND* daemon so we can start it manuall
 /var/vcap/bosh/bin/monit stop bind
 bash -x /var/vcap/jobs/bind/bin/ctl start
 ...
-+ exec /var/vcap/packages/bind-9-9.10.2/sbin/named -u vcap -c /var/vcap/jobs/bind/etc/named.conf
-/var/vcap/packages/bind-9-9.10.2/sbin/named: error while loading shared libraries: libjson.so.0: cannot open shared object file: No such file or directory
+  + exec /var/vcap/packages/bind-9-9.10.2/sbin/named -u vcap -c /var/vcap/jobs/bind/etc/named.conf
+  /var/vcap/packages/bind-9-9.10.2/sbin/named: error while loading shared libraries: libjson.so.0: cannot open shared object file: No such file or directory
 ```
 We fix our release to install libjson.0, upload the release, and redeploy. Our `bosh vms` command shows the job as *failing*, so we again ssh into our VM and check *monit*'s status:
 
 ```
--bash-4.1# /var/vcap/bosh/bin/monit summary
-The Monit daemon 5.2.4 uptime: 16m
-
-Process 'bind'                      not monitored
-System 'system_64100128-c43d-4441-989d-b5726379f339' running
+/var/vcap/bosh/bin/monit summary
+  Process 'bind'                      not monitored
 ```
 Now we check the logs. We were lazy&mdash;we let *named* default to logging to *syslog* using the *daemon* facility, so we check the local log to see why it failed:
 
@@ -702,11 +678,10 @@ bosh ssh bind-9 0
 ...
 tail /var/log/daemon.log
 ...
-Apr  5 04:53:44 kejnssqb34o named[2819]: /var/vcap/jobs/bind/etc/named.conf:6: expected IP address near 'zone'
-Apr  5 04:53:44 kejnssqb34o named[2819]: loading configuration: unexpected token
-Apr  5 04:53:44 kejnssqb34o named[2819]: exiting (due to fatal error)
+  Apr  5 04:53:44 kejnssqb34o named[2819]: /var/vcap/jobs/bind/etc/named.conf:6: expected IP address near 'zone'
+  Apr  5 04:53:44 kejnssqb34o named[2819]: loading configuration: unexpected token
+  Apr  5 04:53:44 kejnssqb34o named[2819]: exiting (due to fatal error)
 ```
-
 In our haste we botched our deployment manifest (*bind-9-bosh-lite.yml*), and the section for the config_file was incomplete (the *forwarders* section was empty and lacked a closing brace ("};")):
 
 ```
@@ -725,11 +700,11 @@ We fix our manifest and redeploy, but it's still failing:
 bosh -n deploy
 bosh vms
 ...
-+-----------+---------+---------------+-------------+
-| Job/index | State   | Resource Pool | IPs         |
-+-----------+---------+---------------+-------------+
-| bind-9/0  | failing | bind-9_pool   | 10.244.0.66 |
-+-----------+---------+---------------+-------------+
+  +-----------+---------+---------------+-------------+
+  | Job/index | State   | Resource Pool | IPs         |
+  +-----------+---------+---------------+-------------+
+  | bind-9/0  | failing | bind-9_pool   | 10.244.0.66 |
+  +-----------+---------+---------------+-------------+
 ...
 ```
 We *ssh* in and troubleshoot:
@@ -740,7 +715,7 @@ bosh ssh bind-9
 sudo su -
 /var/vcap/bosh/bin/monit summary
 ...
-Process 'bind'                      not monitored
+  Process 'bind'                      not monitored
 ...
 ```
 We check the logs:
@@ -748,19 +723,19 @@ We check the logs:
 ```
 tail /var/log/daemon.log
 ...
-Apr  9 02:54:53 kh2fp1cb3r7 named[1813]: the working directory is not writable
-Apr  9 02:54:53 kh2fp1cb3r7 named[1813]: managed-keys-zone: loaded serial 0
-Apr  9 02:54:53 kh2fp1cb3r7 named[1813]: all zones loaded
-Apr  9 02:54:53 kh2fp1cb3r7 named[1813]: running
+  Apr  9 02:54:53 kh2fp1cb3r7 named[1813]: the working directory is not writable
+  Apr  9 02:54:53 kh2fp1cb3r7 named[1813]: managed-keys-zone: loaded serial 0
+  Apr  9 02:54:53 kh2fp1cb3r7 named[1813]: all zones loaded
+  Apr  9 02:54:53 kh2fp1cb3r7 named[1813]: running
 ```
 *named* has seemed to start correctly. Let's double-check and make sure it's running:
 
 ```
 ps auxwww | grep named
 ...
-vcap      1813  0.0  0.2 239896 13820 ?        S<sl 02:54   0:00 /var/vcap/packages/bind-9-9.10.2/sbin/named -u vcap -c /var/vcap/jobs/bind/etc/named.conf
-vcap      1826  0.0  0.2 173580 12896 ?        S<sl 02:55   0:00 /var/vcap/packages/bind-9-9.10.2/sbin/named -u vcap -c /var/vcap/jobs/bind/etc/named.conf
-vcap      1838  0.5  0.2 239116 12888 ?        S<sl 02:56   0:00 /var/vcap/packages/bind-9-9.10.2/sbin/named -u vcap -c /var/vcap/jobs/bind/etc/named.conf
+  vcap      1813  0.0  0.2 239896 13820 ?        S<sl 02:54   0:00 /var/vcap/packages/bind-9-9.10.2/sbin/named -u vcap -c /var/vcap/jobs/bind/etc/named.conf
+  vcap      1826  0.0  0.2 173580 12896 ?        S<sl 02:55   0:00 /var/vcap/packages/bind-9-9.10.2/sbin/named -u vcap -c /var/vcap/jobs/bind/etc/named.conf
+  vcap      1838  0.5  0.2 239116 12888 ?        S<sl 02:56   0:00 /var/vcap/packages/bind-9-9.10.2/sbin/named -u vcap -c /var/vcap/jobs/bind/etc/named.conf
 ```
 *monit* attempts to start *named*, which succeeds, but *monit* seems to think that it has failed (that's why we see three copies of *named*&mdash;*monit* has attempted to start *named* at least three times)
 
@@ -769,22 +744,21 @@ We examine *monit*'s log file:
 ```
 tail /var/vcap/monit/monit.log
 ...
-[UTC Apr  9 02:50:53] info     : 'bind' start: /var/vcap/jobs/bind/bin/ctl
-[UTC Apr  9 02:51:23] error    : 'bind' failed to start
-[UTC Apr  9 02:51:33] error    : 'bind' process is not running
-[UTC Apr  9 02:51:33] info     : 'bind' trying to restart
-[UTC Apr  9 02:51:33] info     : 'bind' start: /var/vcap/jobs/bind/bin/ctl
+  [UTC Apr  9 02:50:53] info     : 'bind' start: /var/vcap/jobs/bind/bin/ctl
+  [UTC Apr  9 02:51:23] error    : 'bind' failed to start
+  [UTC Apr  9 02:51:33] error    : 'bind' process is not running
+  [UTC Apr  9 02:51:33] info     : 'bind' trying to restart
+  [UTC Apr  9 02:51:33] info     : 'bind' start: /var/vcap/jobs/bind/bin/ctl
 ```
-We suspect the PID file is the problem; we notice that our *ctl.sh* template places the PID file in */var/vcap/sys/run/named/pid*, but that in *jobs/bind/monit* we specify a completely different location, i.e. */var/vcap/sys/run/named/pid*.
+We suspect the PID file is the problem; we notice that our *ctl.sh* template places the PID file in */var/vcap/sys/run/named/pid*, but that in *jobs/bind/monit* we specify a completely different location, i.e. */var/vcap/sys/run/bind/pid*.
 
 We recreate our release, upload our release, and deploy it:
 
 ```
 bosh -n deploy
 ...
-  Started preparing package compilation > Finding packages to compile. Failed: Permission denied @ dir_s_mkdir - /vagrant/tmp (00:00:00)
-
-Error 100: Permission denied @ dir_s_mkdir - /vagrant/tmp
+  Failed: Permission denied @ dir_s_mkdir - /vagrant/tmp (00:00:00)
+  Error 100: Permission denied @ dir_s_mkdir - /vagrant/tmp
 ```
 We need to fix our Vagrant permissions (described in [this thread](https://groups.google.com/a/cloudfoundry.org/forum/#!topic/bosh-users/xfbck9EC4AY)). The thread describes a permanent fix; our fix below is merely temporary (i.e. when the BOSH Lite VM is recreated you will need to run the commands below again):
 
@@ -793,3 +767,91 @@ pushd ~/workspace/bosh-lite/
 vagrant ssh -c "sudo chmod 777 /vagrant"
 popd
 ```
+We attempt our deploy again:
+
+```
+bosh -n deploy
+...
+  Failed: Creating VM with agent ID 'fbb2ba55-d27c-40e5-9bdd-889a4ec6d356': Creating container: network already acquired: 10.244.0.64/30 (00:00:00)
+```
+We have run out of IPs for our compilation VM (we believe it's because we have but one usable IP address, and our *BIND* VM is using it). We delete our deployment and re-deploy:
+
+```
+bosh -n delete deployment bind-9-server
+...
+bosh -n deploy
+...
+  Failed: `bind-9/0' is not running after update (00:10:11)
+  Error 400007: `bind-9/0' is not running after update
+```
+We check if the VM is running and then ssh to it:
+
+```
+bosh vms
+...
+  +-----------+---------+---------------+-------------+
+  | Job/index | State   | Resource Pool | IPs         |
+  +-----------+---------+---------------+-------------+
+  | bind-9/0  | failing | bind-9_pool   | 10.244.0.66 |
+  +-----------+---------+---------------+-------------+
+...
+bosh ssh bind-9
+...
+sudo su -
+...
+/var/vcap/bosh/bin/monit summary
+  /var/vcap/monit/job/0000_bind.monitrc:3: Warning: the executable does not exist '/var/vcap/jobs/named/bin/ctl'
+  /var/vcap/monit/job/0000_bind.monitrc:4: Warning: the executable does not exist '/var/vcap/jobs/named/bin/ctl'
+  The Monit daemon 5.2.4 uptime: 18m
+```
+We had made a mistake in our *jobs/named/spec* file; we had configured the name to be *bind* when we should have configured it to be *named*. We re-create our release and deploy:
+
+```
+ # fix `name`
+vim jobs/named/spec
+bosh create release --force
+bosh upload release
+bosh -n delete deployment bind-9-server
+bosh -n deploy
+  Failed: Can't find template `bind' (00:00:00)
+  Error 190012: Can't find template `bind'
+```
+We had not changed our job name from *bind-9* to *named* in our manifest; we edit our manifest and deploy again:
+
+```
+ # fix `name`
+vim config/bind-9-bosh-lite.yml
+bosh create release --force
+bosh upload release
+bosh -n delete deployment bind-9-server
+bosh -n deploy
+  Failed: `named/0' is not running after update (00:10:10)
+  Error 400007: `named/0' is not running after update
+```
+
+
+
+```
+bosh vms
+    +-----------+---------+---------------+-------------+
+    | Job/index | State   | Resource Pool | IPs         |
+    +-----------+---------+---------------+-------------+
+    | named/0   | failing | bind-9_pool   | 10.244.0.66 |
+    +-----------+---------+---------------+-------------+
+bosh ssh named
+sudo su -
+/var/vcap/bosh/bin/monit summary
+    Process 'named'                     not monitored
+ps auxwww | grep named
+    # MANY processes
+killall named
+/var/vcap/bosh/bin/monit stop named
+tail /var/vcap/monit/monit.log
+    [UTC Apr  9 14:41:46] info     : 'named' start: /var/vcap/jobs/named/bin/ctl
+    [UTC Apr  9 14:42:16] error    : 'named' failed to start
+    [UTC Apr  9 14:42:26] error    : 'named' process is not running
+    [UTC Apr  9 14:42:26] info     : 'named' trying to restart
+```
+We see that it's trying to start but failing.
+
+
