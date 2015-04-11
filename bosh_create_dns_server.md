@@ -828,7 +828,7 @@ bosh -n deploy
   Failed: `named/0' is not running after update (00:10:10)
   Error 400007: `named/0' is not running after update
 ```
-
+We look at the VMs and then check *monit*'s log:
 
 
 ```
@@ -852,6 +852,69 @@ tail /var/vcap/monit/monit.log
     [UTC Apr  9 14:42:26] error    : 'named' process is not running
     [UTC Apr  9 14:42:26] info     : 'named' trying to restart
 ```
-We see that it's trying to start but failing.
+We check our pid file:
 
+```
+ls ls /var/vcap/sys/run/named/
+    named.pid  pid  session.key
+```
+We see notice that there are *two* pid files: the one we specified, *pid*, and one that's most likely created by named (*named.pid*).  We check our running *named* processes and note the PIDs of the first four entries. We compare that to the processes that are running:
+
+```
+ps auxwww | grep named
+    vcap       193  0.0  0.2 239896 13912 ?        S<sl 19:37   0:00 /var/vcap/packages/bind-9-9.10.2/sbin/named -u vcap -c /var/vcap/jobs/named/etc/named.conf
+    vcap       207  0.0  0.2 239116 12936 ?        S<sl 19:37   0:00 /var/vcap/packages/bind-9-9.10.2/sbin/named -u vcap -c /var/vcap/jobs/named/etc/named.conf
+    vcap       221  0.0  0.2 173580 12972 ?        S<sl 19:38   0:00 /var/vcap/packages/bind-9-9.10.2/sbin/named -u vcap -c /var/vcap/jobs/named/etc/named.conf
+    vcap       233  0.0  0.2 239116 12976 ?        S<sl 19:38   0:00 /var/vcap/packages/bind-9-9.10.2/sbin/named -u vcap -c /var/vcap/jobs/named/etc/named.conf
+    ...
+head -4 /var/vcap/sys/run/named/pid
+    120
+    203
+    217
+    229
+```
+The PIDs don't match. Our startup script records the wrong PID, and *monit*, seeing that process is no longer running, attempts to start *named* again.
+
+We dig further and realize that */var/vcap/sys/run/named/named.pid* is the *correct* PID, so we modify our release to use that as the PID file.
+
+An alternative solution would be to specify the correct pid in our deployment manifest, in the properties section that includes the  *named.conf*, but we are hesitant to force our users to include `options { pid-file "/var/vcap/sys/run/named/pid"; };`. We feel that our release should manage that
+
+We make our changes and redeploy. Success. We test our DNS service by querying it using *nslookup*:
+
+```
+nslookup google.com. 10.244.0.66
+    Server:		10.244.0.66
+    Address:	10.244.0.66#53
+
+    ** server can't find google.com: REFUSED
+```
+We ssh into our VM and make sure that *named* is listening on all interfaces:
+
+```
+bosh ssh named
+...
+ss -a | grep domain
+    LISTEN     0      10            10.244.0.66:domain                   *:*
+    LISTEN     0      10              127.0.0.1:domain                   *:*
+    LISTEN     0      10                     :::domain                  :::*
+```
+*named* has correctly bound it its external IP address (10.244.0.66), so let's try an nslookup from the VM itself:
+
+```
+nslookup google.com. 10.244.0.66
+    Server:		10.244.0.66
+    Address:	10.244.0.66#53
+
+    Non-authoritative answer:
+    Name:	google.com
+    Address: 74.125.239.136
+...
+```
+
+We check our log file:
+
+```
+less /var/log/daemon.log
+    Apr 11 20:38:35 ace946c0-170d-4a59-a9d7-0a08050c24f9 named[469]: client 192.168.50.1#57821 (google.com): query (cache) 'google.com/A/IN' denied
+```
 
