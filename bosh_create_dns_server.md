@@ -227,7 +227,7 @@ A *BOSH release* is a package, analogous to Microsoft Windows's *.msi*, Apple OS
 Note: if you're only interested in using BOSH to deploy a BIND 9 server (i.e. you are *not* interested in learning how to create a BOSH release), you do *not* need to follow these steps. Instead, you can skip to [Using BOSH to Deploy BIND 9 Release](#deploy)
 -->
 
-We will create a BOSH release of [ISC](https://www.isc.org/)'s *[BIND 9](https://www.isc.org/downloads/BIND/)* <sup>[[1]](#bind_9)</sup> .
+We will create a BOSH release of [ISC](https://www.isc.org/)'s [BIND 9](https://www.isc.org/downloads/BIND/) <sup>[[1]](#bind_9)</sup> .
 
 #### *BIND* versus *named*
 
@@ -911,10 +911,12 @@ nslookup google.com. 10.244.0.66
 ...
 ```
 
-We check our log file:
+The lookup from the VM succeeded, but from without did not. We check *named*'s log file:
 
 ```
 less /var/log/daemon.log
     Apr 11 20:38:35 ace946c0-170d-4a59-a9d7-0a08050c24f9 named[469]: client 192.168.50.1#57821 (google.com): query (cache) 'google.com/A/IN' denied
 ```
+We see that *named* receive the request and explicitly denied it. This is the behavior we want (i.e. we don't want to create caching nameserver; we want our nameserver to only answer queries for which it is authoritative).
 
+At this point we conclude our debugging, for our release is working as expected.
