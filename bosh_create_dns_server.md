@@ -591,7 +591,7 @@ E, [2015-04-04 19:00:57 #2184] [task:33] ERROR -- DirectorJobRunner: Timed out s
 I, [2015-04-04 19:00:57 #2184] []  INFO -- DirectorJobRunner: Task took 2 minutes 15.042849130000008 seconds to process.
 999
 ```
-Find out the VM that's running *named*:
+We determine the VM that's running *named*:
 
 ```
 bosh vms
@@ -671,7 +671,7 @@ We fix our release to install libjson.0, upload the release, and redeploy. Our `
 /var/vcap/bosh/bin/monit summary
   Process 'bind'                      not monitored
 ```
-Now we check the logs. We were lazy&mdash;we let *named* default to logging to *syslog* using the *daemon* facility, so we check the local log to see why it failed:
+Now we check the logs. We were lazy&mdash;we let *named* default to logging to *syslog* using the *daemon* facility, so we check the daemon log to see why it failed:
 
 ```
 bosh ssh bind-9 0
@@ -877,7 +877,7 @@ The PIDs don't match. Our startup script records the wrong PID, and *monit*, see
 
 We dig further and realize that */var/vcap/sys/run/named/named.pid* is the *correct* PID, so we modify our release to use that as the PID file.
 
-An alternative solution would be to specify the correct pid in our deployment manifest, in the properties section that includes the  *named.conf*, but we are hesitant to force our users to include `options { pid-file "/var/vcap/sys/run/named/pid"; };`. We feel that our release should manage that
+An alternative solution would be to specify the correct pid in our deployment manifest, in the properties section that includes the  *named.conf*, but we are hesitant to force our users to include `options { pid-file "/var/vcap/sys/run/named/pid"; };`. We feel that our release should manage the pid file, not the user.
 
 We make our changes and redeploy. Success. We test our DNS service by querying it using *nslookup*:
 
@@ -917,6 +917,124 @@ The lookup from the VM succeeded, but from without did not. We check *named*'s l
 less /var/log/daemon.log
     Apr 11 20:38:35 ace946c0-170d-4a59-a9d7-0a08050c24f9 named[469]: client 192.168.50.1#57821 (google.com): query (cache) 'google.com/A/IN' denied
 ```
-We see that *named* receive the request and explicitly denied it. This is the behavior we want (i.e. we don't want to create caching nameserver; we want our nameserver to only answer queries for which it is authoritative).
+We see that *named* receive the request and explicitly denied it. It seems we have mis-configured the *named* configuration that is specified in *config/bind-9-bosh-lite.yml*.
+
+We decide to edit the configuration in place on the VM; when we're sure our changes work, we'll backport them to the deployment manifest. We edit the configuration to include a directive to allow all queries, including ones that do not originate from the loopback address (i.e. we add `allow-recursion { any; };`):
+
+```
+bosh ssh named
+sudo su -
+ # edit the named.conf to allow recursion
+vim /var/vcap/jobs/named/etc/named.conf
+    options {
+      allow-recursion { any; };
+      ...
+/var/vcap/bosh/bin/monit restart named
+/var/vcap/bosh/bin/monit summary
+    ...
+    Process 'named'                     Execution failed
+```
+We check to to make sure *named* is running, and that its PID matches the contents of the *named.pid* file:
+
+```
+ps auxwww | grep named
+    vcap       386  0.0  0.2 370968 13936 ?        S<sl 15:27   0:00 /var/vcap/packages/bind-9-9.10.2/sbin/named -u vcap -c /var/vcap/jobs/named/etc/named.conf
+    root       455  0.0  0.0  11356  1424 ?        S<   18:33   0:00 /bin/bash /var/vcap/jobs/named/bin/ctl stop
+cat /var/vcap/sys/run/named/named.pid
+    386
+```
+We determine 2 things:
+
+1. *named* is running, and its PID matches the entry in the PID file
+2. *monit*'s attempt to restart *named* has apparently hung on the portion that stops the *named* server.
+
+We kill *monit*'s process to stop *named*, and run it manually with tracing on so we can determine the cause of the hang:
+
+```
+kill 455
+ # make sure it's really dead:
+ps auxwww | grep 455
+bash -x /var/vcap/jobs/named/bin/ctl stop
+    + RUN_DIR=/var/vcap/sys/run/named
+    + PIDFILE=/var/vcap/sys/run/named/named.pid
+    + case $1 in
+    ++ cat /var/vcap/sys/run/named/named.pid
+    + PID=386
+    + '[' -n 386 ']'
+    + SIGNAL=0
+    + N=1
+    + kill -0 386
+    + '[' 1 -eq 1 ']'
+    + echo 'waiting for pid 386 to die'
+    waiting for pid 386 to die
+    + '[' 1 -eq 11 ']'
+    + '[' 1 -gt 20 ']'
+    + n=2
+    + sleep 1
+    + kill -0 386
+    + '[' 1 -eq 1 ']'
+    + echo 'waiting for pid 386 to die'
+    waiting for pid 386 to die
+    + '[' 1 -eq 11 ']'
+    + '[' 1 -gt 20 ']'
+    + n=2
+```
+We realize we have made a mistake in our *ctl.sh* template; we used uppercase 'N' for a variable except when we incremented, where we mistakenly used a lowercase 'n'.
+
+We also realize that our kill script attempts to [initially] kill with a signal '0', which we don't understand because `kill -0`, according to the [man page](http://linux.die.net/man/1/kill), doesn't do anything ("If sig is 0, then no signal is sent"). We decide that a mistake of this magnitude deserves a re-write of the *ctl.sh* template and a redeploy:
+
+```
+vim jobs/named/templates/ctl.sh
+ # make changes and then
+ # check for syntactic correctness
+bash -n jobs/named/templates/ctl.sh
+bosh create release --force
+ # we're already up to release 13
+bosh upload release dev_releases/bind-9/bind-9-0+dev.13.yml
+bosh -n deploy --recreate
+nslookup google.com. 10.244.0.66
+    ** server can't find google.com: REFUSED
+bosh ssh named
+sudo su -
+```
+We pick up our debugging where we left off&mdash;edit *named*'s configuration in place on the VM; when we're sure our changes work, we'll backport them to the deployment manifest. We edit the configuration to include a directive to allow all queries, including ones that do not originate from the loopback address (i.e. we add `allow-recursion { any; };`):
+
+```
+ # edit the named.conf to allow recursion
+vim /var/vcap/jobs/named/etc/named.conf
+    options {
+      allow-recursion { any; };
+      ...
+/var/vcap/bosh/bin/monit restart named
+/var/vcap/bosh/bin/monit summary
+    ...
+    Process 'named'                     running
+```
+It appears that our change to *monit*'s *ctl.sh* template was successful. Now let's test from our workstation to see if our re-configuration of *named* allows recursion:
+
+```
+nslookup google.com. 10.244.0.66
+    Server:		10.244.0.66
+    Address:	10.244.0.66#53
+
+    Non-authoritative answer:
+    Name:	google.com
+    Address: 216.58.192.46
+```
+We backport our change to our deployment's manifest:
+
+```
+vim config/bind-9-bosh-lite.yml
+      properties:
+        config_file: |
+          options {
+            allow-recursion { any; };
+```
+We deploy again:
+
+```
+bosh -n deploy --recreate
+nslookup google.com 10.244.0.66
+```
 
 At this point we conclude our debugging, for our release is working as expected.
