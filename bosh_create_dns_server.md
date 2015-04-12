@@ -215,18 +215,19 @@ We chose the last four bytes by using the hex representation of the ASCII code f
 ## How to Create a BOSH Release of a DNS Server
 [BOSH](http://bosh.io/) is a tool that (among other things) deploys VMs. In this blog post we cover the procedure to create a BOSH release for a DNS server, customizing our release with a manifest, and then deploying the customized release to a VirtualBox VM.
 
-*Note: if you're interested in using BOSH to deploy a BIND 9 server (i.e. you are *not* interested in learning how to create a BOSH release), you should *not* follow these steps. Instead, you *
+*Note: if you're interested in using BOSH to deploy a BIND 9 server (i.e. you are *not* interested in learning how to create a BOSH release), you should *not* follow these steps. Instead, you should follow the instructions on our BOSH DNS Server Release repository's [page](https://github.com/cunnie/bosh-bind-9-release)*.
 
+We acknowledge that creating a *BOSH* release is a non-trivial task and there are tools available to make it simpler, tools such as [bosh-gen](https://github.com/cloudfoundry-community/bosh-gen). Although we haven't used *bosh-gen*, we have nothing but the highest respect for its author, and we encourage you to explore it.
 
 ### 0. Install BOSH Lite
-BOSH runs in a special VM. We will install a BOSH VM in VirtualBox using [BOSH Lite](https://github.com/cloudfoundry/bosh-lite), an easy-to-use tool to install BOSH under VirtualBox.
+*BOSH* runs in a special VM. We will install a *BOSH* VM in VirtualBox using [BOSH Lite](https://github.com/cloudfoundry/bosh-lite), an easy-to-use tool to install *BOSH* under VirtualBox.
 
-We follow the [BOSH Lite installation instructions](https://github.com/cloudfoundry/bosh-lite/blob/master/README.md). We follow the instructions up to and including executing the `bosh login` command.
+We follow the [BOSH Lite installation instructions](https://github.com/cloudfoundry/bosh-lite/blob/master/README.md). We follow the instructions up to and including execution of the `bosh login` command.
 
-### 1. Create a BOSH Release for a DNS Server
+The instructions in the remainder of this blog post will not work if not logged into *BOSH*.
+
+### 1. Initialize a skeletal BOSH Release
 A *BOSH release* is a package, analogous to Microsoft Windows's *.msi*, Apple OS X's *.app*, RedHat's *.rpm*.
-
-
 
 We will create a BOSH release of [ISC](https://www.isc.org/)'s [BIND 9](https://www.isc.org/downloads/BIND/) <sup>[[1]](#bind_9)</sup> .
 
@@ -234,10 +235,10 @@ We will create a BOSH release of [ISC](https://www.isc.org/)'s [BIND 9](https://
 
 *BIND* is a [collection of software](https://www.isc.org/downloads/bind/) that includes, among other things, the *named* DNS daemon.
 
-You may find it convenient to think of *BIND* and *named* as synonyms insofar as this blog post is concerned. <sup>[[2]](#bind_named)</sup>
+You may find it convenient to think of *BIND* and *named* as synonyms <sup>[[2]](#bind_named)</sup>.
 
 #### Initialize Release
-We follow these [instructions](http://bosh.io/docs/create-release.html#prep). We name our release *bind-9* because *BIND 9* <sup>[[2]](#nine)</sup> is a the DNS server daemon for which we are creating a release.
+We follow these [instructions](http://bosh.io/docs/create-release.html#prep). We name our release *bind-9* because *BIND 9* <sup>[[3]](#nine)</sup> is a the DNS server daemon for which we are creating a release.
 
 ```
 cd ~/workspace
@@ -463,7 +464,7 @@ We create an *examples* subdirectory:
 mkdir examples
 ```
 
-We create *examples/bind-9-bosh-lite.yml*. Much of this is boilerplate for a *BOSH Lite* deployment. Note that we hard-code our VMs IP address to 10.244.0.66:
+We create *examples/bind-9-bosh-lite.yml*. Much of this is boilerplate for a *BOSH Lite* deployment. Note that we hard-code our VM's IP address to 10.244.0.66:
 
 ```
 ---
@@ -558,12 +559,27 @@ nslookup pivotal.io 10.244.0.66
     Name:	pivotal.io
     Address: 54.210.84.224
 ```
+We have successfully created a *BOSH* release including one job. We have also successfully created a deployment manifest customizing the release, and deployed the release using our manifest. Finally we tested that our deployment succeeded.
 
-### Conclusion
+### Addendum: BOSH directory structure is orthogonal to *BIND*'s
 
-#### 1. BOSH directory structure is orthogonal to *BIND*'s
+The *BOSH* directory structure differs from *BIND*'s, and systems administrators may find it unfamiliar at first.
 
-The *BOSH* directory structure differs from *BIND*'s, and although it can be made to work, there was the sensation of hammering a round peg into a square hole. This was not a technical shortcoming of either product; it was more a conflict of design requirements.
+Here are some examples:
+
+<table>
+<tr>
+<th>File type</th><th>BOSH location</th><th>Ubuntu 13.04 location</th>
+</tr><tr>
+<th>executable</th><td>/var/vcap/packages/bind-9-9.10.2/sbin/named</td><td>/usr/sbin/named</td>
+</tr><tr>
+<th>configuration</th><td>/var/vcap/jobs/bind/etc/named.conf</td><td>/etc/bind/named.conf</td>
+</tr><tr>
+<th>pid</th><td>/var/vcap/data/sys/run/named/named.pid</td><td>/var/run/named/named.pid</td>
+</tr><tr>
+<th>logs</th><td>/var/log/daemon.log</td><td>(same)</td>
+<tr>
+</table>
 
 For example, *BOSH* prefers to keep the immutable items in the packages directory (e.g. the BIND executable is located in `/var/vcap/packages/bind-9-9.10.2/sbin/named`) and the mutable items in the jobs directory (e.g. the BIND configuration file is kept in `/var/vcap/jobs/bind/etc/named.conf`). This is an elegant solution that allows multiple instances (jobs) of the same package each with different configurations.
 
@@ -583,15 +599,15 @@ For example, the software is named *BIND*, so when creating our *BOSH* release, 
 
 The daemon that runs is named *named*. We use the term *named* where we deem appropriate (e.g. *named* is the name of the *BOSH* job). Also, many of the job-related directories and files are named *named* (a systems administrator would expect to find the configuration file to be *named.conf*, not *bind.conf*, for that's what it's named in RedHat, FreeBSD, Ubuntu, *et al.*)
 
-<a name="nine"><sup>2</sup></a> The number *"9"* in *BIND 9* appears to be a version number, but it isn't: BIND 9 is a distinct codebase from BIND 4, BIND 8, and BIND 10. It's different software.
+<a name="nine"><sup>3</sup></a> The number *"9"* in *BIND 9* appears to be a version number, but it isn't: BIND 9 is a distinct codebase from BIND 4, BIND 8, and BIND 10. It's different software.
 
 This is an important distinction because version numbers, by convention, are not used in BOSH release names. For example, the version number of *BIND 9* that we are downloading is 9.10.2, but we don't name our release *bind-9-9.10.2-release*; instead we name it *bind-9-release*.
 
 Even polished distributions struggle with the *BIND* vs. *named* dichotomy, and the result is evident in the placement of configuration files. For example, the default location for *named.conf* in Ubuntu is */etc/bind/named.conf* but in FreeBSD is */etc/namedb/named.conf* (it's even more complicated in that FreeBSD's directory */etc/namedb* is actually a symbolic link to */var/named/etc/namedb*, for FreeBSD prefers to run *named* in a [chroot](http://en.wikipedia.org/wiki/Chroot) environment whose root is */var/named*. This symbolic link has the advantage that *named*'s configuration file has the same location both from within the chroot and without).
 
-<a name="bind_system_call"><sup>3</sup></a> We refer to the UNIX system call [bind](http://linux.die.net/man/2/bind) (e.g. "binding to port 53") and not the DNS nameserver *BIND*.
+<a name="bind_system_call"><sup>4</sup></a> We refer to the UNIX system call [bind](http://linux.die.net/man/2/bind) (e.g. "binding to port 53") and not the DNS nameserver *BIND*.
 
-<a name="multi_homed"><sup>4</sup></a> One could argue that a multi-homed host  could bind <sup>[[3]](#bind_system_call)</sup> different instances of *BIND* to distinct IP addresses. It's technically feasible though not common practice. And multi-homing is infrequently used in *BOSH*.
+<a name="multi_homed"><sup>5</sup></a> One could argue that a multi-homed host  could bind <sup>[[3]](#bind_system_call)</sup> different instances of *BIND* to distinct IP addresses. It's technically feasible though not common practice. And multi-homing is infrequently used in *BOSH*.
 
 In an interesting side note, the aforementioned nameserver *djbdns* makes use of multi-homed hosts, for it runs several instances of its nameservers to accommodate different purposes, e.g. one server (*dnscache*) to handle general DNS queries, another server (*tinydns*) to handle authoritative queries, another server (*axfrdns*) to handle zone transfers.
 
