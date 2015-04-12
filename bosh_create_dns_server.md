@@ -212,8 +212,11 @@ We chose the last four bytes by using the hex representation of the ASCII code f
 <a name="vmps"><sup>4</sup></a> When VMPS has been deployed, all MAC addresses must be registered with the local IT organization to avoid knocking the host workstation off the network. For example, Pivotal in San Francisco uses VMPS, and when the ethernet switch detects unknown MAC address on one of its ports, it will configure that port's VLAN to be that of the guest network's; however, this will also affect the workstation that is hosting the BOSH VM. In practical terms, the workstation's ethernet connection will ping-pong (switching approximately every 30 seconds from one VLAN to the other), effectively rendering the BOSH VM and the host workstation unusable.
 
 
-## How to Deploy a DNS Server with BOSH
-[BOSH](http://bosh.io/) is a tool that (among other things) deploys VMs. In this blog post we cover the procedure to create a BOSH release for a DNS server, customizing our release with a manifest, and then deploying the customized release to Amazon AWS.
+## How to Create a BOSH Release of a DNS Server
+[BOSH](http://bosh.io/) is a tool that (among other things) deploys VMs. In this blog post we cover the procedure to create a BOSH release for a DNS server, customizing our release with a manifest, and then deploying the customized release to a VirtualBox VM.
+
+*Note: if you're interested in using BOSH to deploy a BIND 9 server (i.e. you are *not* interested in learning how to create a BOSH release), you should *not* follow these steps. Instead, you *
+
 
 ### 0. Install BOSH Lite
 BOSH runs in a special VM. We will install a BOSH VM in VirtualBox using [BOSH Lite](https://github.com/cloudfoundry/bosh-lite), an easy-to-use tool to install BOSH under VirtualBox.
@@ -223,9 +226,7 @@ We follow the [BOSH Lite installation instructions](https://github.com/cloudfoun
 ### 1. Create a BOSH Release for a DNS Server
 A *BOSH release* is a package, analogous to Microsoft Windows's *.msi*, Apple OS X's *.app*, RedHat's *.rpm*.
 
-<!--
-Note: if you're only interested in using BOSH to deploy a BIND 9 server (i.e. you are *not* interested in learning how to create a BOSH release), you do *not* need to follow these steps. Instead, you can skip to [Using BOSH to Deploy BIND 9 Release](#deploy)
--->
+
 
 We will create a BOSH release of [ISC](https://www.isc.org/)'s [BIND 9](https://www.isc.org/downloads/BIND/) <sup>[[1]](#bind_9)</sup> .
 
@@ -254,7 +255,7 @@ Since we are using git, we populate the following 3 files:
 Our release is available on [GitHub](https://github.com/cunnie/bosh-bind-9-release).
 
 #### Create Job Skeletons
-Our release consists of one job, *bind*:
+Our release consists of one job, *named*:
 
 ```
 bosh generate job named
@@ -266,15 +267,14 @@ vim jobs/named/templates/ctl.sh
 ```
 It should look like this (patterned after the Ubuntu 13.04 *bind9* control script):
 
-fixme: does the control need to be executable?
-
 ```
 #!/bin/bash
 
 # named logs to syslog, daemon facility
 # BOSH captures these in /var/log/daemon.log
 RUN_DIR=/var/vcap/sys/run/named
-PIDFILE=${RUN_DIR}/pid
+# PIDFILE is created by named, not by this script
+PIDFILE=${RUN_DIR}/named.pid
 
 case $1 in
 
@@ -293,8 +293,6 @@ case $1 in
     mkdir -p $RUN_DIR
     chown -R vcap:vcap $RUN_DIR
 
-    echo $$ >> $PIDFILE
-
     exec /var/vcap/packages/bind-9-9.10.2/sbin/named -u vcap -c /var/vcap/jobs/named/etc/named.conf
 
     ;;
@@ -303,21 +301,21 @@ case $1 in
 
     PID=$(cat $PIDFILE)
     if [ -n $PID ]; then
-      SIGNAL=0
+      SIGNAL=TERM
       N=1
       while kill -$SIGNAL $PID 2>/dev/null; do
         if [ $N -eq 1 ]; then
           echo "waiting for pid $PID to die"
         fi
         if [ $N -eq 11 ]; then
-          echo "giving up on pid $PID with kill -0; trying -9"
-          SIGNAL=9
+          echo "giving up on pid $PID with kill -TERM; trying -KILL"
+          SIGNAL=KILL
         fi
         if [ $N -gt 20 ]; then
           echo "giving up on pid $PID"
           break
         fi
-        n=$(($N+1))
+        N=$(($N+1))
         sleep 1
       done
     fi
@@ -331,7 +329,7 @@ case $1 in
 
 esac
 ```
-Edit the monit script
+Edit the monit configuration
 
 ```
 vim jobs/named/monit
@@ -340,7 +338,7 @@ It should look like this:
 
 ```
 check process named
-  with pidfile /var/vcap/sys/run/named/pid
+  with pidfile /var/vcap/sys/run/named/named.pid
   start program "/var/vcap/jobs/named/bin/ctl start"
   stop program "/var/vcap/jobs/named/bin/ctl stop"
   group vcap
@@ -355,7 +353,7 @@ bosh generate package bind-9-9.10.2
 Create the spec file. We need to create an empty placeholder file to avoid this error:
 
 ```
-/Users/cunnie/.gem/ruby/2.1.4/gems/bosh_cli-1.2865.0/lib/cli/resources/package.rb:122:in `resolve_globs': undefined method `each' for nil:NilClass (NoMethodError)
+`resolve_globs': undefined method `each' for nil:NilClass (NoMethodError)
 ```
 
 BOSH expects us to place source files within the BOSH package; however, we are deviating from that model: we don't place the  source files withom our release; instead we configure our package to download the source from the ISC. But we need at least one source file to placate BOSH, hence the *placeholder* file.
@@ -415,14 +413,13 @@ make install
 We skip this section because we're not using the blobstore&mdash;we're downloading the source and building from it.
 
 #### Create Job Properties
-
-edit jobs/named/templates/named.conf.erb
+We edit *jobs/named/templates/named.conf.erb*. This will be used to create *named*'s configuration file, *named.conf*. Note that we don't populate this template; instead, we tell BOSH to populate this template from the *config_file* section of the *properties* section of the deployment manifest:
 
 ```
 <%= p('config_file') %>
 ```
 
-edit jobs/named/spec:
+We edit the *spec* file *jobs/named/spec*. We point out that the *properties &rarr; config_file* from the deployment manifest is used to create the contents of *named.conf*:
 
 
 ```
@@ -444,21 +441,127 @@ properties:
 
 ```
 bosh create release --force
-[WARNING] Missing blobstore configuration, please update config/final.yml before making a final release
-Syncing blobs...
-Please enter development release name: bind-9
-...
-Release name: bind-9
-Release version: 0+dev.1
-Release manifest: /Users/cunnie/workspace/bind-9/dev_releases/bind-9/bind-9-0+dev.1.yml
+    [WARNING] Missing blobstore configuration, please update config/final.yml before making a final release
+    Syncing blobs...
+    Please enter development release name: bind-9
+    ...
+    Release name: bind-9
+    Release version: 0+dev.1
+    Release manifest: /Users/cunnie/workspace/bind-9/dev_releases/bind-9/bind-9-0+dev.1.yml
 ```
 
-#### Addendum: Create a Sample Manifest
-We have created sample manifests in the *examples/* directory. When  creating releases, please create at least one sample manifest.
+#### Upload the Dev Release
+
+```
+bosh upload release dev_releases/bind-9/bind-9-0+dev.1.yml
+```
+
+#### Create the sample Deployment Manifest
+We create an *examples* subdirectory:
+
+```
+mkdir examples
+```
+
+We create *examples/bind-9-bosh-lite.yml*. Much of this is boilerplate for a *BOSH Lite* deployment. Note that we hard-code our VMs IP address to 10.244.0.66:
+
+```
+---
+name: bind-9-server
+director_uuid: PLACEHOLDER-DIRECTOR-UUID
+compilation:
+  cloud_properties:
+    ram: 2048
+    disk: 4096
+    cpu: 2
+  network: default
+  reuse_compilation_vms: true
+  workers: 1
+jobs:
+- instances: 1
+  name: named
+  networks:
+  - default:
+    - dns
+    - gateway
+    name: default
+    static_ips:
+    - 10.244.0.66
+  persistent_disk: 16
+  resource_pool: bind-9_pool
+  templates:
+  - { release: bind-9, name: named }
+  properties:
+    config_file: |
+      options {
+        recursion yes;
+        allow-recursion { any; };
+        forwarders { 8.8.8.8; 8.8.4.4; };
+      };
+networks:
+- name: default
+  subnets:
+  - cloud_properties:
+      name: VirtualBox Network
+    range: 10.244.0.64/30
+    dns:
+      - 8.8.8.8
+    gateway: 10.244.0.65
+    static:
+    - 10.244.0.66
+releases:
+  - name: bind-9
+    version: latest
+resource_pools:
+- cloud_properties:
+    ram: 2048
+    disk: 8192
+    cpu: 1
+  name: bind-9_pool
+  network: default
+  stemcell:
+    name: bosh-warden-boshlite-centos-go_agent
+    version: latest
+update:
+  canaries: 1
+  canary_watch_time: 30000 - 600000
+  max_in_flight: 8
+  serial: false
+  update_watch_time: 30000 - 600000
+```
+
+#### Create the Deployment Manifest
+We create the deployment manifest by copying the sample manifest in the *examples* directory and substituting our BOSH's UUID:
+
+```
+cp examples/bind-9-bosh-lite.yml config/
+perl -pi -e "s/PLACEHOLDER-DIRECTOR-UUID/$(bosh status --uuid)/" config/bind-9-bosh-lite.yml
+```
+
+#### Deploy the Release
+```
+bosh deployment config/bind-9-bosh-lite.yml
+bosh -n deploy
+```
+
+#### Test the Deployment
+We use the *nslookup* command to ensure our newly-deployed DNS server can resolve pivotal.io:
+
+```
+nslookup pivotal.io 10.244.0.66
+    Server:		10.244.0.66
+    Address:	10.244.0.66#53
+
+    Non-authoritative answer:
+    Name:	pivotal.io
+    Address: 54.88.108.63
+    Name:	pivotal.io
+    Address: 54.210.84.224
+```
 
 ### Conclusion
 
-#### 1. BOSH Directory Structure Differs from *BIND*'s
+#### 1. BOSH directory structure is orthogonal to *BIND*'s
 
 The *BOSH* directory structure differs from *BIND*'s, and although it can be made to work, there was the sensation of hammering a round peg into a square hole. This was not a technical shortcoming of either product; it was more a conflict of design requirements.
 
@@ -483,6 +586,8 @@ The daemon that runs is named *named*. We use the term *named* where we deem app
 <a name="nine"><sup>2</sup></a> The number *"9"* in *BIND 9* appears to be a version number, but it isn't: BIND 9 is a distinct codebase from BIND 4, BIND 8, and BIND 10. It's different software.
 
 This is an important distinction because version numbers, by convention, are not used in BOSH release names. For example, the version number of *BIND 9* that we are downloading is 9.10.2, but we don't name our release *bind-9-9.10.2-release*; instead we name it *bind-9-release*.
+
+Even polished distributions struggle with the *BIND* vs. *named* dichotomy, and the result is evident in the placement of configuration files. For example, the default location for *named.conf* in Ubuntu is */etc/bind/named.conf* but in FreeBSD is */etc/namedb/named.conf* (it's even more complicated in that FreeBSD's directory */etc/namedb* is actually a symbolic link to */var/named/etc/namedb*, for FreeBSD prefers to run *named* in a [chroot](http://en.wikipedia.org/wiki/Chroot) environment whose root is */var/named*. This symbolic link has the advantage that *named*'s configuration file has the same location both from within the chroot and without).
 
 <a name="bind_system_call"><sup>3</sup></a> We refer to the UNIX system call [bind](http://linux.die.net/man/2/bind) (e.g. "binding to port 53") and not the DNS nameserver *BIND*.
 
@@ -525,33 +630,11 @@ Upload the release:
 bosh upload release dev_releases/bind-9/bind-9-0+dev.1.yml
 ```
 
-Find the UUID of our director:
-
-```
-bosh status
-    Config
-                 /Users/cunnie/.bosh_config
-
-    Director
-      Name       Bosh Lite Director
-      URL        https://bosh.nono.com:25555
-      Version    1.2811.0 (00000000)
-      User       director
-      UUID       c6f166bd-ddac-4f7d-9c57-d11c6ad5133b
-      CPI        vsphere
-      dns        disabled
-      compiled_package_cache enabled (provider: local)
-      snapshots  enabled
-
-    Deployment
-      not set
-```
-
 We take the UUID, *c6f166bd-ddac-4f7d-9c57-d11c6ad5133b*, and change our manifest to include that UUID:
 
 ```
 cp examples/bind-9-bosh-lite.yml config/
-perl -pi -e 's/PLACEHOLDER-DIRECTOR-UUID/c6f166bd-ddac-4f7d-9c57-d11c6ad5133b/' config/bind-9-bosh-lite.yml
+perl -pi -e "s/PLACEHOLDER-DIRECTOR-UUID/$(bosh status --uuid)/" config/bind-9-bosh-lite.yml
 ```
 Let's set our deployment:
 
