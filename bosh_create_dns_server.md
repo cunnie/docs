@@ -545,6 +545,13 @@ bosh deployment config/bind-9-bosh-lite.yml
 bosh -n deploy
 ```
 
+#### Configure any Necessary Routes
+If we are using BOSH Lite, we need to add routes to the VMs hosted in the Warden containers. The following OS X `route` command assumes the default IP scheme of the sample BIND 9 deployment manifest:
+
+```
+sudo route add -net 10.244.0.0/24 192.168.50.4
+```
+
 #### Test the Deployment
 We use the *nslookup* command to ensure our newly-deployed DNS server can resolve pivotal.io:
 
