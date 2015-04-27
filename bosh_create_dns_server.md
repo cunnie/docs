@@ -215,6 +215,8 @@ We chose the last four bytes by using the hex representation of the ASCII code f
 ## How to Create a BOSH Release of a DNS Server
 [BOSH](http://bosh.io/) is a tool that (among other things) deploys VMs. In this blog post we cover the procedure to create a BOSH release for a DNS server, customizing our release with a manifest, and then deploying the customized release to a VirtualBox VM.
 
+*BOSH* is frequently used to deploy applications, but rarely to deploy infrastructure services (e.g. NTP, DHCP, LDAP). When our local IT staff queried us about using *BOSH* to deploy services, we felt it would be both instructive and helpful to map out the proceduring using DNS as an example.
+
 *Note: if you're interested in using BOSH to deploy a BIND 9 server (i.e. you are *not* interested in learning how to create a BOSH release), you should *not* follow these steps. Instead, you should follow the instructions on our BOSH DNS Server Release repository's [page](https://github.com/cunnie/bosh-bind-9-release)*.
 
 We acknowledge that creating a *BOSH* release is a non-trivial task and there are tools available to make it simpler, tools such as [bosh-gen](https://github.com/cloudfoundry-community/bosh-gen). Although we haven't used *bosh-gen*, we have nothing but the highest respect for its author, and we encourage you to explore it.
@@ -568,9 +570,9 @@ nslookup pivotal.io 10.244.0.66
 ```
 We have successfully created a *BOSH* release including one job. We have also successfully created a deployment manifest customizing the release, and deployed the release using our manifest. Finally we tested that our deployment succeeded.
 
-### Addendum: BOSH directory structure is orthogonal to *BIND*'s
+### Addendum: BOSH directory differs from *BIND*'s
 
-The *BOSH* directory structure differs from *BIND*'s, and systems administrators may find it unfamiliar at first.
+The *BOSH* directory structure differs from *BIND*'s, and systems administrators may find the *BOSH* structure unfamiliar.
 
 Here are some examples:
 
@@ -588,9 +590,10 @@ Here are some examples:
 <tr>
 </table>
 
-For example, *BOSH* prefers to keep the immutable items in the packages directory (e.g. the BIND executable is located in `/var/vcap/packages/bind-9-9.10.2/sbin/named`) and the mutable items in the jobs directory (e.g. the BIND configuration file is kept in `/var/vcap/jobs/bind/etc/named.conf`). This is an elegant solution that allows multiple instances (jobs) of the same package each with different configurations.
+That is not to say the *BOSH* layout does not have its advantages. For example,
+The *BOSH* layout allows multiple instances (jobs) of the same package, each with its own configuration.
 
-*BIND* was designed to allow UNIX distributions to customize the layout of its configuration files and directories in order to accommodate different distributions (e.g. FreeBSD ports may choose to place *BIND*'s executable under `/usr/local/sbin/named` whereas Ubuntu might decide to place it in `/sbin/named`); however, running multiple versions of *BIND* was not a primary consideration&mdash;only one program could bind <sup>[[3]](#bind_system_call)</sup> to DNS's assigned port 53 <sup>[[4]](#multi_homed)</sup> , making it difficult to run more than one *BIND* job on a given VM.
+That advantage, however, is lost on *BIND*: running multiple versions of *BIND* was not a primary consideration&mdash;only one program could bind <sup>[[4]](#bind_system_call)</sup> to DNS's assigned port 53 <sup>[[5]](#multi_homed)</sup> , making it difficult to run more than one *BIND* job on a given VM.
 
 ---
 
@@ -606,11 +609,11 @@ For example, the software is named *BIND*, so when creating our *BOSH* release, 
 
 The daemon that runs is named *named*. We use the term *named* where we deem appropriate (e.g. *named* is the name of the *BOSH* job). Also, many of the job-related directories and files are named *named* (a systems administrator would expect to find the configuration file to be *named.conf*, not *bind.conf*, for that's what it's named in RedHat, FreeBSD, Ubuntu, *et al.*)
 
+Even polished distributions struggle with the *BIND* vs. *named* dichotomy, and the result is evident in the placement of configuration files. For example, the default location for *named.conf* in Ubuntu is */etc/bind/named.conf* but in FreeBSD is */etc/namedb/named.conf* (it's even more complicated in that FreeBSD's directory */etc/namedb* is actually a symbolic link to */var/named/etc/namedb*, for FreeBSD prefers to run *named* in a [chroot](http://en.wikipedia.org/wiki/Chroot) environment whose root is */var/named*. This symbolic link has the advantage that *named*'s configuration file has the same location both from within the chroot and without).
+
 <a name="nine"><sup>3</sup></a> The number *"9"* in *BIND 9* appears to be a version number, but it isn't: BIND 9 is a distinct codebase from BIND 4, BIND 8, and BIND 10. It's different software.
 
 This is an important distinction because version numbers, by convention, are not used in BOSH release names. For example, the version number of *BIND 9* that we are downloading is 9.10.2, but we don't name our release *bind-9-9.10.2-release*; instead we name it *bind-9-release*.
-
-Even polished distributions struggle with the *BIND* vs. *named* dichotomy, and the result is evident in the placement of configuration files. For example, the default location for *named.conf* in Ubuntu is */etc/bind/named.conf* but in FreeBSD is */etc/namedb/named.conf* (it's even more complicated in that FreeBSD's directory */etc/namedb* is actually a symbolic link to */var/named/etc/namedb*, for FreeBSD prefers to run *named* in a [chroot](http://en.wikipedia.org/wiki/Chroot) environment whose root is */var/named*. This symbolic link has the advantage that *named*'s configuration file has the same location both from within the chroot and without).
 
 <a name="bind_system_call"><sup>4</sup></a> We refer to the UNIX system call [bind](http://linux.die.net/man/2/bind) (e.g. "binding to port 53") and not the DNS nameserver *BIND*.
 
