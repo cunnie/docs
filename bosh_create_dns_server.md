@@ -623,32 +623,35 @@ In an interesting side note, the aforementioned nameserver *djbdns* makes use of
 
 One might be tempted to think that *djbdns* would be a better fit to *BOSH*'s structure than *BIND*, but one would be mistaken: *djbdns* makes very specific decisions about the placement of its files and the manner in which the nameserver is started and stopped, decisions which don't quite dovetail with *BOSH*'s decisions (e.g. *BOSH* uses *[monit](https://en.wikipedia.org/wiki/Monit)* to supervise processes; *djbdns* assumes the use of *[daemontools](http://cr.yp.to/daemontools.html)*).
 
-### <a name="deploy">Using BOSH to Deploy BIND 9 Release</a>
+### <a name="deploy">Using BOSH to Deploy BIND 9 Release to Amazon AWS</a>
 
-This blog post is the second of a two-part series; it picks up where the previous one, *[How to Deploy a DNS Server with BOSH]()*, leaves off. The first part described how to create a *BOSH release* (i.e. a BOSH software package) of the BIND 9 DNS server. This blog post discusses how to deploy the BIND 9 DNS server package.
+This blog post is the second of a two-part series; it picks up where the previous one, *[How to Create a BOSH Release of a DNS Server](http://pivotallabs.com/how-to-create-a-bosh-release-of-a-dns-server/)*, leaves off. The first part described how to create a *BOSH release* (i.e. a BOSH software package) of the BIND 9 DNS server. This blog post discusses how to deploy the BIND 9 DNS server package to Amazon AWS.
 
 In this example we deploy our release with our previously-created BOSH Lite
 
+Let's clone our BIND release's git repository:
+
 ```
-cd ~/workspace/bind-9
+cd ~/workspace/
+git clone https://github.com/cunnie/bosh-bind-9-release.git
+cd bosh-bind-9-release
+```
+```
 bosh target bosh.nono.com
 bosh login admin
- # if you followed our instructions on securing your bosh
- # http://pivotallabs.com/deploying-bosh-lite-subnet-accessible-manner/
- # then `bosh login director` instead of `bosh login admin`
 ```
 Let's download the correct stemcell:
 
 ```
 mkdir stemcells
 pushd stemcells
-curl -OL https://s3.amazonaws.com/bosh-warden-stemcells/bosh-stemcell-2776-warden-boshlite-centos-go_agent.tgz
+curl -OL https://bosh-jenkins-artifacts.s3.amazonaws.com/bosh-stemcell/aws/light-bosh-stemcell-2922-aws-xen-hvm-centos-7-go_agent.tgz
 popd
 ```
 Upload the stemcell:
 
 ```
-bosh upload stemcell stemcells/bosh-stemcell-2776-warden-boshlite-centos-go_agent.tgz
+bosh upload stemcell https://bosh-jenkins-artifacts.s3.amazonaws.com/bosh-stemcell/aws/light-bosh-stemcell-2922-aws-xen-hvm-centos-7-go_agent.tgz
 ```
 Upload the release:
 
