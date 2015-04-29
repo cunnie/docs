@@ -599,7 +599,7 @@ Task 20 error
 For a more detailed error report, run: bosh task 20 --debug
 Try no. 4 failed. Exited with 1.
 ```
-<a name="ssl"><sup>2</sup></a> For those curious about installing with a *genuine* SSL cert, install this [Certificate PEM](https://gist.github.com/cunnie/ba0bc254cd6ce87cb5d3), this [Private Key PEM](https://gist.github.com/cunnie/6bba891dfd48d218fd21).  Only use this certificate and key if your System and App domains are **cf.nono.com** and your HA Proxy IP is **10.9.8.40**
+<a name="ssl"><sup>2</sup></a> For those curious about installing with a *genuine* SSL cert, install this [Certificate PEM](https://gist.github.com/cunnie/ba0bc254cd6ce87cb5d3), this [Private Key](https://gist.github.com/cunnie/6bba891dfd48d218fd21).  Only use this certificate and key if your System and App domains are **cf.nono.com** and your HA Proxy IP is **10.9.8.40**
 
 <a name="cpu_cores"><sup>3</sup></a> CPU core over-subscription is not something we worry about. vSphere 5.5's Virtual CPU limit is [32 Virtual CPUs per core](http://www.vmware.com/pdf/vsphere5/r55/vsphere-55-configuration-maximums.pdf), which means that our 4-core Mac Pro could support as many as 128 Virtual CPUs. Cloud Foundry's Engineering Team's servers are often over-subscribed by a factor of more than 20:1 (i.e. as many as 240 cores allocated, but only 12 physical cores available).
 
