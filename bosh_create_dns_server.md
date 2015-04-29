@@ -623,9 +623,9 @@ In an interesting side note, the aforementioned nameserver *djbdns* makes use of
 
 One might be tempted to think that *djbdns* would be a better fit to *BOSH*'s structure than *BIND*, but one would be mistaken: *djbdns* makes very specific decisions about the placement of its files and the manner in which the nameserver is started and stopped, decisions which don't quite dovetail with *BOSH*'s decisions (e.g. *BOSH* uses *[monit](https://en.wikipedia.org/wiki/Monit)* to supervise processes; *djbdns* assumes the use of *[daemontools](http://cr.yp.to/daemontools.html)*).
 
-### <a name="deploy">Using BOSH to Deploy BIND 9 Release to Amazon AWS</a>
+### <a name="deploy">Using BOSH to Deploy a DNS to Amazon AWS</a>
 
-This blog post is the second of a two-part series; it picks up where the previous one, *[How to Create a BOSH Release of a DNS Server](http://pivotallabs.com/how-to-create-a-bosh-release-of-a-dns-server/)*, leaves off. The first part described how to create a *BOSH release* (i.e. a BOSH software package) of the BIND 9 DNS server. This blog post discusses how to deploy the BIND 9 DNS server package to Amazon AWS.
+This blog post is the second of a series; it picks up where the previous one, *[How to Create a BOSH Release of a DNS Server](http://pivotallabs.com/how-to-create-a-bosh-release-of-a-dns-server/)*, leaves off. The first part describes how we create a *BOSH release* (i.e. a BOSH software package) of the BIND 9 DNS server and deploy the server to VirtualBox via BOSH Lite. This post, the second part of th series, describes how to deploy the BIND 9 DNS server package to Amazon AWS.
 
 In this example we deploy our release with our previously-created BOSH Lite
 
@@ -636,11 +636,19 @@ cd ~/workspace/
 git clone https://github.com/cunnie/bosh-bind-9-release.git
 cd bosh-bind-9-release
 ```
+We target our BOSH:
+
 ```
 bosh target bosh.nono.com
 bosh login admin
 ```
-Let's download the correct stemcell:
+Let's download the correct stemcell. Some notes:
+
+* we use an [HVM](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/virtualization_types.html) stemcell because we plan to use a T2.micro instance, which requires an HVM stemcell
+* we use a *light* stemcell; all AMIs are *light* stemcells
+* we use a [Xen](http://www.xenproject.org/project-members/141-amazon-web-services.html) stemcell because Amazon AWS's infrastructure is Xen-based
+* we use CentOS, but our decision is arbitrary, and Ubuntu is equally good
+* we use BOSH's new *go agent*
 
 ```
 mkdir stemcells
