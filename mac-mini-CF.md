@@ -837,6 +837,15 @@ We ordered the **Comodo PositiveSSL Wildcard Certificate**, the absolute cheapes
 
 Note: before you decided to purchase your own wildcard cert, you must be sure that you are the hostmaster of your own domain. Really. If you're not sure what a hostmaster is, then you're probably not the hostmaster.
 
+
+#### cheapsslshop Ordering Process:
+
+[CheapSSLShop](https://www.cheapsslshop.com/comodo-positive-ssl-wildcard) has the current best prices: 2 wildcard domains + domain for $55/year.
+
+```
+openssl req -new -keyout nono.com.key -out nono.com.csr -newkey rsa:2048 -sha256 -nodes -subj '/C=US/ST=California/L=San Francisco/O=nono.com/OU=/CN=*.nono.com/emailAddress=brian.cunnie@gmail.com/subjectAltName=DNS.1=nono.com,DNS.2=*.nono.com,DNS.3=*.cf.nono.com'
+```
+
 #### CheapSSLSecurity Ordering Process:
 
 1. Select the type of cert (*Comodo PositiveSSL Wildcard Certificate*) and the terms (1 year)
