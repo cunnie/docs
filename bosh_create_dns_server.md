@@ -623,11 +623,22 @@ In an interesting side note, the aforementioned nameserver *djbdns* makes use of
 
 One might be tempted to think that *djbdns* would be a better fit to *BOSH*'s structure than *BIND*, but one would be mistaken: *djbdns* makes very specific decisions about the placement of its files and the manner in which the nameserver is started and stopped, decisions which don't quite dovetail with *BOSH*'s decisions (e.g. *BOSH* uses *[monit](https://en.wikipedia.org/wiki/Monit)* to supervise processes; *djbdns* assumes the use of *[daemontools](http://cr.yp.to/daemontools.html)*).
 
-### <a name="deploy">Using BOSH to Deploy a DNS to Amazon AWS</a>
+### Deploying a DNS Server to Amazon AWS with *bosh-init*</a>
 
-This blog post is the second of a series; it picks up where the previous one, *[How to Create a BOSH Release of a DNS Server](http://pivotallabs.com/how-to-create-a-bosh-release-of-a-dns-server/)*, leaves off. The first part describes how we create a *BOSH release* (i.e. a BOSH software package) of the BIND 9 DNS server and deploy the server to VirtualBox via BOSH Lite. This post, the second part of th series, describes how to deploy the BIND 9 DNS server package to Amazon AWS.
+This blog post is the second of a series; it picks up where the previous one, *[How to Create a BOSH Release of a DNS Server](http://pivotallabs.com/how-to-create-a-bosh-release-of-a-dns-server/)*, left off. Previously we described how to create a *BOSH release* (i.e. a BOSH software package) of the BIND 9 DNS server and deploy the server to VirtualBox via BOSH Lite. This post describes how to deploy the BIND 9 DNS server package to Amazon AWS using [bosh-init](https://github.com/cloudfoundry/bosh-init), a command-line BOSH tool that allows the deployment of VMs without requiring an additional VM (in the case of [MicroBOSH](https://bosh.io/docs/deploy-microbosh.html)) or several VMs (in the case of [BOSH](http://bosh.io/)).
 
-In this example we deploy our release with our previously-created BOSH Lite
+We use *bosh-init* rather than *MicroBOSH* or *BOSH* primarily for financial reasons: *bosh-init*: with *bosh-init*, we need but spin up the DNS server VM (*t2.micro* instance, $114/year <sup>[[1]](#ec2_pricing)</sup> ). Using *MicroBOSH* requires us to spin up an additional VM (*m3.medium* instance, $614/year), ballooning our costs 538%. Full BOSH, which requires several VMs, would increase our costs even more.
+
+Let's install *bosh-init*; we follow the instructions [here](https://github.com/cloudfoundry/bosh-init/blob/master/docs/build.md)
+
+We copy *bosh-init* to a location in our *PATH*:
+
+```
+cp -i $GOPATH/src/github.com/cloudfoundry/bosh-init/out/bosh-init /usr/local/bin
+```
+We gather the following information:
+
+* AWS API Key
 
 Let's clone our BIND release's git repository:
 
@@ -636,31 +647,66 @@ cd ~/workspace/
 git clone https://github.com/cunnie/bosh-bind-9-release.git
 cd bosh-bind-9-release
 ```
-We target our BOSH:
-
-```
-bosh target bosh.nono.com
-bosh login admin
-```
 Let's download the correct stemcell. Some notes:
 
-* we use an [HVM](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/virtualization_types.html) stemcell because we plan to use a T2.micro instance, which requires an HVM stemcell
+* we use an [HVM](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/virtualization_types.html) stemcell because we plan to use a *t2.micro* instance, which requires an HVM stemcell
 * we use a *light* stemcell; all AMIs are *light* stemcells
 * we use a [Xen](http://www.xenproject.org/project-members/141-amazon-web-services.html) stemcell because Amazon AWS's infrastructure is Xen-based
 * we use CentOS, but our decision is arbitrary, and Ubuntu is equally good
+* we use CentOS 7 because we prefer that over the older CentOS 6
 * we use BOSH's new *go agent*
 
 ```
 mkdir stemcells
 pushd stemcells
-curl -OL https://bosh-jenkins-artifacts.s3.amazonaws.com/bosh-stemcell/aws/light-bosh-stemcell-2922-aws-xen-hvm-centos-7-go_agent.tgz
+curl -OL https://bosh-jenkins-artifacts.s3.amazonaws.com/bosh-stemcell/aws/light-bosh-stemcell-2962-aws-xen-hvm-centos-7-go_agent.tgz
+shasum light-bosh-stemcell-2962-aws-xen-hvm-centos-7-go_agent.tgz
+ # `shasum` on OSX; `sha` on linux
 popd
 ```
+Similarly with the AWS CPI (Cloud Provider Interface) release:
+
+```
+mkdir assets
+curl -Lo assets/bosh-aws-cpi-release-7.tgz \
+    "http://bosh.io/d/github.com/cloudfoundry-incubator/bosh-aws-cpi-release?v=7"
+```
+We create our release (we use *--force* to create a development release, *--with-tarball* to create the .tgz file that we need to deploy to our VM):
+
+```
+bosh create release --force --with-tarball
+shasum dev_releases/bind-9/bind-9-0+dev.1.tgz
+ # `shasum` on OSX; `sha` on linux
+```
+Let's deploy:
+
+```
+bosh-init deploy config/bind-9-aws.yml
+Deployment manifest: '/Users/cunnie/workspace/bind-9/config/bind-9-aws.yml'
+Deployment state: '/Users/cunnie/workspace/bind-9/config/bind-9-aws-state.json'
+
+Started validating
+  Validating deployment manifest... Finished (00:00:00)
+  Validating release 'bind-9'... Finished (00:00:00)
+  Validating release 'bosh-aws-cpi'... Finished (00:00:00)
+  Validating jobs... Finished (00:00:00)
+  Downloading stemcell... Finished (00:00:00)
+  Validating stemcell... Finished (00:00:00)
+  Validating cpi release... Finished (00:00:00)
+Finished validating (00:00:00)
+
+Started installing CPI
+  Compiling package 'ruby_aws_cpi/7903f3a543e8ab35fd980a0ca74f9151282d56b2'...
+
+```
+
+
 Upload the stemcell:
 
 ```
 bosh upload stemcell https://bosh-jenkins-artifacts.s3.amazonaws.com/bosh-stemcell/aws/light-bosh-stemcell-2922-aws-xen-hvm-centos-7-go_agent.tgz
 ```
+-->
 Upload the release:
 
 ```
@@ -670,24 +716,43 @@ bosh upload release dev_releases/bind-9/bind-9-0+dev.1.yml
 We take the UUID, *c6f166bd-ddac-4f7d-9c57-d11c6ad5133b*, and change our manifest to include that UUID:
 
 ```
-cp examples/bind-9-bosh-lite.yml config/
-perl -pi -e "s/PLACEHOLDER-DIRECTOR-UUID/$(bosh status --uuid)/" config/bind-9-bosh-lite.yml
+cp examples/bind-9-aws.yml config/
+perl -pi -e "s/PLACEHOLDER-DIRECTOR-UUID/$(bosh status --uuid)/" config/bind-9-aws.yml
 ```
 Let's set our deployment:
 
 ```
-bosh deployment config/bind-9-bosh-lite.yml
+bosh deployment config/bind-9-aws.yml
 ```
-Let's deploy:
+Let's deploy (if you see *Gem::Installer::ExtensionBuildError: ERROR: Failed to build gem native extension* while installing, you may need to run `xcode-select --install` and accept the license in order to install the necessary header files):
 
 ```
-bosh -n deploy
-```
-Let's set a route to the deployment's 10.244.0.64/30 network via our BOSH Lite (we assume the BOSH Lite's IP address is 192.168.50.4) (you'll need to set the route every time you reboot your workstation) (the following command works for OS X):
+bosh-init deploy config/bind-9-aws.yml
+Deployment manifest: '/Users/cunnie/workspace/bind-9/config/bind-9-aws.yml'
+Deployment state: '/Users/cunnie/workspace/bind-9/config/bind-9-aws-state.json'
 
+Started validating
+  Validating deployment manifest... Finished (00:00:00)
+  Validating release 'bind-9'... Finished (00:00:00)
+  Validating release 'bosh-aws-cpi'... Finished (00:00:00)
+  Validating jobs... Finished (00:00:00)
+  Downloading stemcell... Finished (00:00:00)
+  Validating stemcell... Finished (00:00:00)
+  Validating cpi release... Finished (00:00:00)
+Finished validating (00:00:00)
+
+Started installing CPI
+  Compiling package 'ruby_aws_cpi/7903f3a543e8ab35fd980a0ca74f9151282d56b2'...
 ```
-sudo route add -net 10.244.0.64/30 192.168.50.4
-```
+
+
+---
+
+### Footnotes
+
+<a name="ec2_pricing"><sup>1</sup></a> [Amazon EC2 Prices](http://aws.amazon.com/ec2/pricing/) are current as of the writing of this document. A *t2.micro* instance costs  $0.013 per hour. Assuming 365.2425 24-hour days/year, this works out to $113.96/year. An *m3.medium* instances costs $0.070 per hour, $613.60/year. Our calculations do not take into account *Spot Instances* or *Reserved Instances*.
+
+Admittedly there are mechanisms to reduce the cost of the Micro BOSH (or BOSH) VM(s)&mdash;for example, we could  suspend the Micro BOSH instance after it has deployed the DNS server.
 
 ### Troubleshooting the Deployment
 Here is an example of the steps we followed when our deployment didn't work. Note that several of the problems stemmed from our decision to rename our job from *bind* to *named*.
