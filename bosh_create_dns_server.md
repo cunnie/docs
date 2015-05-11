@@ -745,6 +745,41 @@ Started installing CPI
   Compiling package 'ruby_aws_cpi/7903f3a543e8ab35fd980a0ca74f9151282d56b2'...
 ```
 
+### Appendix A. The Importance of Disallowing Recursion
+
+We disable recursive queries on our DNS servers that have been deployed to the Internet because it prevents our server from being used in a [DNS Amplification Attack](https://www.us-cert.gov/ncas/alerts/TA13-088A). DNS Amplication Attacks are doubly-damning in the sense that we pay for the attack's bandwidth charges (we pay in the literal sense: Amazon charges us for the outbound traffic).
+
+The good news is since version 9.4 [BIND has a non-recursive default](https://kb.isc.org/article/AA-00269/0/What-has-changed-in-the-behavior-of-allow-recursion-and-allow-query-cache.html) (our BOSH release's version is 9.10). If you truly need to allow recursion, add the following stanza to the deployment's manifest's *properties&rarr;config_file* stanza; it will configure the BIND server to be an [Open Resolver](http://openresolverproject.org/) (A DNS server that allows recursive queries/recursion is known as an *Open Resolver*). Don't do this unless your server is behind a firewall:
+
+```
+      options {
+        recursion yes;
+        // DO NOT put the following line on an Internet-accessible DNS server
+        allow-recursion { any; };
+```
+
+An easy way to test if your server is an *Open Resolver* is to run the following *dig* command (substitute *52.6.149.97* with the address of your deployed DNS server):
+
+```
+dig freeinfosys.com ANY @52.6.149.97
+    ...
+    ;; MSG SIZE  rcvd: 33
+```
+The "MSG SIZE rcvd: 33" means that recursion was denied (i.e. our server is properly configured). If instead you see "MSG SIZE  rcvd: 3185", then you need to edit your deployment's manifest and re-deploy.
+
+#### Probed within 3 Hours, Exploited within 3 Days
+
+Our server was probed within 3 hours of deployment (logs from */var/log/daemon.log*):
+
+```
+May  6 14:43:51 localhost named[23167]: client 80.82.78.2#7678 (freeinfosys.com): query (cache) 'freeinfosys.com/ANY/IN' denied
+```
+
+Hackers attempted to exploit our DNS server to attack [voxility](https://www.voxility.com/). The attempts did not succeed because we had properly configured our server:
+
+```
+May  9 01:42:41 localhost named[23167]: message repeated 15 times: [ client 109.163.224.34#19903 (067.cz): query (cache) '067.cz/ANY/IN' denied]
+```
 
 ---
 
