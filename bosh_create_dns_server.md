@@ -678,52 +678,7 @@ bosh create release --force --with-tarball
 shasum dev_releases/bind-9/bind-9-0+dev.1.tgz
  # `shasum` on OSX; `sha` on linux
 ```
-Let's deploy:
 
-```
-bosh-init deploy config/bind-9-aws.yml
-Deployment manifest: '/Users/cunnie/workspace/bind-9/config/bind-9-aws.yml'
-Deployment state: '/Users/cunnie/workspace/bind-9/config/bind-9-aws-state.json'
-
-Started validating
-  Validating deployment manifest... Finished (00:00:00)
-  Validating release 'bind-9'... Finished (00:00:00)
-  Validating release 'bosh-aws-cpi'... Finished (00:00:00)
-  Validating jobs... Finished (00:00:00)
-  Downloading stemcell... Finished (00:00:00)
-  Validating stemcell... Finished (00:00:00)
-  Validating cpi release... Finished (00:00:00)
-Finished validating (00:00:00)
-
-Started installing CPI
-  Compiling package 'ruby_aws_cpi/7903f3a543e8ab35fd980a0ca74f9151282d56b2'...
-
-```
-
-
-Upload the stemcell:
-
-```
-bosh upload stemcell https://bosh-jenkins-artifacts.s3.amazonaws.com/bosh-stemcell/aws/light-bosh-stemcell-2922-aws-xen-hvm-centos-7-go_agent.tgz
-```
--->
-Upload the release:
-
-```
-bosh upload release dev_releases/bind-9/bind-9-0+dev.1.yml
-```
-
-We take the UUID, *c6f166bd-ddac-4f7d-9c57-d11c6ad5133b*, and change our manifest to include that UUID:
-
-```
-cp examples/bind-9-aws.yml config/
-perl -pi -e "s/PLACEHOLDER-DIRECTOR-UUID/$(bosh status --uuid)/" config/bind-9-aws.yml
-```
-Let's set our deployment:
-
-```
-bosh deployment config/bind-9-aws.yml
-```
 Let's deploy (if you see *Gem::Installer::ExtensionBuildError: ERROR: Failed to build gem native extension* while installing, you may need to run `xcode-select --install` and accept the license in order to install the necessary header files):
 
 ```
