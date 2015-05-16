@@ -625,20 +625,24 @@ One might be tempted to think that *djbdns* would be a better fit to *BOSH*'s st
 
 ### Deploying a DNS Server to Amazon AWS with *bosh-init*</a>
 
-This blog post is the second of a series; it picks up where the previous one, *[How to Create a BOSH Release of a DNS Server](http://pivotallabs.com/how-to-create-a-bosh-release-of-a-dns-server/)*, left off. Previously we described how to create a *BOSH release* (i.e. a BOSH software package) of the BIND 9 DNS server and deploy the server to VirtualBox via BOSH Lite. This post describes how to deploy the BIND 9 DNS server package to Amazon AWS using [bosh-init](https://github.com/cloudfoundry/bosh-init), a command-line BOSH tool that allows the deployment of VMs without requiring an additional VM (in the case of [MicroBOSH](https://bosh.io/docs/deploy-microbosh.html)) or several VMs (in the case of [BOSH](http://bosh.io/)).
+This post describes how to deploy a BIND 9 DNS server to Amazon AWS using [bosh-init](https://github.com/cloudfoundry/bosh-init), a command-line BOSH tool that enables the deployment of VMs without requiring an additional VM (in the case of [MicroBOSH](https://bosh.io/docs/deploy-microbosh.html)) or several VMs (in the case of [BOSH](http://bosh.io/)). <sup>[[1]](#bosh-init_advantages)</sup>
 
-We use *bosh-init* rather than *MicroBOSH* or *BOSH* primarily for financial reasons: *bosh-init*: with *bosh-init*, we need but spin up the DNS server VM (*t2.micro* instance, $114/year <sup>[[1]](#ec2_pricing)</sup> ). Using *MicroBOSH* requires us to spin up an additional VM (*m3.medium* instance, $614/year), ballooning our costs 538%. Full BOSH, which requires several VMs, would increase our costs even more.
+This blog post is the second of a series; it picks up where the previous one, *[How to Create a BOSH Release of a DNS Server](http://blog.pivotal.io/labs/labs/how-to-create-a-bosh-release-of-a-dns-server)*, left off. Previously we described how to create a *BOSH release* (i.e. a BOSH software package) of the BIND 9 DNS server and deploy the server to VirtualBox via BOSH Lite.
 
-Let's install *bosh-init*; we follow the instructions [here](https://github.com/cloudfoundry/bosh-init/blob/master/docs/build.md)
+#### 0. Download Executables, Releases, Stemcells, and CPIs
 
-We copy *bosh-init* to a location in our *PATH*:
+Let's begin by installing *bosh-init* on our OS X development workstation:
+
+* look [here](https://bosh.io/docs/install-bosh-init.html) for downloading the Linux variant
+* note that our download destination, */usr/local/bin*, is in our *PATH* and is writable
+* check [https://bosh.io/docs/install-bosh-init.html](https://bosh.io/docs/install-bosh-init.html) for newer versions of the oft-updated *bosh-init*
 
 ```
-cp -i $GOPATH/src/github.com/cloudfoundry/bosh-init/out/bosh-init /usr/local/bin
+curl -L https://s3.amazonaws.com/bosh-init-artifacts/bosh-init-0.0.29-darwin-amd64 -o /usr/local/bin/bosh-init
+chmod 755 /usr/local/bin/bosh-init
+bosh-init version # test for successful install
+    version 0.0.29-9ba06aa-2015-05-14T16:52:13Z
 ```
-We gather the following information:
-
-* AWS API Key
 
 Let's clone our BIND release's git repository:
 
@@ -647,7 +651,7 @@ cd ~/workspace/
 git clone https://github.com/cunnie/bosh-bind-9-release.git
 cd bosh-bind-9-release
 ```
-Let's download the correct stemcell. Some notes:
+Let's download our stemcell, *light-bosh-stemcell-2962-aws-xen-hvm-centos-7-go_agent.tgz*. We chose our stemcell for the following reasons:
 
 * we use an [HVM](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/virtualization_types.html) stemcell because we plan to use a *t2.micro* instance, which requires an HVM stemcell
 * we use a *light* stemcell; all AMIs are *light* stemcells
@@ -664,13 +668,14 @@ shasum light-bosh-stemcell-2962-aws-xen-hvm-centos-7-go_agent.tgz
  # `shasum` on OSX; `sha` on linux
 popd
 ```
-Similarly with the AWS CPI (Cloud Provider Interface) release:
+We need to install the AWS CPI (Cloud Provider Interface) which allows *bosh-init* to communicate via Amazon AWS's API:
 
 ```
 mkdir assets
-curl -Lo assets/bosh-aws-cpi-release-7.tgz \
-    "http://bosh.io/d/github.com/cloudfoundry-incubator/bosh-aws-cpi-release?v=7"
+curl -L http://bosh.io/d/github.com/cloudfoundry-incubator/bosh-aws-cpi-release?v=7 -o assets/bosh-aws-cpi-release-7.tgz
 ```
+#### 1. Create BOSH DNS Release
+
 We create our release (we use *--force* to create a development release, *--with-tarball* to create the .tgz file that we need to deploy to our VM):
 
 ```
@@ -678,6 +683,33 @@ bosh create release --force --with-tarball
 shasum dev_releases/bind-9/bind-9-0+dev.1.tgz
  # `shasum` on OSX; `sha` on linux
 ```
+#### 2. Create BOSH Deployment Manifest
+
+We gather the following information, which we will need in order to create our BOSH deployment manifest:
+
+* Elastic IP Address (e.g. *52.0.56.137*, must have scope *vpc* not *standard*)
+* Subnet ID (e.g. *subnet-1c90ef6b*) (This must be a subnet in your VPC)
+* AWS Key Pair name (e.g. *aws_nono*)
+* AWS Key Pair's path (e.g. */Users/cunnie/.ssh/aws_nono.pem*) (must *not* be passphrase-protected)
+* AWS Access Key (e.g. *AKIAIZWITxxxxxxxxxxx*)
+* AWS Secret (e.g. *0+B1XW6VVEYw55J+ZjfqMW+AjELxxxxxxxxxxxxx*)
+* Security Group (must have the VPC ID of your VPC (e.g. *vpc-e4250881*)
+* A password for your agent (generate a hard-to-guess password, e.g. *Lif6@stambha*)
+
+We copy the sample AWS deployment manifest into our *config* directory:
+
+```
+cp examples/bind-9-aws.yml config/
+```
+We edit the deployment manifest; we search for all occurrences of "CHANGME" and replace them with the information we gathered earlier:
+
+```
+vim config/bind-9-aws.yml
+    # replace all occurences of 'CHANGME'
+    # with appropriate values
+```
+
+#### 3. Deploy
 
 Let's deploy (if you see *Gem::Installer::ExtensionBuildError: ERROR: Failed to build gem native extension* while installing, you may need to run `xcode-select --install` and accept the license in order to install the necessary header files):
 
@@ -699,6 +731,8 @@ Finished validating (00:00:00)
 Started installing CPI
   Compiling package 'ruby_aws_cpi/7903f3a543e8ab35fd980a0ca74f9151282d56b2'...
 ```
+
+#### 4. Test
 
 ### Appendix A. The Importance of Disallowing Recursion
 
@@ -740,7 +774,9 @@ May  9 01:42:41 localhost named[23167]: message repeated 15 times: [ client 109.
 
 ### Footnotes
 
-<a name="ec2_pricing"><sup>1</sup></a> [Amazon EC2 Prices](http://aws.amazon.com/ec2/pricing/) are current as of the writing of this document. A *t2.micro* instance costs  $0.013 per hour. Assuming 365.2425 24-hour days/year, this works out to $113.96/year. An *m3.medium* instances costs $0.070 per hour, $613.60/year. Our calculations do not take into account *Spot Instances* or *Reserved Instances*.
+<a name="bosh-init_advantages"><sup>1</sup></a> We use *bosh-init* rather than *MicroBOSH* or *BOSH* primarily for financial reasons: *bosh-init*: with *bosh-init*, we need but spin up the DNS server VM (*t2.micro* instance, $114/year <sup>[[2]](#ec2_pricing)</sup> ). Using *MicroBOSH* requires us to spin up an additional VM (*m3.medium* instance, $614/year), ballooning our costs 538%. Full BOSH, which requires several VMs, would increase our costs even more.
+
+<a name="ec2_pricing"><sup>2</sup></a> [Amazon EC2 Prices](http://aws.amazon.com/ec2/pricing/) are current as of the writing of this document. A *t2.micro* instance costs  $0.013 per hour. Assuming 365.2425 24-hour days/year, this works out to $113.96/year. An *m3.medium* instances costs $0.070 per hour, $613.60/year. Our calculations do not take into account *Spot Instances* or *Reserved Instances*.
 
 Admittedly there are mechanisms to reduce the cost of the Micro BOSH (or BOSH) VM(s)&mdash;for example, we could  suspend the Micro BOSH instance after it has deployed the DNS server.
 
