@@ -696,10 +696,10 @@ We gather the following information, which we will need in order to create our B
 * AWS Key Pair's path (e.g. */Users/cunnie/.ssh/aws_nono.pem*) (must *not* be passphrase-protected)
 * AWS Access Key (e.g. *AKIAIZWITxxxxxxxxxxx*)
 * AWS Secret (e.g. *0+B1XW6VVEYw55J+ZjfqMW+AjELxxxxxxxxxxxxx*)
-* Security Group (must have the VPC ID of your VPC (e.g. *vpc-e4250881*)
+* Security Group (must have the VPC ID of your VPC, e.g. *vpc-e4250881*)
 * A password for your agent (generate a hard-to-guess password, e.g. *Lif6@stambha*)
 
-We copy the sample AWS deployment manifest into our *config* directory:
+We copy the sample AWS deployment manifest to our *config* directory:
 
 ```
 cp examples/bind-9-aws.yml config/
@@ -708,7 +708,7 @@ We edit the deployment manifest; we search for all occurrences of "CHANGEME" and
 
 ```
 vim config/bind-9-aws.yml
-    # replace all occurences of 'CHANGME'
+    # replace all occurences of 'CHANGEME'
     # with appropriate values
 ```
 
@@ -766,11 +766,11 @@ bosh-init deploy config/bind-9-aws.yml
 
 We have shown the ease with which one can deploy BOSH releases to single-instance VMs in Amazon AWS using *bosh-init*.
 
-One might be tempted to compare BOSH to other configuration management tools such as Ansible, Chef, and Puppet, but upon close inspection one would see that their approaches differ radically:
+One might be tempted to compare BOSH to configuration management tools such as Ansible, Chef, and Puppet, and on closer inspection one would see that their approaches differ radically:
 
 * BOSH assumes deployment to a cloud infrastructure (AWS, vSphere, OpenStack)
 * BOSH depends on specially-built disks (stemcells); BOSH does not function with, say, a generic Ubuntu install.
-* BOSH does not install 'packages' (e.g. .deb, .rpm), instead, one must build a custom BOSH release or take advantage of a community-built release
+* BOSH does not install 'packages' (e.g. .deb, .rpm), instead, one must build a custom BOSH release or take advantage of community-built releases.
 
 ### Appendix A. The Importance of Disallowing Recursion
 
@@ -807,6 +807,9 @@ Hackers attempted to exploit our DNS server to attack [voxility](https://www.vox
 ```
 May  9 01:42:41 localhost named[23167]: message repeated 15 times: [ client 109.163.224.34#19903 (067.cz): query (cache) '067.cz/ANY/IN' denied]
 ```
+### Acknowledgements
+
+[Dmitriy Kalinin](https://github.com/cppforlife)'s assistance was invaluable when creating the sample manifest.
 
 ---
 
