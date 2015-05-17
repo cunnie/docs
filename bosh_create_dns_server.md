@@ -664,8 +664,6 @@ Let's download our stemcell, *light-bosh-stemcell-2962-aws-xen-hvm-centos-7-go_a
 mkdir stemcells
 pushd stemcells
 curl -OL https://bosh-jenkins-artifacts.s3.amazonaws.com/bosh-stemcell/aws/light-bosh-stemcell-2962-aws-xen-hvm-centos-7-go_agent.tgz
-shasum light-bosh-stemcell-2962-aws-xen-hvm-centos-7-go_agent.tgz
- # `shasum` on OSX; `sha` on linux
 popd
 ```
 We need to install the AWS CPI (Cloud Provider Interface) which allows *bosh-init* to communicate via Amazon AWS's API:
@@ -676,12 +674,17 @@ curl -L http://bosh.io/d/github.com/cloudfoundry-incubator/bosh-aws-cpi-release?
 ```
 #### 1. Create BOSH DNS Release
 
+We install the *BOSH* CLI ruby gem:
+
+```
+# if using system ruby, you may need to prepend 'sudo' to the following line:
+gem install bosh_cli
+```
+
 We create our release (we use *--force* to create a development release, *--with-tarball* to create the .tgz file that we need to deploy to our VM):
 
 ```
-bosh create release --force --with-tarball
-shasum dev_releases/bind-9/bind-9-0+dev.1.tgz
- # `shasum` on OSX; `sha` on linux
+bosh create release --force --with-tarball --name bind-9
 ```
 #### 2. Create BOSH Deployment Manifest
 
@@ -701,7 +704,7 @@ We copy the sample AWS deployment manifest into our *config* directory:
 ```
 cp examples/bind-9-aws.yml config/
 ```
-We edit the deployment manifest; we search for all occurrences of "CHANGME" and replace them with the information we gathered earlier:
+We edit the deployment manifest; we search for all occurrences of "CHANGEME" and replace them with the information we gathered earlier:
 
 ```
 vim config/bind-9-aws.yml
@@ -734,11 +737,46 @@ Started installing CPI
 
 #### 4. Test
 
+We test our newly-deployed DNS server to ensure it refuses to resolve queries for which it is not authoritative (e.g. *google.com*), but will answer queries for which it *is* authoritative (*nono.com*). We assume that no change has been made to the manifest's *jobs/properties/config_file* section; i.e. we assume that the server that has been deployed is a slave server for the zone *nono.com.*.
+
+```
+# Substitue your Elastic IP as appropriate, i.e. don't use 52.0.56.137
+ELASTIC_IP=52.0.56.137
+# status should be 'REFUSED', i.e. no recursive lookups:
+dig google.com @$ELASTIC_IP | grep status
+    ;; ->>HEADER<<- opcode: QUERY, status: REFUSED, id: 49040
+# status should be 'NOERROR', i.e. authoritative lookups succeed
+dig nono.com @$ELASTIC_IP | grep status
+    ;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 28829
+```
+
+#### 5. Customize and Re-deploy
+
+We have a successful deployment, but not a useful one (a DNS server that acts as a secondary for *nono.com* does not add much value).
+
+We need to customize our deployment to suit our purposes. Fortunately, our DNS server's configuration (i.e. *named.conf*) is embedded in our deployment manifest; we need merely make changes to the manifest's *jobs&rarr;properties&rarr;config_file* section and re-deploy, i.e.
+
+```
+vim config/bind-9-aws.yml
+    # make changes; be sure the configuration section is indented appropriately!
+bosh-init deploy config/bind-9-aws.yml
+```
+
+#### 6. Summary
+
+We have shown the ease with which one can deploy BOSH releases to single-instance VMs in Amazon AWS using *bosh-init*.
+
+One might be tempted to compare BOSH to other configuration management tools such as Ansible, Chef, and Puppet, but upon close inspection one would see that their approaches differ radically:
+
+* BOSH assumes deployment to a cloud infrastructure (AWS, vSphere, OpenStack)
+* BOSH depends on specially-built disks (stemcells); BOSH does not function with, say, a generic Ubuntu install.
+* BOSH does not install 'packages' (e.g. .deb, .rpm), instead, one must build a custom BOSH release or take advantage of a community-built release
+
 ### Appendix A. The Importance of Disallowing Recursion
 
 We disable recursive queries on our DNS servers that have been deployed to the Internet because it prevents our server from being used in a [DNS Amplification Attack](https://www.us-cert.gov/ncas/alerts/TA13-088A). DNS Amplication Attacks are doubly-damning in the sense that we pay for the attack's bandwidth charges (we pay in the literal sense: Amazon charges us for the outbound traffic).
 
-The good news is since version 9.4 [BIND has a non-recursive default](https://kb.isc.org/article/AA-00269/0/What-has-changed-in-the-behavior-of-allow-recursion-and-allow-query-cache.html) (our BOSH release's version is 9.10). If you truly need to allow recursion, add the following stanza to the deployment's manifest's *properties&rarr;config_file* stanza; it will configure the BIND server to be an [Open Resolver](http://openresolverproject.org/) (A DNS server that allows recursive queries/recursion is known as an *Open Resolver*). Don't do this unless your server is behind a firewall:
+The good news is since version 9.4 [BIND has a non-recursive default](https://kb.isc.org/article/AA-00269/0/What-has-changed-in-the-behavior-of-allow-recursion-and-allow-query-cache.html) (our BOSH release's version is 9.10). If you truly need to allow recursion, add the following stanza to the deployment's manifest's *jobs&rarr;properties&rarr;config_file* stanza; it will configure the BIND server to be an [Open Resolver](http://openresolverproject.org/) (A DNS server that allows recursive queries/recursion is known as an *Open Resolver*). Don't do this unless your server is behind a firewall:
 
 ```
       options {
