@@ -788,7 +788,7 @@ May  9 01:42:41 localhost named[23167]: message repeated 15 times: [ client 109.
 ```
 ### Acknowledgements
 
-[Dmitriy Kalinin](https://github.com/cppforlife)'s assistance was invaluable when creating the sample manifest, proofreading the draft, and suggesting simplifications.
+[Dmitriy Kalinin](https://github.com/cppforlife)'s assistance was invaluable when creating the sample manifest, checking the blog post for errors, and simplifying the deployment procedure.
 
 ---
 
