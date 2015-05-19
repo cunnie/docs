@@ -625,7 +625,7 @@ One might be tempted to think that *djbdns* would be a better fit to *BOSH*'s st
 
 ### Deploying a DNS Server to Amazon AWS with *bosh-init*</a>
 
-This post describes how to deploy a BIND 9 DNS server to Amazon AWS using [bosh-init](https://github.com/cloudfoundry/bosh-init), a command-line BOSH tool that enables the deployment of VMs without requiring an additional VM (in the case of [MicroBOSH](https://bosh.io/docs/deploy-microbosh.html)) or several VMs (in the case of [BOSH](http://bosh.io/)). <sup>[[1]](#bosh-init_advantages)</sup>
+This post describes how to deploy a BIND 9 DNS server to Amazon AWS using [bosh-init](https://github.com/cloudfoundry/bosh-init), a command-line BOSH tool that enables the deployment of VMs without requiring a Director VM. <sup>[[1]](#bosh-init_advantages)</sup>
 
 This blog post is the second of a series; it picks up where the previous one, *[How to Create a BOSH Release of a DNS Server](http://blog.pivotal.io/labs/labs/how-to-create-a-bosh-release-of-a-dns-server)*, left off. Previously we described how to create a *BOSH release* (i.e. a BOSH software package) of the BIND 9 DNS server and deploy the server to VirtualBox via BOSH Lite.
 
@@ -650,27 +650,6 @@ Let's clone our BIND release's git repository:
 cd ~/workspace/
 git clone https://github.com/cunnie/bosh-bind-9-release.git
 cd bosh-bind-9-release
-```
-Let's download our stemcell, *light-bosh-stemcell-2962-aws-xen-hvm-centos-7-go_agent.tgz*. We chose our stemcell for the following reasons:
-
-* we use an [HVM](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/virtualization_types.html) stemcell because we plan to use a *t2.micro* instance, which requires an HVM stemcell
-* we use a *light* stemcell; all AMIs are *light* stemcells
-* we use a [Xen](http://www.xenproject.org/project-members/141-amazon-web-services.html) stemcell because Amazon AWS's infrastructure is Xen-based
-* we use CentOS, but our decision is arbitrary, and Ubuntu is equally good
-* we use CentOS 7 because we prefer that over the older CentOS 6
-* we use BOSH's new *go agent*
-
-```
-mkdir stemcells
-pushd stemcells
-curl -OL https://bosh-jenkins-artifacts.s3.amazonaws.com/bosh-stemcell/aws/light-bosh-stemcell-2962-aws-xen-hvm-centos-7-go_agent.tgz
-popd
-```
-We need to install the AWS CPI (Cloud Provider Interface) which allows *bosh-init* to communicate via Amazon AWS's API:
-
-```
-mkdir assets
-curl -L http://bosh.io/d/github.com/cloudfoundry-incubator/bosh-aws-cpi-release?v=7 -o assets/bosh-aws-cpi-release-7.tgz
 ```
 #### 1. Create BOSH DNS Release
 
@@ -769,7 +748,7 @@ We have shown the ease with which one can deploy BOSH releases to single-instanc
 One might be tempted to compare BOSH to configuration management tools such as Ansible, Chef, and Puppet, and on closer inspection one would see that their approaches differ radically:
 
 * BOSH assumes deployment to a cloud infrastructure (AWS, vSphere, OpenStack)
-* BOSH depends on specially-built disks (stemcells); BOSH does not function with, say, a generic Ubuntu install.
+* BOSH depends on specially-built images/AMIs (stemcells); BOSH does not function with, say, a generic Ubuntu AMI.
 * BOSH does not install 'packages' (e.g. .deb, .rpm), instead, one must build a custom BOSH release or take advantage of community-built releases.
 
 ### Appendix A. The Importance of Disallowing Recursion
@@ -809,17 +788,17 @@ May  9 01:42:41 localhost named[23167]: message repeated 15 times: [ client 109.
 ```
 ### Acknowledgements
 
-[Dmitriy Kalinin](https://github.com/cppforlife)'s assistance was invaluable when creating the sample manifest.
+[Dmitriy Kalinin](https://github.com/cppforlife)'s assistance was invaluable when creating the sample manifest, proofreading the draft, and suggesting simplifications.
 
 ---
 
 ### Footnotes
 
-<a name="bosh-init_advantages"><sup>1</sup></a> We use *bosh-init* rather than *MicroBOSH* or *BOSH* primarily for financial reasons: *bosh-init*: with *bosh-init*, we need but spin up the DNS server VM (*t2.micro* instance, $114/year <sup>[[2]](#ec2_pricing)</sup> ). Using *MicroBOSH* requires us to spin up an additional VM (*m3.medium* instance, $614/year), ballooning our costs 538%. Full BOSH, which requires several VMs, would increase our costs even more.
+<a name="bosh-init_advantages"><sup>1</sup></a> We use *bosh-init* rather than a Director VM primarily for financial reasons: with *bosh-init*, we need but spin up the DNS server VM (*t2.micro* instance, $114/year <sup>[[2]](#ec2_pricing)</sup> ). Using a Director VM requires an *m3.medium* instance ($614/year), ballooning our costs 538%.
 
 <a name="ec2_pricing"><sup>2</sup></a> [Amazon EC2 Prices](http://aws.amazon.com/ec2/pricing/) are current as of the writing of this document. A *t2.micro* instance costs  $0.013 per hour. Assuming 365.2425 24-hour days/year, this works out to $113.96/year. An *m3.medium* instances costs $0.070 per hour, $613.60/year. Our calculations do not take into account *Spot Instances* or *Reserved Instances*.
 
-Admittedly there are mechanisms to reduce the cost of the Micro BOSH (or BOSH) VM(s)&mdash;for example, we could  suspend the Micro BOSH instance after it has deployed the DNS server.
+Admittedly there are mechanisms to reduce the cost of the Director VM&mdash;for example, we could  suspend the Director VM instance after it has deployed the DNS server.
 
 ### Troubleshooting the Deployment
 Here is an example of the steps we followed when our deployment didn't work. Note that several of the problems stemmed from our decision to rename our job from *bind* to *named*.
