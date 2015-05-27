@@ -282,22 +282,9 @@ PIDFILE=${RUN_DIR}/named.pid
 case $1 in
 
   start)
-    # ugly way to install libjson.0 shared library dependency
-    if [ -f /etc/redhat-release ]; then
-      # Install libjson0 for CentOS stemcells.
-      # We first check if it's installed to prevent an
-      # an over-eager yum from contacting the Internet.
-      rpm -qi json-c > /dev/null || yum install -y json-c
-    elif [ -f /etc/lsb-release ]; then
-      # install libjson0 for Ubuntu stemcells (not tested)
-      apt-get install libjson0
-    fi
-
-    mkdir -p $RUN_DIR
+   mkdir -p $RUN_DIR
     chown -R vcap:vcap $RUN_DIR
-
     exec /var/vcap/packages/bind-9-9.10.2/sbin/named -u vcap -c /var/vcap/jobs/named/etc/named.conf
-
     ;;
 
   stop)
@@ -347,6 +334,8 @@ check process named
   group vcap
 ```
 #### Create Package Skeletons
+
+##### 0. Create Package *bind-9-9.10.2*
 Create the *bind* package; we include the version number (*9.10.2*).
 
 ```
@@ -371,6 +360,7 @@ It should look like this:
 name: bind-9-9.10.2
 
 dependencies:
+- libjson
 
 files:
 - bind/placeholder
@@ -411,6 +401,10 @@ cd bind-9.10.2
 make
 make install
 ```
+
+##### 1. Create Package *libjson-7.6.1*
+
+
 
 #### Configure a blobstore
 We skip this section because we're not using the blobstore&mdash;we're downloading the source and building from it.
@@ -800,8 +794,83 @@ May  9 01:42:41 localhost named[23167]: message repeated 15 times: [ client 109.
 
 Admittedly there are mechanisms to reduce the cost of the Director VM&mdash;for example, we could  suspend the Director VM instance after it has deployed the DNS server.
 
-### Troubleshooting the Deployment
+### Troubleshooting BOSH Releases/Deployments
 Here is an example of the steps we followed when our deployment didn't work. Note that several of the problems stemmed from our decision to rename our job from *bind* to *named*.
+
+#### Troubleshooting BOSH compilation VM problems
+
+Your compilation may fail the first time you do a deploy; the output of the `bosh deploy` will be similar to the following:
+
+```
+  Started compiling packages > bind-9-9.10.2/9e6f17bcebdc0acf860adf28de34e5a091c32173. Failed: Action Failed get_task: Task 3441c0a4-ce13-4d02-4e12-5c04f886145d result: Compiling package bind-9-9.10.2: Running packaging script: Command exited with 2; Truncated stdout: a - unix/time.o...
+```
+
+The first thing to do is edit the packaging script, change `set -e` to `set +e` (we don't want the compilation to abort when it hits an error) and append `sleep 600` at the end of the script (so the script will linger long enough for us to debug).
+
+```
+vim packages/bind-9-9.10.2/packaging
+    set +e
+    ...
+    sleep 600
+bosh create release --force
+bosh upload release
+bosh -n deploy
+    ...
+    Started compiling packages > bind-9-9.10.2/3220fc6c003bf67bd07bc63a124d96c315155625.
+```
+
+When the deploy enters the compilation phase, go to another terminal window to find the IP address of the compilation VM:
+
+```
+bosh vms
+    ...
+    +-----------------+---------+---------------+-------------+
+    | Job/index       | State   | Resource Pool | IPs         |
+    +-----------------+---------+---------------+-------------+
+    | unknown/unknown | running |               | 10.244.0.70 |
+    +-----------------+---------+---------------+-------------+
+```
+
+Our compilation VM is at 10.244.0.70. We log into it to see the status of the compilation:
+
+```
+ssh vcap@10.244.0.70 # password is 'c1oudc0w'
+sudo su - # password is still 'c1oudc0w'
+```
+
+We find the `sleep` command and use the PID (239 in this case) and the /proc filesystem to determine where the compilation directory is:
+
+```
+ps auxwww | grep sleep
+    root       239  0.0  0.0   4124   316 ?        S<   02:16   0:00 sleep 600
+ls -l /proc/239/cwd
+    lrwxrwxrwx 1 root root 0 May 25 02:21 /proc/239/cwd -> /var/vcap/data/compile/bind-9-9.10.2/bind-9.10.2
+```
+
+We `cd` into the compilation directory.
+
+```
+cd /var/vcap/data/compile/bind-9-9.10.2/bind-9.10.2
+```
+
+We manually want to compile the package, but first we set the `BOSH_INSTALL_TARGET` environment variable.
+
+```
+export BOSH_INSTALL_TARGET=/var/vcap/packages/bind-9-9.10.2/
+```
+
+We change to the parent directory and run the `packaging` script with tracing enabled to see where it's failing:
+
+```
+cd ..
+bash -x packaging
+    ...
+    packaging: line 29: --prefix=/var/vcap/packages/bind-9-9.10.2/: No such file or directory
+```
+
+Our packaging script had an error. We fix the error locally on the compilation VM and test before backporting the change to our release.
+
+#### Troubleshooting the BOSH deployment
 
 ```
 bosh -n deploy
