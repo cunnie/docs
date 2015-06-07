@@ -795,7 +795,9 @@ May  9 01:42:41 localhost named[23167]: message repeated 15 times: [ client 109.
 Admittedly there are mechanisms to reduce the cost of the Director VM&mdash;for example, we could  suspend the Director VM instance after it has deployed the DNS server.
 
 ### Troubleshooting BOSH Releases/Deployments
-Here is an example of the steps we followed when our deployment didn't work. Note that several of the problems stemmed from our decision to rename our job from *bind* to *named*.
+This blog post describes the steps we took to resolve failures when developing our [BOSH DNS Release](http://blog.pivotal.io/labs/labs/how-to-create-a-bosh-release-of-a-dns-server). Although the steps described are specific to our BOSH DNS Release, we feel that they can be generalized to troubleshooting most if not all BOSH Releases.
+
+Note that several of the problems stemmed from our decision to rename our job from *bind* to *named*.
 
 #### Troubleshooting BOSH compilation VM problems
 
@@ -834,15 +836,23 @@ bosh vms
 Our compilation VM is at 10.244.0.70. We log into it to see the status of the compilation:
 
 ```
+ssh vcap@10.244.0.70
+ssh: connect to host 10.244.0.70 port 22: Operation timed out
+```
+We cannot connect because we haven't set our route to our BOSH Lite's VMs. Let's set our route and try again:
+
+```
+sudo route add -net 10.244.0.0/24 192.168.50.4
 ssh vcap@10.244.0.70 # password is 'c1oudc0w'
 sudo su - # password is still 'c1oudc0w'
 ```
 
-We find the `sleep` command and use the PID (239 in this case) and the /proc filesystem to determine where the compilation directory is:
+We find the `sleep` command and use the PID (239 in this case) for two things: we suspend the `sleep` process (to prevent the compilation VM being torn down while we're still working on it when the `sleep` expires) and to determine (via the /proc filesystem) to determine where the compilation directory is:
 
 ```
 ps auxwww | grep sleep
     root       239  0.0  0.0   4124   316 ?        S<   02:16   0:00 sleep 600
+kill -STOP 239 # suspend `sleep`
 ls -l /proc/239/cwd
     lrwxrwxrwx 1 root root 0 May 25 02:21 /proc/239/cwd -> /var/vcap/data/compile/bind-9-9.10.2/bind-9.10.2
 ```
@@ -869,6 +879,12 @@ bash -x packaging
 ```
 
 Our packaging script had an error. We fix the error locally on the compilation VM and test before backporting the change to our release.
+
+When we're finished, we resume the `sleep` in so that it exits so that BOSH can tear down the now-unneeded compilation VM:
+
+```
+killall -CONT sleep
+```
 
 #### Troubleshooting the BOSH deployment
 
