@@ -807,7 +807,10 @@ Your compilation may fail the first time you do a deploy; the output of the `bos
   Started compiling packages > bind-9-9.10.2/9e6f17bcebdc0acf860adf28de34e5a091c32173. Failed: Action Failed get_task: Task 3441c0a4-ce13-4d02-4e12-5c04f886145d result: Compiling package bind-9-9.10.2: Running packaging script: Command exited with 2; Truncated stdout: a - unix/time.o...
 ```
 
-The first thing to do is edit the packaging script, change `set -e` to `set +e` (we don't want the compilation to abort when it hits an error) and append `sleep 600` at the end of the script (so the script will linger long enough for us to debug).
+We modify the packaging script to help us debug:
+
+* change `set -e` to `set +e` (we don't want the compilation to abort when it hits an error)
+* append `sleep 600` at the end of the script (so the script will linger long enough for us to debug).
 
 ```
 vim packages/bind-9-9.10.2/packaging
@@ -847,7 +850,10 @@ ssh vcap@10.244.0.70 # password is 'c1oudc0w'
 sudo su - # password is still 'c1oudc0w'
 ```
 
-We find the `sleep` command and use the PID (239 in this case) for two things: we suspend the `sleep` process (to prevent the compilation VM being torn down while we're still working on it when the `sleep` expires) and to determine (via the /proc filesystem) to determine where the compilation directory is:
+We use `ps` to find the `sleep` command's PID (239 in this case), which we use to accomplish the following:
+
+1. to suspend the `sleep` process (to prevent the compilation VM being torn down while we're still working on it when the `sleep` expires)
+2. to determine (via the /proc filesystem) to determine where the compilation directory is:
 
 ```
 ps auxwww | grep sleep
@@ -863,7 +869,7 @@ We `cd` into the compilation directory.
 cd /var/vcap/data/compile/bind-9-9.10.2/bind-9.10.2
 ```
 
-We manually want to compile the package, but first we set the `BOSH_INSTALL_TARGET` environment variable.
+We set the `BOSH_INSTALL_TARGET` environment variable.
 
 ```
 export BOSH_INSTALL_TARGET=/var/vcap/packages/bind-9-9.10.2/
