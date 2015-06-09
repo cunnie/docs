@@ -1360,3 +1360,21 @@ nslookup google.com 10.244.0.66
 ```
 
 At this point we conclude our debugging, for our release is working as expected.
+
+### *bosh-init* troubleshooting
+
+```
+bosh-init deploy config/bind-9-ntp-aws.yml
+Command 'deploy' failed:
+  Deploying:
+    Building state for instance 'named_and_ntp/0':
+      Rendering job templates for instance 'named_and_ntp/0':
+        Rendering templates for job 'named/6220dda89cf6b85d6821667e63661ee059b8637a':
+          Rendering template src: ctl.sh, dst: bin/ctl:
+            Rendering template src: /var/folders/5q/p12p8rq57hx83fm555qrd2k80000gn/T/bosh-init-release258719544/extracted_jobs/named/templates/ctl.sh, dst: /var/folders/5q/p12p8rq57hx83fm555qrd2k80000gn/T/rendered-jobs231930644/bin/ctl:
+              Running ruby to render templates:
+                Running command: 'ruby /var/folders/5q/p12p8rq57hx83fm555qrd2k80000gn/T/erb-renderer068207971/erb-render.rb /var/folders/5q/p12p8rq57hx83fm555qrd2k80000gn/T/erb-renderer068207971/erb-context.json /var/folders/5q/p12p8rq57hx83fm555qrd2k80000gn/T/bosh-init-release258719544/extracted_jobs/named/templates/ctl.sh /var/folders/5q/p12p8rq57hx83fm555qrd2k80000gn/T/rendered-jobs231930644/bin/ctl', stdout: '', stderr: '/var/folders/5q/p12p8rq57hx83fm555qrd2k80000gn/T/erb-renderer068207971/erb-render.rb:11:in `merge!': no implicit conversion of nil into Hash (TypeError)
+	from /var/folders/5q/p12p8rq57hx83fm555qrd2k80000gn/T/erb-renderer068207971/
+```
+
+We mistakenly used the release names (e.g. *bind-9* and *ntp*) instead of our job names (e.g. *named* and *ntpd*) in our manifest's *properties* section.
