@@ -799,6 +799,26 @@ This blog post describes the steps we took to resolve failures when developing o
 
 Note that several of the problems stemmed from our decision to rename our job from *bind* to *named*.
 
+#### Troubleshooting BOSH pre-compilation problesm
+
+```
+bosh create release --force --with-tarball
+[WARNING] Missing blobstore configuration, please update config/final.yml before making a final release
+...
+Building jobs
+-------------
+Job spec is missing
+```
+
+We mistakenly put a single quote within a single-quoted string in our spec file (i.e. 'The contents of named.conf (named's configuration file)'). We convert the string to double-quotes so our jobs/named/spec file looks like this:
+
+```
+...
+properties:
+  named_conf:
+    description: "The contents of named.conf (named's configuration file)"
+```
+
 #### Troubleshooting BOSH compilation VM problems
 
 Your compilation may fail the first time you do a deploy; the output of the `bosh deploy` will be similar to the following:
