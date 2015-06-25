@@ -812,6 +812,8 @@ Job spec is missing
 
 We mistakenly put a single quote within a single-quoted string in our spec file (i.e. 'The contents of named.conf (named's configuration file)'). We convert the string to double-quotes so our jobs/named/spec file looks like this:
 
+FIXME: see https://github.com/cloudfoundry/bosh/issues/804
+
 ```
 ...
 properties:
@@ -832,9 +834,19 @@ We modify the packaging script to help us debug:
 * change `set -e` to `set +e` (we don't want the compilation to abort when it hits an error)
 * append `sleep 600` at the end of the script (so the script will linger long enough for us to debug).
 
+
+FIXME:
+
+* don't set `set +e`
+* set sleep super-high (8 horus)
+* don't kill -STOP or killall -CONT, just kill when you're done, and
+  the thing will fail
+* FIXME: Dmitriy says you might want to put your sleep ahead of the portion that fails (typically
+the `make` command) and proceed to troubleshoot by hand.
+
 ```
 vim packages/bind-9-9.10.2/packaging
-    set +e
+    set -e
     ...
     sleep 600
 bosh create release --force
@@ -843,6 +855,7 @@ bosh -n deploy
     ...
     Started compiling packages > bind-9-9.10.2/3220fc6c003bf67bd07bc63a124d96c315155625.
 ```
+
 
 When the deploy enters the compilation phase, go to another terminal window to find the IP address of the compilation VM:
 
@@ -945,7 +958,7 @@ bosh vms
   +-----------------+--------------------+---------------+-----+
 ...
 ```
-We tell BOSH to run an internal consistency check ("cck", i.e. "cloud check"):
+We tell BOSH to run an IAAS consistency check ("cck", i.e. "cloud check"):
 
 ```
 bosh cck
@@ -1398,3 +1411,9 @@ Command 'deploy' failed:
 ```
 
 We mistakenly used the release names (e.g. *bind-9* and *ntp*) instead of our job names (e.g. *named* and *ntpd*) in our manifest's *properties* section.
+
+References
+
+http://bosh.io/docs/aws-cpi.html#errors
+
+FIXME:
