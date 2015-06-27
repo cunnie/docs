@@ -795,7 +795,7 @@ May  9 01:42:41 localhost named[23167]: message repeated 15 times: [ client 109.
 Admittedly there are mechanisms to reduce the cost of the Director VM&mdash;for example, we could  suspend the Director VM instance after it has deployed the DNS server.
 
 ### Troubleshooting BOSH Releases/Deployments
-This blog post describes the steps we took to resolve failures when developing our [BOSH DNS Release](http://blog.pivotal.io/labs/labs/how-to-create-a-bosh-release-of-a-dns-server). Although the steps described are specific to our BOSH DNS Release, we feel that they can be generalized to troubleshooting most if not all BOSH Releases.
+<img src="http://blog.pivotal.io/wp-content/uploads/2015/06/featured-data-kernel.png" alt="featured-data-kernel" width="220" height="220" class="alignleft size-full wp-image-32867" /> This blog post describes the steps we took to resolve failures when developing our [BOSH DNS Release](http://blog.pivotal.io/labs/labs/how-to-create-a-bosh-release-of-a-dns-server). Although the steps described are specific to our BOSH DNS Release, we feel that they can be generalized to troubleshooting most if not all BOSH Releases.
 
 Debugging a BOSH Release and it subsequent deployment can be challenging, but there are a few tricks which can ease the burden (e.g. preventing the tear-down of the compilation VM in order to troubleshoot the failure *in vivo*).
 
@@ -1413,8 +1413,14 @@ Command 'deploy' failed:
 
 We mistakenly used the release names (e.g. *bind-9* and *ntp*) instead of our job names (e.g. *named* and *ntpd*) in our manifest's *properties* section.
 
-References
+### References
 
-http://bosh.io/docs/aws-cpi.html#errors
+The official BOSH documentation contains a list of IaaS-specific errors that one may encounter during deploymens:
 
-FIXME:
+* [AWS](http://bosh.io/docs/aws-cpi.html#errors)
+* [OpenStack](http://bosh.io/docs/openstack-cpi.html#errors)
+* [vSphere](http://bosh.io/docs/vsphere-cpi.html#errors)
+
+### Acknowledgements
+
+[Dmitriy Kalinin](https://github.com/cppforlife)'s input was invaluable when correcting errors and simplifying the debugging process.
