@@ -803,7 +803,7 @@ Note that several of the problems described here stemmed from our decision to re
 
 #### 0. Troubleshooting BOSH compilation VM problems
 
-Your compilation may fail the first time you do a deploy; the output of the `bosh deploy` will be similar to the following:
+Our compilation fails the first time; this is output of the `bosh deploy` command:
 
 ```
   Started compiling packages > bind-9-9.10.2/9e6f17bcebdc0acf860adf28de34e5a091c32173. Failed: Action Failed get_task: Task 3441c0a4-ce13-4d02-4e12-5c04f886145d result: Compiling package bind-9-9.10.2: Running packaging script: Command exited with 2; Truncated stdout: a - unix/time.o...
@@ -811,10 +811,11 @@ Your compilation may fail the first time you do a deploy; the output of the `bos
 
 We modify the packaging script to help us debug:
 
-* insert `sleep 10800` (10800 seconds, 3 hours, should be long enough for us to troubleshoot this particular error)
+* insert `sleep 10800` (10800 seconds (3 hours) should be long enough for us to troubleshoot this particular error)
 
 ```
 vim packages/bind-9-9.10.2/packaging
+    set -e
     sleep 10800
     ...
 bosh create release --force
