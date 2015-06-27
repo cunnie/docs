@@ -685,7 +685,11 @@ Please add a host-only network to the machine (with either DHCP or a
 static IP) for NFS to work.
 ```
 
-# Why Is My NTP Server Costing Me $500/Year? Part 3: Locking Down
+# Why Is My NTP Server Costing Me $500/Year? Part 3: Throttling the Bad Guys
+
+<img src="http://blog.pivotal.io/wp-content/uploads/2015/06/featured-data-kernel.png" alt="featured-data-kernel" width="220" height="220" class="alignleft size-full wp-image-33145" /> Running a Network Time Protocol (NTP) server on the Internet can incur significant ($500/year) bandwidth charges, much of it due to poorly-behaved clients. In this blog post we explore using NTP's built-in rate-limiting controls to throttle the requests from poorly-behaved clients while honoring the requests from the well-behaved ones. We find that with the proper tools in place we can reduce our charges as much as 25% (we can save $125/year).
+
+In the first part of our series, [*Why Is My NTP Server Costing $500/Year? Part 1*](http://pivotallabs.com/ntp-server-costing-500year/), we conclusively determined that our NTP server was costing us $500/year in bandwidth charges. In our second installment, [*Why Is My NTP Server Costing Me $500/Year? Part 2: Characterizing the NTP Clients*](http://pivotallabs.com/ntp-server-costing-500year-part-2-characterizing-ntp-clients/), we came to the conclusion that the poorly-behaved clients were most likely embedded systems with badly-coded NTP clients and not Windows, OS X, Linux, or FreeBSD.
 
 ### *ntpd* Rate-Limiting:
 
@@ -710,7 +714,17 @@ ntpq -c sysstats
 We determine the following:
 
 * our server receives an average of **1789 NTP queries/second** (2,434,660,116 queries &div; 136,039 seconds)
+* **25% of the NTP queries are rate-limited** ( 630616082 rate-limited queries &div; 2434660116 packets received &times; 100%). These are bad NTP clients.
 * our server has been up **15.7 days** (136,039 seconds &div; 86,400 seconds/day)
+
+### t2.micro with HVM versus t1.micro with paravirtualization
+We were curious if Amazon's new virtualization type, [HVM](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/virtualization_types.html), would perform better than the original virtualization type, *paravirtualization*. Our answer seems to indicate that HVM performs twice as well as paravirtualization, at least in regards latency (i.e. HVM instance has a latency of roughly -2ms to +2ms (4ms spread), and the paravirtualization instance has a latency of -4ms to +4ms (8ms spread)) (lower is better). See the charts below.
+
+[caption id="attachment_33419" align="alignnone" width="300"]<a href="http://blog.pivotal.io/wp-content/uploads/2015/06/ntp_pool_amazon-300x288.png"><img src="http://blog.pivotal.io/wp-content/uploads/2015/06/ntp_pool_amazon-300x288-300x288.png" alt="t1.micro with paravirtualization. Notice the points vary from -4ms to +4ms (the axis on the left). Keep in mind the y axis is logarithmic." width="300" height="288" class="size-medium wp-image-33419" /></a> t1.micro with paravirtualization. Notice the points vary from -4ms to +4ms (the axis on the left). Keep in mind the y axis is logarithmic.[/caption]
+
+[caption id="attachment_33418" align="alignnone" width="300"]<a href="http://blog.pivotal.io/wp-content/uploads/2015/06/ntp_pool_amazon-HVM-564x538.png"><img src="http://blog.pivotal.io/wp-content/uploads/2015/06/ntp_pool_amazon-HVM-564x538-300x286.png" alt="t2.micro with HVM virtualization. Notice that the points tend to cluster in two bands at -2ms and +2ms (the axis on the left).  We hypothesize that this may be due to the VM having access to the CPU once every 4ms, but we are not sure. Keep in mind the y axis is logarithmic." width="300" height="286" class="size-medium wp-image-33418" /></a> t2.micro with HVM virtualization. Notice the points cluster in two bands at -2ms and +2ms (the axis on the left).  We hypothesize that this may be due to the VM having access to the CPU once every 4ms, but we are not sure. Keep in mind the y axis is logarithmic.[/caption]
+
+Disclaimer: these charts are not definitive: many factors affect latency. The t2.micro chart is much newer (June 2015) than the t2.micro chart (April 2014), and many changes to the AWS infrastructure may have occurred in the interim. For example, the t2.micro may be running on much newer, faster hardware.
 
 ### References
 
