@@ -811,24 +811,12 @@ Your compilation may fail the first time you do a deploy; the output of the `bos
 
 We modify the packaging script to help us debug:
 
-* change `set -e` to `set +e` (we don't want the compilation to abort when it hits an error)
-* append `sleep 600` at the end of the script (so the script will linger long enough for us to debug).
-
-
-FIXME:
-
-* don't set `set +e`
-* set sleep super-high (8 horus)
-* don't kill -STOP or killall -CONT, just kill when you're done, and
-  the thing will fail
-* FIXME: Dmitriy says you might want to put your sleep ahead of the portion that fails (typically
-the `make` command) and proceed to troubleshoot by hand.
+* insert `sleep 10800` (10800 seconds, 3 hours, should be long enough for us to troubleshoot this particular error)
 
 ```
 vim packages/bind-9-9.10.2/packaging
-    set -e
+    sleep 10800
     ...
-    sleep 600
 bosh create release --force
 bosh upload release
 bosh -n deploy
@@ -862,15 +850,11 @@ ssh vcap@10.244.0.70 # password is 'c1oudc0w'
 sudo su - # password is still 'c1oudc0w'
 ```
 
-We use `ps` to find the `sleep` command's PID (239 in this case), which we use to accomplish the following:
-
-1. to suspend the `sleep` process (to prevent the compilation VM being torn down while we're still working on it when the `sleep` expires)
-2. to determine (via the /proc filesystem) to determine where the compilation directory is:
+We use `ps` to find the `sleep` command's PID (239 in this case), which we use to determine (via the /proc filesystem) the location of the compilation directory:
 
 ```
 ps auxwww | grep sleep
-    root       239  0.0  0.0   4124   316 ?        S<   02:16   0:00 sleep 600
-kill -STOP 239 # suspend `sleep`
+    root       239  0.0  0.0   4124   316 ?        S<   02:16   0:00 sleep 10800
 ls -l /proc/239/cwd
     lrwxrwxrwx 1 root root 0 May 25 02:21 /proc/239/cwd -> /var/vcap/data/compile/bind-9-9.10.2/bind-9.10.2
 ```
@@ -887,10 +871,12 @@ We set the `BOSH_INSTALL_TARGET` environment variable.
 export BOSH_INSTALL_TARGET=/var/vcap/packages/bind-9-9.10.2/
 ```
 
-We change to the parent directory and run the `packaging` script with tracing enabled to see where it's failing:
+We change to the parent directory, edit the `packaging` script to remove the `sleep` command, and run the script with tracing enabled to see where it's failing:
 
 ```
 cd ..
+vim packaging
+    # sleep 10800
 bash -x packaging
     ...
     packaging: line 29: --prefix=/var/vcap/packages/bind-9-9.10.2/: No such file or directory
@@ -898,13 +884,17 @@ bash -x packaging
 
 Our packaging script had an error. We fix the error locally on the compilation VM and test before backporting the change to our release.
 
-When we're finished, we resume the `sleep` in so that it exits so that BOSH can tear down the now-unneeded compilation VM:
+When we're finished, we kill the `sleep` process:
+
+* `sleep` will exit with a non-zero return code
+* since we have configured our packaging script to exit on errors (via `set -e`), our packaging script will exit with a non-zero return code
+* BOSH, upon receiving the non-zero return code from the packaging script, will tear down the now-unneeded compilation VM. BOSH will assume compilation has failed and won't attempt a deploy.
 
 ```
-killall -CONT sleep
+killall sleep
 ```
 #### 1. Troubleshooting BOSH pre-compilation problems
-Sometimes we fail before reaching the compilation phase.
+We may fail before reaching the compilation phase:
 
 ```
 bosh create release --force --with-tarball
@@ -915,13 +905,15 @@ Building jobs
 Job spec is missing
 ```
 
-We mistakenly put a single quote within a single-quoted string in our spec file (i.e. 'The contents of named.conf (named's configuration file)'). We convert the string to double-quotes so our jobs/named/spec file looks like this:
-FIXME: see https://github.com/cloudfoundry/bosh/issues/804
+We examine our *jobs/named/spec* file; we notice that we mistakenly put a single quote within a single-quoted string in our spec file. We double-quote the string in order to fix the problem (we are not the only ones to have encountered this [issue](https://github.com/cloudfoundry/bosh/issues/804))
 
+##### Broken spec:
 ```
-...
-properties:
-  named_conf:
+    description: 'The contents of named.conf (named's configuration file)'
+```
+
+##### Fixed spec (double-quotes):
+```
     description: "The contents of named.conf (named's configuration file)"
 ```
 
