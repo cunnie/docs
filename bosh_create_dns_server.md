@@ -1408,7 +1408,7 @@ We mistakenly used the release names (e.g. *bind-9* and *ntp*) instead of our jo
 
 ### References
 
-The official BOSH documentation contains a list of IaaS-specific errors that one may encounter during deploymens:
+The official BOSH documentation contains a list of IaaS-specific errors that one may encounter during deployments:
 
 * [AWS](http://bosh.io/docs/aws-cpi.html#errors)
 * [OpenStack](http://bosh.io/docs/openstack-cpi.html#errors)
