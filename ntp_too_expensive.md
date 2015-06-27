@@ -684,3 +684,35 @@ NFS requires a host-only network to be created.
 Please add a host-only network to the machine (with either DHCP or a
 static IP) for NFS to work.
 ```
+
+# Why Is My NTP Server Costing Me $500/Year? Part 3: Locking Down
+
+### *ntpd* Rate-Limiting:
+
+We determine the effectiveness of rate limiting by running the following command on our NTP server. In our initial configuration (`restrict kod limited`) and no tuning, we see that over **25% of the NTP queries are rate-limited** ( 630616082 &div; 2434660116 &times; 100% = 25.9% )):
+
+```
+ntpq -c sysstats
+    uptime:                 1360392
+    sysstats reset:         1360392
+    packets received:       2434660116
+    current version:        1498949584
+    older version:          935661639
+    bad length or format:   16090
+    authentication failed:  276043
+    declined:               179
+    restricted:             42729
+    rate limited:           630616082
+    KoD responses:          156166249
+    processed for time:     4043
+```
+
+We determine the following:
+
+* our server receives an average of **1789 NTP queries/second** (2,434,660,116 queries &div; 136,039 seconds)
+* our server has been up **15.7 days** (136,039 seconds &div; 86,400 seconds/day)
+
+### References
+
+* The NTP canonical documentation describes in technical detail the [*ntpd* rate-limiting options](https://www.eecis.udel.edu/~mills/ntp/html/rate.html)
+* *ntpd*'s Most Recently Used (MRU) source IP addresses of NTP clients was [increased from the default of 600](http://lists.ntp.org/pipermail/questions/2010-April/026306.html) to accommodate public servers which can have thousands of queries per second. Our server receives close to 2,000 queries per second.
