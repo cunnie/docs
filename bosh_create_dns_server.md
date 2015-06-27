@@ -797,31 +797,11 @@ Admittedly there are mechanisms to reduce the cost of the Director VM&mdash;for 
 ### Troubleshooting BOSH Releases/Deployments
 This blog post describes the steps we took to resolve failures when developing our [BOSH DNS Release](http://blog.pivotal.io/labs/labs/how-to-create-a-bosh-release-of-a-dns-server). Although the steps described are specific to our BOSH DNS Release, we feel that they can be generalized to troubleshooting most if not all BOSH Releases.
 
-Note that several of the problems stemmed from our decision to rename our job from *bind* to *named*.
+Debugging a BOSH Release and it subsequent deployment can be challenging, but there are a few tricks which can ease the burden (e.g. preventing the tear-down of the compilation VM in order to troubleshoot the failure *in vivo*).
 
-#### Troubleshooting BOSH pre-compilation problesm
+Note that several of the problems described here stemmed from our decision to rename our job from *bind* to *named*.
 
-```
-bosh create release --force --with-tarball
-[WARNING] Missing blobstore configuration, please update config/final.yml before making a final release
-...
-Building jobs
--------------
-Job spec is missing
-```
-
-We mistakenly put a single quote within a single-quoted string in our spec file (i.e. 'The contents of named.conf (named's configuration file)'). We convert the string to double-quotes so our jobs/named/spec file looks like this:
-
-FIXME: see https://github.com/cloudfoundry/bosh/issues/804
-
-```
-...
-properties:
-  named_conf:
-    description: "The contents of named.conf (named's configuration file)"
-```
-
-#### Troubleshooting BOSH compilation VM problems
+#### 0. Troubleshooting BOSH compilation VM problems
 
 Your compilation may fail the first time you do a deploy; the output of the `bosh deploy` will be similar to the following:
 
@@ -855,7 +835,6 @@ bosh -n deploy
     ...
     Started compiling packages > bind-9-9.10.2/3220fc6c003bf67bd07bc63a124d96c315155625.
 ```
-
 
 When the deploy enters the compilation phase, go to another terminal window to find the IP address of the compilation VM:
 
@@ -924,8 +903,30 @@ When we're finished, we resume the `sleep` in so that it exits so that BOSH can 
 ```
 killall -CONT sleep
 ```
+#### 1. Troubleshooting BOSH pre-compilation problems
+Sometimes we fail before reaching the compilation phase.
 
-#### Troubleshooting the BOSH deployment
+```
+bosh create release --force --with-tarball
+[WARNING] Missing blobstore configuration, please update config/final.yml before making a final release
+...
+Building jobs
+-------------
+Job spec is missing
+```
+
+We mistakenly put a single quote within a single-quoted string in our spec file (i.e. 'The contents of named.conf (named's configuration file)'). We convert the string to double-quotes so our jobs/named/spec file looks like this:
+FIXME: see https://github.com/cloudfoundry/bosh/issues/804
+
+```
+...
+properties:
+  named_conf:
+    description: "The contents of named.conf (named's configuration file)"
+```
+
+#### 2. Troubleshooting the BOSH deployment
+These are the steps we followed when our deployment successfully completed the compilation phase only to fail during deployment.
 
 ```
 bosh -n deploy
