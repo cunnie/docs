@@ -13,4 +13,6 @@ aws s3 ls s3://
 # so do the next two
 aws s3 ls docker-boshrelease
 aws s3 ls s3://docker-boshrelease
+# create a bucket "ntp-release"
+aws s3 mb s3://ntp-release
 ```
