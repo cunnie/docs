@@ -15,4 +15,8 @@ aws s3 ls docker-boshrelease
 aws s3 ls s3://docker-boshrelease
 # create a bucket "ntp-release"
 aws s3 mb s3://ntp-release
+# empty a bucket
+aws s3 rm --recursive s3://bosh-releases
+# delete a bucket (as long as it's empty)
+aws s3 rb s3://bosh-releases
 ```
