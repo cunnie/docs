@@ -717,6 +717,34 @@ We determine the following:
 * **25% of the NTP queries are rate-limited** ( 630616082 rate-limited queries &div; 2434660116 packets received &times; 100%). These are bad NTP clients.
 * our server has been up **15.7 days** (136,039 seconds &div; 86,400 seconds/day)
 
+
+ntp.conf
+
+We explore reducing the minimum interval between 2 packets from 2 seconds
+to one second. This is to accommodate clients who barely fall within the
+interval due to jitter. http://lists.ntp.org/pipermail/questions/2010-April/026306.html
+
+Also, we explore not sending a KoD packet
+
+* no kod
+* `discard minimum 0`
+
+```
+/var/vcap/packages/ntp-4.2.8p2/bin/ntpq -c sysstats
+  uptime:                 4566190
+  sysstats reset:         4566190
+  packets received:       9495345201
+  current version:        5961053583
+  older version:          3532450004
+  bad length or format:   68989
+  authentication failed:  1503697
+  declined:               889
+  restricted:             72709
+  rate limited:           1045933181
+  KoD responses:          0
+  processed for time:     17398
+```
+
 ### t2.micro with HVM versus t1.micro with paravirtualization
 We were curious if Amazon's new virtualization type, [HVM](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/virtualization_types.html), would perform better than the original virtualization type, *paravirtualization*. Our answer seems to indicate that HVM performs twice as well as paravirtualization, at least in regards latency (i.e. HVM instance has a latency of roughly -2ms to +2ms (4ms spread), and the paravirtualization instance has a latency of -4ms to +4ms (8ms spread)) (lower is better). See the charts below.
 
