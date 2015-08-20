@@ -1,6 +1,6 @@
 ## Using [BOSH Community S3](https://github.com/cloudfoundry-community/bosh-gen#share-bosh-releases)
 
-```
+```bash
 brew install awscli
 aws configure
   AWS Access Key ID [****************X4WQ]: 
@@ -20,4 +20,14 @@ aws s3 rm --recursive s3://bosh-releases
 # delete a bucket (as long as it's empty)
 aws s3 rb s3://bosh-releases
 aws s3 cp releases/ntp/ntp-2.tgz s3://ntp-release/ --grants read=uri=http://acs.amazonaws.com/groups/global/AllUsers
+#  list your buckets
+aws s3api get-bucket-lifecycle --bucket ntp-release
+aws s3api put-bucket-policy --bucket ntp-release --policy file://<(echo '{
+  "Statement": [{
+    "Action": [ "s3:GetObject" ],
+    "Effect": "Allow",
+    "Resource": "arn:aws:s3:::ntp-release/*",
+    "Principal": { "AWS": ["*"] }
+  }]
+}')
 ```
