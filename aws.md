@@ -19,4 +19,5 @@ aws s3 mb s3://ntp-release
 aws s3 rm --recursive s3://bosh-releases
 # delete a bucket (as long as it's empty)
 aws s3 rb s3://bosh-releases
+aws s3 cp releases/ntp/ntp-2.tgz s3://ntp-release/ --grants read=uri=http://acs.amazonaws.com/groups/global/AllUsers
 ```
