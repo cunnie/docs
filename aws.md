@@ -22,12 +22,15 @@ aws s3 rb s3://bosh-releases
 aws s3 cp releases/ntp/ntp-2.tgz s3://ntp-release/ --grants read=uri=http://acs.amazonaws.com/groups/global/AllUsers
 #  list your buckets
 aws s3api get-bucket-lifecycle --bucket ntp-release
-aws s3api put-bucket-policy --bucket ntp-release --policy file://<(echo '{
+cat > /tmp/bucket-policy.json <<EOF
+{
   "Statement": [{
     "Action": [ "s3:GetObject" ],
     "Effect": "Allow",
     "Resource": "arn:aws:s3:::ntp-release/*",
     "Principal": { "AWS": ["*"] }
   }]
-}')
+}
+EOF
+aws s3api put-bucket-policy --bucket ntp-release --policy file:///tmp/bucket-policy.json
 ```

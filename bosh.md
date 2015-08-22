@@ -1,4 +1,4 @@
-```
+```bash
 cd ~/workspace/ntp-release
 vim config/final.yml
   ---
@@ -10,3 +10,5 @@ vim config/final.yml
 bosh create release --with-tarball --final --with-tarball
 aws s3 cp releases/ntp/ntp-2.tgz s3://ntp-release/ --grants read=uri=http://acs.amazonaws.com/groups/global/AllUsers
 ```
+
+Read [AWSCLI](aws.md) for instructions to create the bucket with the correct permissions
