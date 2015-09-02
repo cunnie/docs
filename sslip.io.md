@@ -13,10 +13,10 @@ Costs are a vital but often-overlooked dimension of smaller engineering projects
 The sslip.io service costs $238.55 per year, two-thirds of which are paid to Amaozn to support the two <sup>[[2]](#rfc1034)</sup> DNS nameservers that run 24 hours a day, answering queries for the sslip.io domain. In our case we were fortunate&mdash;the servers were already in place for a previous project, eliminating that line item (i.e. we only had to pay for the registration and certificates, not for the servers).
 
 |Expense|Vendor|Cost|Cost / year
-|-------------
+|-------|------|----|----------
 |*sslip.io* domain name registration|namecheap.com|$164.40 5- year|$32.88
 |\**.sslip.io* wildcard cert|cheapsslshop.com|$165.00 3-year|$55.00
-|2 &times; EC2 t2.micro instances|Amazon AWS|$0.0172 / hour  <sup>[[3]](#ec2_pricing)|$150.67
+|2 &times; EC2 t2.micro instances|Amazon AWS|$0.0172 / hour  <sup>[[3]](#ec2_pricing)</sup>|$150.67
 
 ### A Mysterious 1-Second Delay, Unmasked
 
@@ -64,4 +64,4 @@ two servers, and many zones have more redundancy than that.
 
 <a name="ec2_pricing"><sup>3</sup></a> Amazon effectively charges [$0.0086/hour](https://aws.amazon.com/ec2/pricing/) for a 1 year term all-upfront t2.micro reserved instance.
 
-<a name="emoji"><sup>4</sup></a> The sharp-eyed reader may notice that ":0100" which appears in maria.nono.com's IPv6 address is not appropriately abbreviated (i.e. the leading "0" should be stripped). The reason the 0 isn't stripped is that when it is stripped, it becomes the emoji ["100"](http://emojipedia.org/hundred-points-symbol/) (:100:) in Atom, the GitHub MarkDown editor.
+<a name="emoji"><sup>4</sup></a> The sharp-eyed reader may notice that ":0100" which appears in maria.nono.com's IPv6 address is not appropriately abbreviated (i.e. the leading "0" should be stripped). The reason the 0 isn't stripped is that when it is stripped, it becomes the emoji ["100"](http://emojipedia.org/hundred-points-symbol/) (:100:), which has the unfortunate side-effect of turning a conventional, boring IPv6 address into a spectacle.
