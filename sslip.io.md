@@ -12,9 +12,7 @@ This blog post discusses how we <sup>[[1]](#authors)</sup> implemented the forme
 
 ### Modifying xip.io to create sslip.io
 
-xip.io's back end almost accomplished what we needed, but not quite: it lacked the ability
-to resolve hostnames that were in the sslip.io domain (i.e. not in an sslip.io subdomain). In fact, the typical
-sslip.io hostname did not resolve properly until it was 3 or more subdomains removed from the sslip.io domain. Here are some examples:
+xip.io's back end almost accomplished what we needed, but not quite: it lacked the ability to resolve hostnames that were in the sslip.io domain (i.e. not in an sslip.io subdomain). In fact, the typical sslip.io hostname did not resolve properly until it was 3 or more subdomains removed from the sslip.io domain. Here are some examples:
 
 |hostname|# of subdomains|IP address(es)|
 |----------|-----------------------|--------------|
@@ -24,9 +22,7 @@ sslip.io hostname did not resolve properly until it was 3 or more subdomains rem
 | 192.168.1.2.sslip.io | 3 | 192.168.1.2 (good) |
 | www.192.168.1.2.sslip.io | 4 | 192.168.1.2 (good) |
 
-**The hostname must be in the sslip.io domain for the wildcard certificate to work properly**; it will not work in an sslip.io subdomain. This is a technical limitation of wildcard
-certs and the manner in which browsers treat them (read
-more [here](http://security.stackexchange.com/questions/10538/what-certificates-are-needed-for-multi-level-subdomains)).
+**The hostname must be in the sslip.io domain for the wildcard certificate to work properly**; it will not work in an sslip.io subdomain. This is a technical limitation of wildcard certs and the manner in which browsers treat them (read more [here](http://security.stackexchange.com/questions/10538/what-certificates-are-needed-for-multi-level-subdomains)).
 
 Our solution: use dashes, not dots, to separate the numbers embedded in the hostname. Some examples:
 
@@ -57,7 +53,6 @@ We modified *xip-pdns.sh* to accommodate dashes as well as dots. Although we wer
 +        answer_subdomain_a_query_for dashed_ip
 +
 ```
-
 
 ### The Economics of sslip.io: $238.55 per year
 
@@ -94,8 +89,7 @@ unfortunate events (involving IPv6):
 - *nslookup* would fall back to the IPv4 address
 - the lookup would succeed.
 
-The fix was to force PowerDNS to bind to the IPv6 port by adding the following line
-to the *pdns.conf* file:
+The fix was to force PowerDNS to bind to the IPv6 port by adding the following lineto the *pdns.conf* file:
 
 ```
 local-ipv6=::
@@ -103,25 +97,20 @@ local-ipv6=::
 
 ### Acknowledgements
 
-We'd like to thank Pivotal Software for setting aside a hackday where we
-could implement sslip.io as a proof of concept.
+We'd like to thank Pivotal Software for setting aside a hackday where wecould implement sslip.io as a proof of concept.
 
-We'd like to thank Sam Stephenson for writing
-xip.io, which was the initial inspiration for sslip.io, and for suggesting the domain
-name sslip.io.
+We'd like to thank Sam Stephenson for writing xip.io, which was the initial inspiration for sslip.io, and for suggesting the domain name sslip.io.
 
 [Justin Smith](https://github.com/justinjsmith) consulted on the security implications of releasing an SSL certificate and key to the general public.
 
 ### Footnotes
 
-<a name="authors"><sup>1</sup></a> [Tyler Schultz](https://github.com/tylerschultz), [Alvaro Perez Shirley](https://github.com/APShirley),
+<a name="authors"><sup>1</sup></a> [Tyler Schultz](https://github.com/tylerschultz), [Alvaro Perez-Shirley](https://github.com/APShirley),
 and [Brian Cunnie](https://github.com/cunnie) created sslip.io
 
 <a name="ec2_pricing"><sup>2</sup></a> We must have at least two name servers; we can't get away with just one. Per [RFC 1034](http://tools.ietf.org/html/rfc1034):
 <blockquote>
-By
-administrative fiat, we require every zone to be available on at least
-two servers, and many zones have more redundancy than that.
+By administrative fiat, we require every zone to be available on at least two servers, and many zones have more redundancy than that.
 </blockquote>
 
 <a name="ec2_pricing"><sup>3</sup></a> Amazon effectively charges [$0.0086/hour](https://aws.amazon.com/ec2/pricing/) for a 1 year term all-upfront t2.micro reserved instance.
