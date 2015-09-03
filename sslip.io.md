@@ -32,9 +32,9 @@ Our solution: use dashes, not dots, to separate the numbers embedded in the host
 | 10-9-8-7.sslip.io | 0 | 10.9.8.7 |
 | www-172-16-0-1.sslip.io | 0 | 172.16.0.1 |
 
-We modified *xip-pdns.sh* to accommodate dashes as well as dots. Although we were surprised to discover that the xip.io back end was a bash script, we found the coding to be tight, and making the needed changes was fairly straightforward:
+We modified *xip-pdns.sh*, the core of the xip.io back end, to accommodate dashes as well as dots. Although we were surprised to discover that the xip.io back end program was a bash script, we found the coding to be tight, and making the needed changes was fairly straightforward:
 
-```diff
+```
 @@ -68,6 +68,7 @@ log() {
 +DASHED_IP_SUBDOMAIN_PATTERN="(^|-|\.)(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)-){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))\$"
 @@ -95,6 +96,10 @@ subdomain_is_ip() {
@@ -54,6 +54,17 @@ We modified *xip-pdns.sh* to accommodate dashes as well as dots. Although we wer
 +
 ```
 
+We made the changes, which led us to the next step: deploying our changes with BOSH.
+
+### Creating the BOSH release
+
+Creating the BOSH release was straightforward
+
+* We followed the [BOSH instructions](https://bosh.io/docs/create-release.html)
+* The release is available on [GitHub](https://github.com/APShirley/sslxip-release)
+* We cut corners when creating a release. Specifically, in our [packaging script](https://github.com/APShirley/sslxip-release/blob/master/packages/powerdns/packaging) we installed dependent packages (e.g. boost-devel, libmysqlclient-dev) directly using the OS (i.e. `yum` in the case of a CentOS stemcell, `apt-get` in the case of Ubuntu). This is strongly discouraged, but the alternative&mdash;building releases for the dependencies&mdash;would have jeopardized our ability to have something to present at the end of Hack Day.
+* The sample BOSH manifest can be customized for clients who would like to deploy their own version of sslip.io/xip.io.
+
 ### The Economics of sslip.io: $238.55 per year
 
 Costs are a vital but often-overlooked dimension of smaller engineering projects.
@@ -65,15 +76,6 @@ The sslip.io service costs $238.55 per year, two-thirds of which are paid to Ama
 |*sslip.io* domain name registration|namecheap.com|$164.40 5- year|$32.88
 |\**.sslip.io* wildcard cert|cheapsslshop.com|$165.00 3-year|$55.00
 |2 &times; EC2 t2.micro instances|Amazon AWS|$0.0172 / hour  <sup>[[3]](#ec2_pricing)</sup>|$150.67
-
-### Creating the BOSH release
-
-Creating the BOSH release was straightforward
-
-* We followed the [BOSH instructions](https://bosh.io/docs/create-release.html)
-* The release is available on [GitHub](https://github.com/APShirley/sslxip-release)
-* We cut corners when creating a release. Specifically, in our [packaging script](https://github.com/APShirley/sslxip-release/blob/master/packages/powerdns/packaging) we installed dependent packages (e.g. boost-devel, libmysqlclient-dev) directly using the OS (i.e. `yum` in the case of a CentOS stemcell, `apt-get` in the case of Ubuntu). This is strongly discouraged, but the alternative&mdash;building releases for the dependencies&mdash;would have jeopardized our ability to have something to present at the end of Hack Day.
-* The sample BOSH manifest can be customized for clients who would like to deploy their own version of sslip.io/xip.io.
 
 ### A Mysterious 1-Second Delay, Unmasked
 
@@ -97,7 +99,7 @@ local-ipv6=::
 
 ### Acknowledgements
 
-We'd like to thank Pivotal Software for setting aside a hackday where wecould implement sslip.io as a proof of concept.
+We'd like to thank Pivotal Software for setting aside a Hack Day where we could implement sslip.io as a proof of concept.
 
 We'd like to thank Sam Stephenson for writing xip.io, which was the initial inspiration for sslip.io, and for suggesting the domain name sslip.io.
 
