@@ -2,38 +2,62 @@
 
 [sslip.io](https://sslip.io/) enables developers to equip their servers with valid SSL certificates for free (on the downside, the server's URI will be an awkward mash-up of the server's IP address and the sslip.io domain, e.g. [https://52-0-56-137.sslip.io](https://52-0-56-137.sslip.io/)). Two components make this possible: a custom DNS ([Domain Name System](https://en.wikipedia.org/wiki/Domain_Name_System)) backend that resolves hostnames to an embedded IP address (e.g. 192-168-0-1.sslip.io resolves to 192.168.0.1), and an SSL key and wildcard certificate downloadable from GitHub.
 
-This blog post discusses how we <sup>[[1]](#authors)</sup> implemented the former component (the custom DNS backend) (the latter component's implementation, a file downloaded from GitHub, is trivial and thus not discussed). We also discuss how one would customize one's own sslip.io.
+This blog post discusses how we <sup>[[1]](#authors)</sup> implemented the former component (the custom DNS backend) (the latter component's implementation, a file downloaded from GitHub, is trivial and thus not discussed).
 
 ### sslip.io Implementation
 
 * We wanted the concept to be easy to understand. To that end, we made it similar to a popular service, [xip.io](http://xip.io/).
 * We wanted it to be easy to implement. Fortunately, we didn't have to start from scratch&mdash;[Sam Stephenson](https://github.com/sstephenson) had already done much of the heavy lifting when he created xip.io, and he made the source code [freely available](https://github.com/basecamp/xip-pdns).
-* We wanted it to be a [BOSH release](https://bosh.io/docs/create-release.html), so that we could deploy our servers using a single command (i.e. `bosh-init deploy sslip.yml`)
+* We wanted it to be a [BOSH release](https://bosh.io/docs/create-release.html), so that we could deploy our servers using a single command (i.e. `bosh-init deploy sslip.yml`). Also, a stipulation of the Hack Day (a day that Pivotal Software set aside to work on fun projects) was that our project had to be Cloud Foundry-related. We wrote much of sslip.io during the Hack Day.
 
-sslip.io uses xip.io's back end.
+### Modifying xip.io to create sslip.io
 
-### Customizing sslip.io
+xip.io's back end almost accomplished what we needed, but not quite: it lacked the ability
+to resolve hostnames that were in the sslip.io domain (i.e. not in an sslip.io subdomain). In fact, the typical
+sslip.io hostname did not resolve properly until it was 3 or more subdomains removed from the sslip.io domain. Here are some examples:
 
-Modify the following in your manifest
+|hostname|# of subdomains|IP address(es)|
+|----------|-----------------------|--------------|
+| 2.sslip.io | 0                     |  2.0.0.0 (broken) |
+| 1.2.sslip.io | 1 | 2.0.0.0 (broken)|
+| 168.1.2.sslip.io | 2 | 2.0.0.0 (broken)|
+| 192.168.1.2.sslip.io | 3 | 192.168.1.2 (good) |
+| www.192.168.1.2.sslip.io | 4 | 192.168.1.2 (good) |
 
-```Diff
-diff --git a/jobs/sslip/spec b/jobs/sslip/spec
-index 90ed693..320eef5 100644
---- a/jobs/sslip/spec
-+++ b/jobs/sslip/spec
-@@ -11,9 +11,9 @@ packages:
- - powerdns
-properties:
--  named_conf:
-+  sslip.named_conf:
-    description: "The contents of named.conf (PowerDNS's BIND backend's configuration file)"
--  pdns_conf:
-+  sslip.pdns_conf:
-    description: "The contents of pdns.conf (PowerDNS's configuration file)"
--  xip_pdns_conf:
-+  sslip.xip_pdns_conf:
-    description: "The contents of xip-pdns.conf (xip's configuration file)"
+**The hostname must be in the sslip.io domain for the wildcard certificate to work properly**; it will not work in an sslip.io subdomain. This is a technical limitation of wildcard
+certs and the manner in which browsers treat them (read
+more [here](http://security.stackexchange.com/questions/10538/what-certificates-are-needed-for-multi-level-subdomains)).
+
+Our solution: use dashes, not dots, to separate the numbers embedded in the hostname. Some examples:
+
+|hostname|# of subdomains|IP address(es)|
+|----------|-----------------------|--------------|
+| 192-168-1-2.sslip.io | 0 | 192.168.1.2 |
+| 10-9-8-7.sslip.io | 0 | 10.9.8.7 |
+| www-172-16-0-1.sslip.io | 0 | 172.16.0.1 |
+
+We modified *xip-pdns.sh* to accommodate dashes as well as dots. Although we were surprised to discover that the xip.io back end was a bash script, we found the coding to be tight, and making the needed changes was fairly straightforward:
+
+```diff
+@@ -68,6 +68,7 @@ log() {
++DASHED_IP_SUBDOMAIN_PATTERN="(^|-|\.)(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)-){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))\$"
+@@ -95,6 +96,10 @@ subdomain_is_ip() {
++subdomain_is_dashed_ip() {
++  [[ "$SUBDOMAIN" =~ $DASHED_IP_SUBDOMAIN_PATTERN ]]
++}
++
+@@ -109,6 +114,11 @@ resolve_ip_subdomain() {
++resolve_dashed_ip_subdomain() {
++  [[ "$SUBDOMAIN" =~ $DASHED_IP_SUBDOMAIN_PATTERN ]] || true
++  echo "${BASH_REMATCH[2]//-/.}"
++}
++
+@@ -174,6 +184,9 @@ while read_query; do
++      elif subdomain_is_dashed_ip; then
++        answer_subdomain_a_query_for dashed_ip
++
 ```
+
 
 ### The Economics of sslip.io: $238.55 per year
 
@@ -46,6 +70,15 @@ The sslip.io service costs $238.55 per year, two-thirds of which are paid to Ama
 |*sslip.io* domain name registration|namecheap.com|$164.40 5- year|$32.88
 |\**.sslip.io* wildcard cert|cheapsslshop.com|$165.00 3-year|$55.00
 |2 &times; EC2 t2.micro instances|Amazon AWS|$0.0172 / hour  <sup>[[3]](#ec2_pricing)</sup>|$150.67
+
+### Creating the BOSH release
+
+Creating the BOSH release was straightforward
+
+* We followed the [BOSH instructions](https://bosh.io/docs/create-release.html)
+* The release is available on [GitHub](https://github.com/APShirley/sslxip-release)
+* We cut corners when creating a release. Specifically, in our [packaging script](https://github.com/APShirley/sslxip-release/blob/master/packages/powerdns/packaging) we installed dependent packages (e.g. boost-devel, libmysqlclient-dev) directly using the OS (i.e. `yum` in the case of a CentOS stemcell, `apt-get` in the case of Ubuntu). This is strongly discouraged, but the alternative&mdash;building releases for the dependencies&mdash;would have jeopardized our ability to have something to present at the end of Hack Day.
+* The sample BOSH manifest can be customized for clients who would like to deploy their own version of sslip.io/xip.io.
 
 ### A Mysterious 1-Second Delay, Unmasked
 
@@ -124,4 +157,4 @@ Filesystem      Size  Used Avail Use% Mounted on
 
 Note that our t2.micro instance is not exclusively dedicated to serving DNS; it's also running an [NTP Pool](http://www.pool.ntp.org/en/) server, processing ~1700 NTP queries / second. And running an nginx server. And yet, in spite of those extra processes, the server is essentially doing nothing 95% of the time.
 
-<a name="emoji"><sup>4</sup></a> The sharp-eyed reader may notice that ":0100" which appears in maria.nono.com's IPv6 address is not appropriately abbreviated (i.e. the leading "0" should be stripped). The reason the 0 isn't stripped is that when it is stripped, it becomes the emoji ["100"](http://emojipedia.org/hundred-points-symbol/) (:100:), which has the unfortunate side-effect of turning a conventional, boring IPv6 address into a spectacle.
+<a name="emoji"><sup>4</sup></a> The sharp-eyed reader may notice that ":0100" which appears in maria.nono.com's IPv6 address is not appropriately abbreviated (i.e. the leading "0" should be stripped). The reason the 0 isn't stripped is that when it is stripped, it becomes the emoji ["100"](http://emojipedia.org/hundred-points-symbol/) (:100:) in our [Markdown editor](https://atom.io/), which has the unfortunate side-effect of turning a conventional, boring IPv6 address into a spectacle.
