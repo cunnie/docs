@@ -12,7 +12,7 @@ This blog post discusses how we <sup>[[1]](#authors)</sup> implemented the forme
 
 ### Modifying xip.io to create sslip.io
 
-xip.io's back end almost accomplished what we needed, but not quite: it lacked the ability to resolve hostnames that were in the sslip.io domain (i.e. not in an sslip.io subdomain). In fact, the typical sslip.io hostname did not resolve properly until it was 3 or more subdomains removed from the sslip.io domain. Here are some examples:
+xip.io's backend almost accomplished what we needed, but not quite: it lacked the ability to resolve hostnames that were in the sslip.io domain (i.e. not in an sslip.io subdomain). In fact, the typical sslip.io hostname did not resolve properly until it was 3 or more subdomains removed from the sslip.io domain. Here are some examples:
 
 |hostname|# of subdomains|IP address(es)|
 |----------|-----------------------|--------------|
@@ -32,7 +32,7 @@ Our solution: use dashes, not dots, to separate the numbers embedded in the host
 | 10-9-8-7.sslip.io | 0 | 10.9.8.7 |
 | www-172-16-0-1.sslip.io | 0 | 172.16.0.1 |
 
-We modified *xip-pdns.sh*, the core of the xip.io back end, to accommodate dashes as well as dots. Although we were surprised to discover that the xip.io back end program was a bash script, we found the coding to be tight, and making the needed changes was fairly straightforward:
+We modified *xip-pdns.sh*, the core of the xip.io backend, to accommodate dashes as well as dots. Although we were surprised to discover that the xip.io backend program was a bash script, we found the coding to be tight, and making the needed changes was fairly straightforward:
 
 ```diff
 @@ -68,6 +68,7 @@ log() {
@@ -62,8 +62,14 @@ Creating the BOSH release was straightforward
 
 * We followed the [BOSH instructions](https://bosh.io/docs/create-release.html)
 * The release is available on [GitHub](https://github.com/cloudfoundry-community/xip-release)
-* We cut corners when creating a release. Specifically, in our [packaging script](https://github.com/APShirley/sslxip-release/blob/master/packages/powerdns/packaging) we installed dependent packages (e.g. boost-devel, libmysqlclient-dev) directly using the OS (i.e. `yum` in the case of a CentOS stemcell, `apt-get` in the case of Ubuntu). This is strongly discouraged, but the alternative&mdash;building releases for the dependencies&mdash;would have jeopardized our ability to have something to present at the end of Hack Day.
-* The sample [BOSH manifest](https://github.com/cloudfoundry-community/xip-release/blob/master/examples/xip-bosh-init-aws.yml) can be customized for clients who would like to deploy their own version of sslip.io/xip.io.
+* We cut corners when creating a release. Specifically, in our [packaging script](https://github.com/cloudfoundry-community/xip-release/blob/master/packages/powerdns/packaging) we installed dependent packages (e.g. boost-devel, libmysqlclient-dev) directly using the OS (i.e. `yum` in the case of a CentOS stemcell, `apt-get` in the case of Ubuntu). This is strongly discouraged, but the alternative&mdash;building releases for the dependencies&mdash;would have jeopardized our ability to finish within the 8-hour span of Hack Day.
+
+### Rolling Your Own
+
+Rolling your own version of an xip.io-style nameserver is fairly straightforward; the xip BOSH release has [instructions](https://github.com/cloudfoundry-community/xip-release#deploying-a-custom-version-of-xip-to-amazon-aws)
+for setting up the Amazon AWS environment, deploying, and testing.
+
+Although there is work involved setting up the BOSH manifest (e.g. setting up the AWS VPC), it's not terribly burdensome. We encourage you to review the [sample manifest](https://github.com/cloudfoundry-community/xip-release/blob/master/examples/xip-bosh-init-aws.yml). Most of it is boilerplate; search for "CHANGEME" to see what would need to be changed to deploy your own version. Surprisingly little.
 
 ### The Economics of sslip.io: $238.55 per year
 
