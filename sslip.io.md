@@ -34,7 +34,7 @@ Our solution: use dashes, not dots, to separate the numbers embedded in the host
 
 We modified *xip-pdns.sh*, the core of the xip.io back end, to accommodate dashes as well as dots. Although we were surprised to discover that the xip.io back end program was a bash script, we found the coding to be tight, and making the needed changes was fairly straightforward:
 
-```
+```diff
 @@ -68,6 +68,7 @@ log() {
 +DASHED_IP_SUBDOMAIN_PATTERN="(^|-|\.)(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)-){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))\$"
 @@ -95,6 +96,10 @@ subdomain_is_ip() {
@@ -61,9 +61,9 @@ We made the changes, which led us to the next step: deploying our changes with B
 Creating the BOSH release was straightforward
 
 * We followed the [BOSH instructions](https://bosh.io/docs/create-release.html)
-* The release is available on [GitHub](https://github.com/APShirley/sslxip-release)
+* The release is available on [GitHub](https://github.com/cloudfoundry-community/xip-release)
 * We cut corners when creating a release. Specifically, in our [packaging script](https://github.com/APShirley/sslxip-release/blob/master/packages/powerdns/packaging) we installed dependent packages (e.g. boost-devel, libmysqlclient-dev) directly using the OS (i.e. `yum` in the case of a CentOS stemcell, `apt-get` in the case of Ubuntu). This is strongly discouraged, but the alternative&mdash;building releases for the dependencies&mdash;would have jeopardized our ability to have something to present at the end of Hack Day.
-* The sample BOSH manifest can be customized for clients who would like to deploy their own version of sslip.io/xip.io.
+* The sample [BOSH manifest](https://github.com/cloudfoundry-community/xip-release/blob/master/examples/xip-bosh-init-aws.yml) can be customized for clients who would like to deploy their own version of sslip.io/xip.io.
 
 ### The Economics of sslip.io: $238.55 per year
 
