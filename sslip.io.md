@@ -66,8 +66,7 @@ Creating the BOSH release was straightforward
 
 ### Rolling Your Own
 
-Rolling your own version of an xip.io-style nameserver is fairly straightforward; the xip BOSH release has [instructions](https://github.com/cloudfoundry-community/xip-release#deploying-a-custom-version-of-xip-to-amazon-aws)
-for setting up the Amazon AWS environment, deploying, and testing.
+Rolling your own version of an xip.io-style nameserver is fairly straightforward; the xip BOSH release has [instructions](https://github.com/cloudfoundry-community/xip-release#deploying-a-custom-version-of-xip-to-amazon-aws) for setting up the Amazon AWS environment, deploying, and testing.
 
 Although there is work involved setting up the BOSH manifest (e.g. setting up the AWS VPC), it's not terribly burdensome. We encourage you to review the [sample manifest](https://github.com/cloudfoundry-community/xip-release/blob/master/examples/xip-bosh-init-aws.yml). Most of it is boilerplate; search for "CHANGEME" to see what would need to be changed to deploy your own version. Surprisingly little.
 
@@ -79,7 +78,7 @@ The sslip.io service costs $238.55 per year, two-thirds of which are paid to Ama
 
 |Expense|Vendor|Cost|Cost / year
 |-------|------|----|----------
-|*sslip.io* domain name registration|namecheap.com|$164.40 5- year|$32.88
+|*sslip.io* domain name registration|namecheap.com|$164.40 5-year|$32.88
 |\**.sslip.io* wildcard cert|cheapsslshop.com|$165.00 3-year|$55.00
 |2 &times; EC2 t2.micro instances|Amazon AWS|$0.0172 / hour  <sup>[[3]](#ec2_pricing)</sup>|$150.67
 
@@ -113,8 +112,7 @@ We'd like to thank Sam Stephenson for writing xip.io, which was the initial insp
 
 ### Footnotes
 
-<a name="authors"><sup>1</sup></a> [Tyler Schultz](https://github.com/tylerschultz), [Alvaro Perez-Shirley](https://github.com/APShirley),
-and [Brian Cunnie](https://github.com/cunnie) created sslip.io
+<a name="authors"><sup>1</sup></a> [Tyler Schultz](https://github.com/tylerschultz), [Alvaro Perez-Shirley](https://github.com/APShirley), and [Brian Cunnie](https://github.com/cunnie) created sslip.io
 
 <a name="ec2_pricing"><sup>2</sup></a> We must have at least two name servers; we can't get away with just one. Per [RFC 1034](http://tools.ietf.org/html/rfc1034):
 <blockquote>
