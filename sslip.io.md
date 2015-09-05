@@ -58,11 +58,11 @@ We made the changes, which led us to the next step: deploying our changes with B
 
 ### Creating the BOSH release
 
-Creating the BOSH release was straightforward
+Creating the BOSH release posed no problems.
 
 * We followed the [BOSH instructions](https://bosh.io/docs/create-release.html)
 * The release is available on [GitHub](https://github.com/cloudfoundry-community/xip-release)
-* We cut corners when creating a release. Specifically, in our [packaging script](https://github.com/cloudfoundry-community/xip-release/blob/master/packages/powerdns/packaging) we installed dependent packages (e.g. boost-devel, libmysqlclient-dev) directly using the OS (i.e. `yum` in the case of a CentOS stemcell, `apt-get` in the case of Ubuntu). This is strongly discouraged, but the alternative&mdash;building releases for the dependencies&mdash;would have jeopardized our ability to finish within the 8-hour span of Hack Day.
+* We cut corners when creating a release. Specifically, in our [packaging script](https://github.com/cloudfoundry-community/xip-release/blob/master/packages/pdns-3.4.6/packaging) we installed dependent packages (e.g. boost-devel, libmysqlclient-dev) directly using the OS (i.e. `yum` in the case of a CentOS stemcell, `apt-get` in the case of Ubuntu). This is strongly discouraged, but the alternative&mdash;building releases for the dependencies&mdash;would have jeopardized our ability to finish within the 8-hour span of Hack Day.
 
 ### Rolling Your Own
 
@@ -114,7 +114,7 @@ We'd like to thank Sam Stephenson for writing xip.io, which was the initial insp
 
 <a name="authors"><sup>1</sup></a> [Tyler Schultz](https://github.com/tylerschultz), [Alvaro Perez-Shirley](https://github.com/APShirley), and [Brian Cunnie](https://github.com/cunnie) created sslip.io
 
-<a name="ec2_pricing"><sup>2</sup></a> We must have at least two name servers; we can't get away with just one. Per [RFC 1034](http://tools.ietf.org/html/rfc1034):
+<a name="rfc1034"><sup>2</sup></a> We must have at least two name servers; we can't get away with just one. Per [RFC 1034](http://tools.ietf.org/html/rfc1034):
 <blockquote>
 By administrative fiat, we require every zone to be available on at least two servers, and many zones have more redundancy than that.
 </blockquote>
