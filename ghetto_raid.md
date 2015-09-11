@@ -1,6 +1,16 @@
 # A High-performing Mid-range NAS Server
 ## Part 1: Initial Set-up and Testing
 
+***[2015/09/11 addendum: replaced fans after receiving***
+
+To fix repeated fan ["revving"](https://forums.freenas.org/index.php?threads/how-to-change-sensor-thresholds-with-ipmi-using-ipmitool.23571/)
+
+```
+ipmitool sensor list all
+ # warning: your fan is probably NOT FAN1
+ipmitool sensor thresh "FAN1" lower 100 200 300
+```
+
 This blog post describes how we built a high-performing NAS server using off-the-shelf components and open source software ([FreeNAS](http://www.freenas.org/)). The NAS has the following characteristics:
 
 * total cost (before tax & shipping): **$2,631**
