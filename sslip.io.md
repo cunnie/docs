@@ -153,3 +153,21 @@ Filesystem      Size  Used Avail Use% Mounted on
 Note that our t2.micro instance is not exclusively dedicated to serving DNS; it's also running an [NTP Pool](http://www.pool.ntp.org/en/) server, processing ~1700 NTP queries / second. And running an nginx server. And yet, in spite of those extra processes, the server is essentially doing nothing 95% of the time.
 
 <a name="emoji"><sup>4</sup></a> The sharp-eyed reader may notice that ":0100" which appears in maria.nono.com's IPv6 address is not appropriately abbreviated (i.e. the leading "0" should be stripped). The reason the 0 isn't stripped is that when it is stripped, it becomes the emoji ["100"](http://emojipedia.org/hundred-points-symbol/) (:100:) in our [Markdown editor](https://atom.io/), which has the unfortunate side-effect of turning a conventional, boring IPv6 address into a spectacle.
+
+# Failing Fast: The Overnight Unravelling of an SSL Service (sslip.io)
+
+...within hours of it being picked up by Hacker News, our SSL certificate had been revoked,
+rendering the service unusable. We discuss the timeline of the unravelling, the reasons
+why Comodo revoked our certificate, and the unforeseen security implications of our service.
+
+Timeline:
+
+Sat Sep 5 16:53:02 2015 -0700 Announced sslip.io on Pivotal Labs's Blog
+
+Tues Sep 8 03:18:26 -0700 Posted on Hacker News by arianvp
+
+Tues Sep 8 05:00:00 2015 -0700 Reached #1 on Hacker News
+
+curl -L https://hacker-news.firebaseio.com/v0/item/10184866.json?print=pretty
+curl -L https://hacker-news.firebaseio.com/v0/item/2921983.json?print=pretty
+ruby -e 'print Time.at(1441707506)'
