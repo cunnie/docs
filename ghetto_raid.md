@@ -6,9 +6,13 @@
 To fix repeated fan ["revving"](https://forums.freenas.org/index.php?threads/how-to-change-sensor-thresholds-with-ipmi-using-ipmitool.23571/)
 
 ```
-ipmitool sensor list all
- # warning: your fan is probably NOT FAN1
+ipmitool sensor list all | grep FAN
+FAN1             | 1400.000   | RPM        | ok    | 300.000   | 500.000   | 700.000   | 25300.000 | 25400.000 | 25500.000
+FAN2             | na         |            | na    | na        | na        | na        | na        | na        | na
+FAN3             | 1000.000   | RPM        | ok    | 300.000   | 500.000   | 700.000   | 25300.000 | 25400.000 | 25500.000
+ # warning: your fans may be different
 ipmitool sensor thresh "FAN1" lower 100 200 300
+ipmitool sensor thresh "FAN3" lower 100 200 300
 ```
 
 This blog post describes how we built a high-performing NAS server using off-the-shelf components and open source software ([FreeNAS](http://www.freenas.org/)). The NAS has the following characteristics:
