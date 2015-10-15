@@ -36,6 +36,17 @@ We make the following changes to our Vagrantfile because we want it to be reacha
 
 ```
 vagrant up
+The box you're attempting to add doesn't support the provider
+you requested. Please find an alternate box or use an alternate
+provider. Double-check your requested provider to verify you didn't
+simply misspell it.
+
+If you're adding a box from HashiCorp's Atlas, make sure the box is
+released.
+
+Name: concourse/lite
+Address: https://atlas.hashicorp.com/concourse/lite
+Requested provider: ["vmware_desktop", "vmware_fusion", "vmware_workstation"]
 ```
 
 We browse to [http://concourse.nono.com](http://concourse.nono.com:8080) (note for people following the Concourse instructions, browse to [http://192.168.100.4:8080/](http://192.168.100.4:8080/) instead.
@@ -45,6 +56,16 @@ We download the `fly` CLI and move it into place:
 ```bash
 mv -i ~/Downloads/fly /usr/local/bin
 chmod +x /usr/local/bin/fly
+```
+
+### Conclusion
+
+Using VMware requires a [VMware Fusion](http://www.vmware.com/products/fusion) ($80) from VMware and a [VMware Fusion Provider](http://www.vagrantup.com/vmware) ($79) from Hashicorp.
+
+```
+vagrant plugin install vagrant-vmware-fusion
+vagrant plugin license vagrant-vmware-fusion ~/Downloads/license.lic
+vagrant plugin list
 ```
 
 ### Footnotes
