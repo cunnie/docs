@@ -1,25 +1,61 @@
 # Replacing Travis-CI for Android with Concourse CI
-[Travis CI](https://travis-ci.org/) is a service the provides continuous integration (free for open source projects). We were pleased to host our Android project on Travis-CI until we ran into a bug <sup>[[android-23]](#android-23)</sup> which was difficult to troubleshoot within Travis's parameters <sup>[[travis]](#travis-shortcomings)</sup> . We discovered that by migrating our CI to Concourse and using VMware Fusion, we were able to decrease the duration of
+[Travis CI](https://travis-ci.org/) is a service the provides continuous integration (free for open source projects). We were pleased to host our Android project on Travis-CI until we ran into a bug <sup>[[android-23]](#android-23)</sup> which was difficult to troubleshoot within Travis's parameters <sup>[[travis]](#travis-shortcomings)</sup> . We discovered that by migrating our CI to Concourse and [houdini](https://github.com/vito/houdini), the "World's worst containerizer", we were able to decrease the duration of
 our tests 400% (from [9 minutes 22 seconds](https://travis-ci.org/blabbertabber/blabbertabber/builds/84781702) to something)
 
-This blog post may be of interest to Android developers who would like greater control over
-their continuous integration environment, who would like to speed up their CI emulator, or
-who would like to test against a variety of hardware platforms (currently Travis doesn't support
-x86-based or x86_64-based emulators, only ARM emulators).
+This blog post may be of interest to Android developers who use Travis CI for continuous integration and who would like greater control over
+their CI environment, who would like to speed up their CI emulator, or
+who would like to test against a variety of ABI interfaces (currently Travis doesn't support x86-based or x86_64-based emulators, only ARM emulators).
 
 ## 0. Setting up Concourse.
 
-### 0.0 Download Concourse's Vagrantfile
+### 0.0 Create Security Groups
 
-(We use the instructions [here](http://concourse.ci/getting-started.html) as a
-template, but we adjust for our environment. Our actual instructions are shown below). Make sure you've installed [Vagrant](https://www.vagrantup.com/).
+We log into our Amazon AWS Console
 
-```
-mkdir ~/workspace/concourse
-cd !$
-vagrant init concourse/lite
-vim Vagrantfile
-```
+* **VPC &rarr; Security Groups**
+* click **Create Security Group**
+  * Name tag: **concourse**
+  * Description: **Rules for accessing Concourse CI server**
+  * VPC: *select the VPC in which your server will be deployed*
+  * click **Yes, Create**
+* click **Inbound Rules** tab
+* click **Edit**
+* add the following rules:
+
+  | Type            | Protocol  | Port Range | Source    |
+  | :-------------  | :-------- | ---------: | :-------- |
+  | SSH (22)        | TCP (6)   | 22         | 0.0.0.0/0 |
+  | HTTP (80)       | TCP (6)   | 80         | 0.0.0.0/0 |
+  | HTTPS (443)     | TCP (6)   | 443        | 0.0.0.0/0 |
+  | Custom TCP Rule | TCP (6)   | 2222       | 0.0.0.0/0 |
+  | Custom TCP Rule | TCP (6)   | 6868       | 0.0.0.0/0 |
+
+* click **Save**
+
+We create a Security Group "concourse" with the following permissions:
+
+
+
+* allow 22 # so I can ssh in & troubleshoot
+* allow 80 # http, allows redirect to https 443
+<!--
+* allow 53 # udp, DNS
+* allow 123 # udp, NTP
+-->
+* allow 443 # https, primary interface
+* allow 2222 # workers
+
+### 0.1 Create manifest
+
+Our BOSH Lite manifest can be found here (TODO: insert URL of redacted manifest)
+
+Concourse has a sample BOSH Lite [manifest](https://github.com/concourse/concourse/blob/master/manifests/bosh-init-aws.yml), but we've taken theirs and modified it as follows:
+
+* added an nginx release to avoid the cost of an ELB
+* [do I even need consul-agent?]
+
+
+
 ### 0.1 Modify Concourse's Vagrantfile
 
 *(You may skip this step if you need to browse your CI only from your local machine,
@@ -84,13 +120,15 @@ install ~/Downloads/fly /usr/local/bin
 
 ### Conclusion
 
-Using VMware requires a [VMware Fusion](http://www.vmware.com/products/fusion) ($80) from VMware and a [VMware Fusion Provider](http://www.vagrantup.com/vmware) ($79) from Hashicorp.
+We were pleased with out switch to Concourse; however, switching CI platforms is
+not a trivial decision, and *if Travis CI is working for you then don't bother
+switching*.
 
-```
-vagrant plugin install vagrant-vmware-fusion
-vagrant plugin license vagrant-vmware-fusion ~/Downloads/license.lic
-vagrant plugin list
-```
+Travis CI has the following advantages:
+
+* Free (at least for Open Source projects)
+* relatively easy-to-configure (a single .travis.yml file in repo)
+*
 
 ### Footnotes
 
@@ -107,3 +145,5 @@ cycle of making small changes, pushing them, waiting [6 minutes](https://travis-
 to determine if they fixed the problem, and starting again.
 
 <a name="BOSH-Lite-subnet"><sup>[BOSH-Lite-subnet]</sup></a> Our Concourse server runs on [BOSH Lite](https://github.com/cloudfoundry/bosh-lite), which by default is not accessible from anywhere but the host machine; however, there are [several techniques](http://blog.pivotal.io/labs/labs/deploying-bosh-lite-subnet-accessible-manner) to make it accessible from the external network.
+
+<a name="ELB-pricing"><sup>[ELB-pricing]</sup></a> ELB pricing, as of this writing, is [$0.025/hour](https://aws.amazon.com/elasticloadbalancing/pricing/), $0.60/day, $219.1455 / year (assuming 365.2425 days / year).
