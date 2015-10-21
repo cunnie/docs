@@ -1,5 +1,5 @@
 # Replacing Travis-CI for Android with Concourse CI
-[Travis CI](https://travis-ci.org/) is a service the provides continuous integration. We were pleased to host our Android project on Travis-CI until we ran into a bug <sup>[[android-23]](#android-23)</sup> which was difficult to troubleshoot within Travis's parameters <sup>[[travis]](#travis-shortcomings)</sup> . We discovered that by migrating our CI to Concourse and [houdini](https://github.com/vito/houdini), the "World's worst containerizer", we were able to decrease the duration of
+[Travis CI](https://travis-ci.org/) is a service the provides continuous integration. We were pleased to host our Android project on Travis-CI until we ran into a bug <sup>[[android-23]](#android-23)</sup> which was difficult to troubleshoot within Travis's parameters <sup>[[Travis]](#Travis)</sup> . We discovered that by migrating our CI to Concourse and [houdini](https://github.com/vito/houdini), the "World's worst containerizer", we were able to decrease the duration of
 our tests 400% (from [9 minutes 22 seconds](https://travis-ci.org/blabbertabber/blabbertabber/builds/84781702) to something)
 
 This blog post may be of interest to Android developers who use Travis CI for continuous integration and who need greater control over
@@ -54,7 +54,7 @@ We decide to use HTTPS to communicate with our Concourse server, for we will
 need to authenticate against the webserver when we configure our CI (we don't
 want to transmit our credentials unencrypted, over the Internet)
 
-We purchase <sup>[[inexpensive-SSL]](#inexpensive-SSL)</sup> valid SSL certificates for our server. Using a self-signed certificate is also an option.
+We purchase valid SSL certificates for our server. Using a self-signed certificate is also an option.
 
 We use the following command to create our key and CSR. Note that you
 should substitute your information where appropriate, especially for the
@@ -83,9 +83,9 @@ ci.blabbertabber.com. A 52.0.76.229
 
 Our redacted (passwords & keys removed) BOSH manifest can be found here (TODO: insert URL of redacted manifest)
 
-Concourse has a sample BOSH Lite [manifest](https://github.com/concourse/concourse/blob/master/manifests/bosh-init-aws.yml), and we've taken theirs and modified it as follows:
+Concourse has a sample *bosh-init* [manifest](https://github.com/concourse/concourse/blob/master/manifests/bosh-init-aws.yml), and we've taken theirs and modified it as follows:
 
-* added an nginx release to avoid the cost of an ELB <sup>[[ELB-pricing]](#ELB-pricing)</sup>
+* added an nginx release to avoid the cost of an ELB ($219.14/year <sup>[[ELB-pricing]](#ELB-pricing)</sup> )
 * removed the consul-agent job (in the concourse release) which is not needed
 on a single-host deployment
 * removed the tsa and atc jobs (in the concourse release) which is not needed
@@ -130,12 +130,19 @@ install ~/Downloads/fly /usr/local/bin
 
 ## 2. Concourse Yearly Costs: $80.34
 
+The yearly cost of running a Concourse server is $80.34. Note that this
+does not include the cost of the worker, which for the purposes of this
+blog post is considered "free" (i.e. our worker is our personal workstation); however,
+had we chosen to use the recommended m3.large EC2 instance for a worker, it
+would have increased our yearly cost by $713.54 <sup>[[m3.large]](#m3.large)</sup> .
 
+Although Travis CI is free for Open Source projects, the price climbs to $1,548/year
+([$129/month](https://travis-ci.com/plans)) for closed source projects.
 
 |Expense|Vendor|Cost|Cost / year
 |-------|------|----|----------
-|\**ci.blabbertabber.com* cert|cheapsslshop.com|$14.85 3-year|$4.95
-|EC2 t2.micro instance|Amazon AWS|$0.0086 / hour  <sup>[[t2.micro]](#t2.micro)</sup>|$75.39
+|*ci.blabbertabber.com* cert|cheapsslshop.com|$14.85 3-year  <sup>[[inexpensive-SSL]](#inexpensive-SSL)</sup>|$4.95
+|EC2 t2.micro instance|Amazon AWS|$0.0086 / hour <sup>[[t2.micro]](#t2.micro)</sup>|$75.39
 
 ## 3. Conclusion
 
@@ -149,16 +156,19 @@ Travis CI has several advantages:
 * relatively easy to configure (a single .travis.yml file in repo)
 * tight GitHub integration, e.g. Travis CI runs pull requests and updates
 the pull request's status page.
-* badges
+* badges (e.g. [![Build Status](https://travis-ci.org/blabbertabber/blabbertabber.png?branch=master)](https://travis-ci.org/blabbertabber/blabbertabber) )
 
 We have concerns over the security implications of using our OS X workstation as
 a remote Concourse worker. Should the Concourse server be compromised, our
 workstation will be compromised, too.
 
-Alternative, more secure solutions would include using a more orthodox
+Alternative, more secure solutions would include the following:
+
+* using a more orthodox
 [Concourse deployment](https://github.com/concourse/concourse/blob/master/manifests/aws-vpc.yml)
 (with an m3.large Concourse worker VM) (disadvantage: would be restricted to the
-ARM ABI for the Android emulators) or using a Linux VM on a firewalled network
+ARM ABI for the Android emulators)
+* using a Linux VM on a firewalled network
 (with hardware virtualization enabled to allow ABIs other than ARM).
 
 ## Footnotes
@@ -170,7 +180,7 @@ The problem was posted to [StackOverflow](http://stackoverflow.com/questions/329
 but no solution was offered (at the time of this writing).
 The problem may lie with the image, not with Travis-CI: according to one developer, _["something is up with the API 23 Google API emulator image"](https://github.com/googlemaps/android-maps-utils/issues/207#issuecomment-144904766)_.
 
-<a name="travis"><sup>[travis]</sup></a> Travis CI does not permit ssh'ing into the container
+<a name="Travis"><sup>[Travis]</sup></a> Travis CI does not permit ssh'ing into the container
 to troubleshoot the build. That, coupled with long feedback times, leads to a frustrating
 cycle of making small changes, pushing them, waiting [6 minutes](https://travis-ci.org/blabbertabber/blabbertabber/builds/85456216)
 to determine if they fixed the problem, and starting again.
@@ -182,3 +192,5 @@ $25 for a 3-year certificate. We used [SSLSHOP](https://www.cheapsslshop.com/com
 the other.
 
 <a name="t2.micro"><sup>[t2.micro]</sup></a> Amazon effectively charges [$0.0086/hour](https://aws.amazon.com/ec2/pricing/) for a 1 year term all-upfront t2.micro reserved instance.
+
+<a name="m3.large"><sup>[m3.large]</sup></a> Amazon effectively charges [$0.0814/hour](https://aws.amazon.com/ec2/pricing/) for a 1 year term all-upfront t2.micro reserved instance.
