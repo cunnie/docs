@@ -79,7 +79,17 @@ We have the following line in our blabbertabber.com zone file:
 ci.blabbertabber.com. A 52.0.76.229
 ```
 
-### 0.3 Create BOSH Manifest
+### 0.3 Create Private SSH Key for Remote workers
+
+We create a private ssh key for our remote worker:
+
+```
+ssh-keygen -P ''  -f ~/.ssh/worker_key
+```
+
+We will use the public key in the next step, when we create our BOSH manifest.
+
+### 0.4 Create BOSH Manifest
 
 Our redacted (passwords & keys removed) BOSH manifest can be found here (TODO: insert URL of redacted manifest)
 
@@ -93,8 +103,9 @@ because we have no local workers (we only need workers if we're running containe
 which would be overly ambitious on a t2.micro instance)
 * configured the web interface to be publicly-viewable but require authorization to
 make changes
+* add our remote worker's public key to jobs.properties.tsa.authorized_keys.
 
-### 0.4 Deploy the Concourse Server
+### 0.5 Deploy the Concourse Server
 
 We install *bosh-init* by following these [instructions](https://bosh.io/docs/install-bosh-init.html).
 
@@ -113,7 +124,7 @@ bosh-init deploy concourse-aws.yml
 
 A deployment can take ~12 minutes.
 
-### 0.5 Verify Deployment and Download Concourse CLI
+### 0.6 Verify Deployment and Download Concourse CLI
 
 We browse to [https://ci.blabbertabber.com](https://ci.blabbertabber.com).
 
@@ -127,6 +138,59 @@ install ~/Downloads/fly /usr/local/bin
 
 ## 1. Configure Concourse to Run CI
 
+### 1.0 Verify There Are No Concourse Workers
+
+We check Concourse to make sure no workers are registered: https://ci.blabbertabber.com/api/v1/workers (substitute your server's URL as appropriate; you will need to authenticate). We should see an
+empty JSON array (i.e. "[ ]").
+
+### 1.1 Download, Install, and Start Houdini
+
+The Concourse worker needs Houdini, "*[The World's Worst Containerizer](https://github.com/vito/houdini)*" to implement the Garden Linux container API so that the Concourse remote worker can spin up containers.
+
+```
+curl -OL curl -L https://github.com/vito/houdini/releases/download/2015-10-09/houdini_darwin_amd64 -o ~/Downloads/houdini
+install ~/Downloads/houdini /usr/local/bin
+```
+```bash
+cd ~/workspace
+houdini
+  {"timestamp":"1445517108.557929754","source":"houdini","message":"houdini.started","log_level":1,"data":{"addr":"0.0.0.0:7777","network":"tcp"}}
+```
+
+### 1.2 Manually Provision Worker
+
+We follow the instructions <sup>[[workers]](#workers)</sup> to manually our remote worker:
+
+[FIXME: why override UserKnownHostsFile? Why not opt for the default
+or "StrictHostKeyChecking no"?]
+
+```bash
+mkdir ~/workspace/container
+cd ~/workspace/container
+cat > worker.json <<EOF
+{
+    "platform": "osx",
+    "tags": [],
+    "resource_types": []
+}
+EOF
+TSA_HOST=ci.blabbertabber.com
+GARDEN_ADDR=0.0.0.0:7777
+ssh -p 2222 $TSA_HOST \
+      -i ~/.ssh/worker_key \
+      -o UserKnownHostsFile=host_key.pub \
+      -R0.0.0.0:0:$GARDEN_ADDR \
+      forward-worker \
+      < worker.json
+  Warning: Permanently added '[ci.blabbertabber.com]:2222,[52.0.76.229]:2222' (RSA) to the list of known hosts.
+  Allocated port 35509 for remote forward to 0.0.0.0:7777
+  2015/10/22 13:11:58 heartbeat took 177.775696ms
+  ...
+```
+
+### 1.0 Verify There Is One Concourse Workers
+
+We check Concourse to make sure our worker is registered: https://ci.blabbertabber.com/api/v1/workers (substitute your server's URL as appropriate; you will need to authenticate). We should see the following JSON:
 
 ## 2. Concourse Yearly Costs: $80.34
 
@@ -139,6 +203,8 @@ would have increased our yearly cost by $713.54 <sup>[[m3.large]](#m3.large)</su
 Although Travis CI is free for Open Source projects, the price climbs to $1,548/year
 ([$129/month](https://travis-ci.com/plans)) for closed source projects.
 
+Here are our costs:
+
 |Expense|Vendor|Cost|Cost / year
 |-------|------|----|----------
 |*ci.blabbertabber.com* cert|cheapsslshop.com|$14.85 3-year  <sup>[[inexpensive-SSL]](#inexpensive-SSL)</sup>|$4.95
@@ -146,7 +212,7 @@ Although Travis CI is free for Open Source projects, the price climbs to $1,548/
 
 ## 3. Conclusion
 
-We were pleased with out switch to Concourse; however, switching CI platforms is
+We were pleased with our switch to Concourse; however, switching CI platforms is
 not a trivial decision, and we switched because Travis CI no longer met our
 requirements. ***Don't switch to Concourse if Travis CI meets your needs***.
 
@@ -158,9 +224,9 @@ Travis CI has several advantages:
 the pull request's status page.
 * badges (e.g. [![Build Status](https://travis-ci.org/blabbertabber/blabbertabber.png?branch=master)](https://travis-ci.org/blabbertabber/blabbertabber) )
 
-We have concerns over the security implications of using our OS X workstation as
+We have serious concerns over the security implications of using our OS X workstation as
 a remote Concourse worker. Should the Concourse server be compromised, our
-workstation will be compromised, too.
+workstation will be compromised, too. Hosting a Concourse worker on one's personal workstation should be viewed as a proof-of-concept, not as a production-ready solution.
 
 Alternative, more secure solutions would include the following:
 
@@ -186,6 +252,8 @@ cycle of making small changes, pushing them, waiting [6 minutes](https://travis-
 to determine if they fixed the problem, and starting again.
 
 <a name="ELB-pricing"><sup>[ELB-pricing]</sup></a> ELB pricing, as of this writing, is [$0.025/hour](https://aws.amazon.com/elasticloadbalancing/pricing/), $0.60/day, $219.1455 / year (assuming 365.2425 days / year).
+
+<a name="workers"><sup>[workers]</sup></a> The instructions for [manually provisioning Concourse workers](http://concourse.ci/manual-workers.html) can be found on the Concourse documentation. Additional information can be found on Concourse's atc's GitHub [repo](https://github.com/concourse/tsa)
 
 <a name="inexpensive-SSL"><sup>[inexpensive-SSL]</sup></a> One shouldn't pay more than
 $25 for a 3-year certificate. We used [SSLSHOP](https://www.cheapsslshop.com/comodo-positive-ssl) to purchase our *Comodo Positive SSL*, but there are many good SSL vendors, and we don't endorse one over
