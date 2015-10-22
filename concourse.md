@@ -148,7 +148,7 @@ empty JSON array (i.e. "[ ]").
 The Concourse worker needs Houdini, "*[The World's Worst Containerizer](https://github.com/vito/houdini)*" to implement the Garden Linux container API so that the Concourse remote worker can spin up containers.
 
 ```bash
-curl -OL curl -L https://github.com/vito/houdini/releases/download/2015-10-09/houdini_darwin_amd64 -o ~/Downloads/houdini
+curl -L https://github.com/vito/houdini/releases/download/2015-10-09/houdini_darwin_amd64 -o ~/Downloads/houdini
 install ~/Downloads/houdini /usr/local/bin
 mkdir -p ~/workspace/houdini/containers
 cd ~/workspace/houdini/
@@ -269,4 +269,4 @@ the other.
 
 <a name="t2.micro"><sup>[t2.micro]</sup></a> Amazon effectively charges [$0.0086/hour](https://aws.amazon.com/ec2/pricing/) for a 1 year term all-upfront t2.micro reserved instance.
 
-<a name="m3.large"><sup>[m3.large]</sup></a> Amazon effectively charges [$0.0814/hour](https://aws.amazon.com/ec2/pricing/) for a 1 year term all-upfront t2.micro reserved instance.
+<a name="m3.large"><sup>[m3.large]</sup></a> Amazon effectively charges [$0.0814/hour](https://aws.amazon.com/ec2/pricing/) for a 1 year term all-upfront m3.large reserved instance.
