@@ -147,14 +147,18 @@ empty JSON array (i.e. "[ ]").
 
 The Concourse worker needs Houdini, "*[The World's Worst Containerizer](https://github.com/vito/houdini)*" to implement the Garden Linux container API so that the Concourse remote worker can spin up containers.
 
-```
+```bash
 curl -OL curl -L https://github.com/vito/houdini/releases/download/2015-10-09/houdini_darwin_amd64 -o ~/Downloads/houdini
 install ~/Downloads/houdini /usr/local/bin
-```
-```bash
-cd ~/workspace
+mkdir -p ~/workspace/houdini/containers
+cd ~/workspace/houdini/
 houdini
-  {"timestamp":"1445517108.557929754","source":"houdini","message":"houdini.started","log_level":1,"data":{"addr":"0.0.0.0:7777","network":"tcp"}}
+```
+
+We see the following output:
+
+```
+{"timestamp":"1445517108.557929754","source":"houdini","message":"houdini.started","log_level":1,"data":{"addr":"0.0.0.0:7777","network":"tcp"}}
 ```
 
 ### 1.2 Manually Provision Worker
@@ -165,7 +169,7 @@ We follow the instructions <sup>[[workers]](#workers)</sup> to manually our remo
 or "StrictHostKeyChecking no"?]
 
 ```bash
-mkdir ~/workspace/container
+mkdir ~/workspace/houdini
 cd ~/workspace/container
 cat > worker.json <<EOF
 {
@@ -182,10 +186,14 @@ ssh -p 2222 $TSA_HOST \
       -R0.0.0.0:0:$GARDEN_ADDR \
       forward-worker \
       < worker.json
-  Warning: Permanently added '[ci.blabbertabber.com]:2222,[52.0.76.229]:2222' (RSA) to the list of known hosts.
-  Allocated port 35509 for remote forward to 0.0.0.0:7777
-  2015/10/22 13:11:58 heartbeat took 177.775696ms
-  ...
+```
+
+We see the following output:
+
+```
+Warning: Permanently added '[ci.blabbertabber.com]:2222,[52.0.76.229]:2222' (RSA) to the list of known hosts.
+Allocated port 35509 for remote forward to 0.0.0.0:7777
+2015/10/22 13:11:58 heartbeat took 177.775696ms
 ```
 
 ### 1.0 Verify There Is One Concourse Workers
