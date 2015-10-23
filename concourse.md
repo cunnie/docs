@@ -289,6 +289,8 @@ that _jobs.*.properties.atc.basic_auth_username_ matches
 _jobs.*.properties.*.tsa.atc.username_ and that _jobs.*.properties.atc.basic_password_
 matches _jobs.*.properties.*.tsa.atc.password_
 
+This may also be caused by a mis-set _jobs.*.properties.tsa.atc.address_.
+
 (The [HTTP/1.1 Status Code 401](http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html), "Unauthorized", is
 an important clue).
 
@@ -296,6 +298,15 @@ an important clue).
 {"timestamp":"1445599186.677824974","source":"tsa","message":"tsa.connection.forward-worker.register.start","log_level":1,"data":{"session":"20.2.31","worker-address":"127.0.0.1:52502","worker-platform":"darwin","worker-tags":""}}
 {"timestamp":"1445599186.868321419","source":"tsa","message":"tsa.connection.forward-worker.register.bad-response","log_level":2,"data":{"session":"20.2.31","status-code":401}}
 ```
+
+FIXME:
+
+```json
+{"timestamp":"1445629584.477599382","source":"tsa","message":"tsa.connection.forward-worker.register.bad-response","log_level":2,"data":{"session":"9.2.6","status-code":401}}
+{"timestamp":"1445629584.477698088","source":"tsa","message":"tsa.connection.forward-worker.register.done","log_level":1,"data":{"session":"9.2.6","worker-address":"127.0.0.1:49925","worker-platform":"osx","worker-tags":""}}
+{"timestamp":"1445629585.477985620","source":"tsa","message":"tsa.connection.forward-worker.register.start","log_level":1,"data":{"session":"9.2.7","worker-address":"127.0.0.1:49925","worker-platform":"osx","worker-tags":""}}
+```
+
 
 <a name="inexpensive-SSL"><sup>[inexpensive-SSL]</sup></a> One shouldn't pay more than
 $25 for a 3-year certificate. We used [SSLSHOP](https://www.cheapsslshop.com/comodo-positive-ssl) to purchase our *Comodo Positive SSL*, but there are many good SSL vendors, and we don't endorse one over
