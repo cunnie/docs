@@ -169,8 +169,8 @@ We follow the instructions <sup>[[workers]](#workers)</sup> to manually our remo
 or "StrictHostKeyChecking no"?]
 
 ```bash
-mkdir ~/workspace/houdini
-cd ~/workspace/container
+mkdir -p ~/workspace/houdini
+cd ~/workspace/houdini
 cat > worker.json <<EOF
 {
     "platform": "osx",
@@ -199,6 +199,8 @@ Allocated port 35509 for remote forward to 0.0.0.0:7777
 ### 1.0 Verify There Is One Concourse Workers
 
 We check Concourse to make sure our worker is registered: https://ci.blabbertabber.com/api/v1/workers (substitute your server's URL as appropriate; you will need to authenticate). We should see the following JSON:
+
+If instead you see "[ ]", then you'll need to troubleshoot TSA  <sup>[[tsa]](#tsa)</sup> .
 
 ## 2. Concourse Yearly Costs: $80.34
 
@@ -262,6 +264,38 @@ to determine if they fixed the problem, and starting again.
 <a name="ELB-pricing"><sup>[ELB-pricing]</sup></a> ELB pricing, as of this writing, is [$0.025/hour](https://aws.amazon.com/elasticloadbalancing/pricing/), $0.60/day, $219.1455 / year (assuming 365.2425 days / year).
 
 <a name="workers"><sup>[workers]</sup></a> The instructions for [manually provisioning Concourse workers](http://concourse.ci/manual-workers.html) can be found on the Concourse documentation. Additional information can be found on Concourse's atc's GitHub [repo](https://github.com/concourse/tsa)
+
+<a name="tsa"><sup>[tsa]</sup></a> The Concourse server's file `/var/vcap/sys/log/tsa/tsa.stdout.log` often contains important troubleshooting
+information. For example, when troubleshooting our server, we do the following:
+
+```bash
+ssh -i ~/.ssh/aws_nono.pem vcap@ci.blabbertabber.com # BOSH account is always 'vcap'
+# Last login: Fri Oct 23 11:17:21 2015 from 24.23.190.188
+sudo su - # password is 'c1oudc0w'
+tail -f /var/vcap/sys/log/tsa/tsa.stdout.log
+```
+
+When we see the following message in the log, it indicates our *worker.json*
+is malformed (in this case, an unexpected comma):
+
+```json
+{"timestamp":"1445598975.989170074","source":"tsa","message":"tsa.connection.forward-worker.failed-to-register","log_level":2,"data":{"error":"invalid character '}' looking for beginning of object key string
+","session":"18.2"}}
+```
+
+When we see the following message in the log, it indicates that the *tsa* is
+failing to authenticate against the *atc*. Check the BOSH manifest to make sure
+that _jobs.*.properties.atc.basic_auth_username_ matches
+_jobs.*.properties.*.tsa.atc.username_ and that _jobs.*.properties.atc.basic_password_
+matches _jobs.*.properties.*.tsa.atc.password_
+
+(The [HTTP/1.1 Status Code 401](http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html), "Unauthorized", is
+an important clue).
+
+```json
+{"timestamp":"1445599186.677824974","source":"tsa","message":"tsa.connection.forward-worker.register.start","log_level":1,"data":{"session":"20.2.31","worker-address":"127.0.0.1:52502","worker-platform":"darwin","worker-tags":""}}
+{"timestamp":"1445599186.868321419","source":"tsa","message":"tsa.connection.forward-worker.register.bad-response","log_level":2,"data":{"session":"20.2.31","status-code":401}}
+```
 
 <a name="inexpensive-SSL"><sup>[inexpensive-SSL]</sup></a> One shouldn't pay more than
 $25 for a 3-year certificate. We used [SSLSHOP](https://www.cheapsslshop.com/comodo-positive-ssl) to purchase our *Comodo Positive SSL*, but there are many good SSL vendors, and we don't endorse one over
