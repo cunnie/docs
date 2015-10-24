@@ -1,17 +1,18 @@
 # Replacing Travis-CI for Android with Concourse CI
-[Travis CI](https://travis-ci.org/) is a service the provides continuous integration. We were pleased to host our Android project on Travis-CI until we ran into a bug <sup>[[android-23]](#android-23)</sup> which was difficult to troubleshoot within Travis's parameters <sup>[[Travis]](#Travis)</sup> . We discovered that by migrating our CI to Concourse and [houdini](https://github.com/vito/houdini), the "World's worst containerizer", we were able to decrease the duration of
-our tests 400% (from [9 minutes 22 seconds](https://travis-ci.org/blabbertabber/blabbertabber/builds/84781702) to something)
+
+## Part 1: Creating the World's Smallest Concourse Server
+
+[Travis CI](https://travis-ci.org/) is a service the provides continuous integration. We were pleased to host our Android project on Travis-CI until we ran into a bug <sup>[[android-23]](#android-23)</sup> which was difficult to troubleshoot within Travis's parameters <sup>[[Travis]](#Travis)</sup> .
 
 This blog post may be of interest to Android developers who use Travis CI for continuous integration and who need greater control over
-their CI environment, who would like to reduce their feedback cycle, or
-who would like to test against a variety of ABI interfaces (currently Travis doesn't support x86-based or x86_64-based emulators, only ARM emulators).
+their CI environment.
 
 ## 0. Set Up the Concourse Server
 
 ### 0.0 Prepare an AWS Account
 
 We follow the bosh.io [instructions](http://bosh.io/docs/init-aws.html#prepare-aws)
-for preparing our AWS account.
+to prepare our AWS account.
 
 After we have completed this step, we have the five pieces of information
 we need to populate our BOSH deployment's manifest, e.g.:
@@ -51,8 +52,7 @@ We create a *concourse* Security Group via the Amazon AWS Console:
 ### 0.2 Obtain SSL Certificates
 
 We decide to use HTTPS to communicate with our Concourse server, for we will
-need to authenticate against the webserver when we configure our CI (we don't
-want to transmit our credentials unencrypted, over the Internet)
+need to authenticate against the webserver when we configure our CI (when we transmit our credentials over the Internet we want them to be encrypted).
 
 We purchase valid SSL certificates for our server. Using a self-signed certificate is also an option.
 
@@ -98,12 +98,12 @@ Concourse has a sample *bosh-init* [manifest](https://github.com/concourse/conco
 * added an nginx release to avoid the cost of an ELB ($219.14/year <sup>[[ELB-pricing]](#ELB-pricing)</sup> )
 * removed the consul-agent job (in the concourse release) which is not needed
 on a single-host deployment
-* removed the tsa and atc jobs (in the concourse release) which is not needed
+* removed all but the _tsa_ and _atc_ jobs (in the concourse release). We don't need the _baggageclaim_ or _groundcrew_ jobs
 because we have no local workers (we only need workers if we're running containers,
-which would be overly ambitious on a t2.micro instance)
+which would be overly ambitious on a t2.micro instance). Note: we will provision workers in a follow-on blog post.
 * configured the web interface to be publicly-viewable but require authorization to
 make changes
-* add our remote worker's public key to jobs.properties.tsa.authorized_keys.
+* add our remote worker's public key to *jobs.properties.tsa.authorized_keys*.
 
 ### 0.5 Deploy the Concourse Server
 
@@ -136,7 +136,48 @@ We download the `fly` CLI by clicking on the Apple icon (assuming that your work
 install ~/Downloads/fly /usr/local/bin
 ```
 
-## 1. Configure Concourse to Run CI
+
+## 1. Concourse Yearly Costs: $80.34
+
+The yearly cost of running a Concourse server is $80.34. Note that this
+does not include the cost of the worker, which for the purposes of this
+blog post is considered "free" (i.e. our worker is our personal workstation); however,
+had we chosen to use the recommended m3.large EC2 instance for a worker, it
+would have increased our yearly cost by $713.54 <sup>[[m3.large]](#m3.large)</sup> .
+
+Although Travis CI is free for Open Source projects, the price climbs to $1,548/year
+([$129/month](https://travis-ci.com/plans)) for closed source projects.
+
+Here are our costs:
+
+|Expense|Vendor|Cost|Cost / year
+|-------|------|----|----------
+|*ci.blabbertabber.com* cert|cheapsslshop.com|$14.85 3-year  <sup>[[inexpensive-SSL]](#inexpensive-SSL)</sup>|$4.95
+|EC2 t2.micro instance|Amazon AWS|$0.0086 / hour <sup>[[t2.micro]](#t2.micro)</sup>|$75.39
+
+## Footnotes
+
+<a name="android-23"><sup>[android-23]</sup></a> We discovered a bug when we upgraded our
+Travis CI to use the latest Android emulator (API 23, Marshmallow). Specifically
+our builds would fail with `com.android.ddmlib.ShellCommandUnresponsiveException`.
+The problem was posted to [StackOverflow](http://stackoverflow.com/questions/32952413/gradle-commands-fail-on-api-23-google-api-emulator-image-armeabi-v7a),
+but no solution was offered (at the time of this writing).
+The problem may lie with the image, not with Travis-CI: according to one developer, _["something is up with the API 23 Google API emulator image"](https://github.com/googlemaps/android-maps-utils/issues/207#issuecomment-144904766)_.
+
+<a name="Travis"><sup>[Travis]</sup></a> Travis CI does not permit ssh'ing into the container
+to troubleshoot the build. That, coupled with long feedback times, leads to a frustrating
+cycle of making small changes, pushing them, waiting [6 minutes](https://travis-ci.org/blabbertabber/blabbertabber/builds/85456216)
+to determine if they fixed the problem, and starting again.
+
+<a name="ELB-pricing"><sup>[ELB-pricing]</sup></a> ELB pricing, as of this writing, is [$0.025/hour](https://aws.amazon.com/elasticloadbalancing/pricing/), $0.60/day, $219.1455 / year (assuming 365.2425 days / year).
+
+
+
+
+
+
+
+## 1. Configure Concourse Worker, Pipeline, and Job
 
 ### 1.0 Verify There Are No Concourse Workers
 
@@ -204,7 +245,7 @@ We check Concourse to make sure our worker is registered: https://ci.blabbertabb
 [{"addr":"127.0.0.1:47274","baggageclaim_url":"","active_containers":0,"resource_types":null,"platform":"darwin","tags":[],"name":"127.0.0.1:47274"}]
 ```
 
-If instead you see ``[ ]``, then you'll need to troubleshoot TSA  <sup>[[tsa]](#tsa)</sup> .
+If instead you see ``[ ]``, then you'll need to troubleshoot the _tsa_  <sup>[[tsa]](#tsa)</sup> daemon.
 
 ### 1.1 Create *Hello World* Concourse job
 
@@ -234,23 +275,20 @@ fly -t https://user:password@ci.blabbertabber.com configure really-cool-pipeline
 
 ### 1.2 Browse to Concourse and Kick off Job
 
-## 2. Concourse Yearly Costs: $80.34
+We browse to our CI server to verify the pipeline has been created: We browse to [https://ci.blabbertabber.com](https://ci.blabbertabber.com).
 
-The yearly cost of running a Concourse server is $80.34. Note that this
-does not include the cost of the worker, which for the purposes of this
-blog post is considered "free" (i.e. our worker is our personal workstation); however,
-had we chosen to use the recommended m3.large EC2 instance for a worker, it
-would have increased our yearly cost by $713.54 <sup>[[m3.large]](#m3.large)</sup> .
+<img src="http://i.imgur.com/fajNqoc.png" title="source: imgur.com" />
 
-Although Travis CI is free for Open Source projects, the price climbs to $1,548/year
-([$129/month](https://travis-ci.com/plans)) for closed source projects.
+Next we unpause the job
 
-Here are our costs:
+* click the "hamburger" in the upper left hand corner
+* click the "&#x25b6;" (play button) that appears below the hamburger
+* authenticate with the *atc*'s account and password. The banner at the top of the screen will switch from light-blue to black. The page should look like this:
 
-|Expense|Vendor|Cost|Cost / year
-|-------|------|----|----------
-|*ci.blabbertabber.com* cert|cheapsslshop.com|$14.85 3-year  <sup>[[inexpensive-SSL]](#inexpensive-SSL)</sup>|$4.95
-|EC2 t2.micro instance|Amazon AWS|$0.0086 / hour <sup>[[t2.micro]](#t2.micro)</sup>|$75.39
+<img src="http://i.imgur.com/uzAqd3D.png" title="source: imgur.com" />
+
+* click the *hello-world* rectangle in the middle of the screen.
+* click the "**+**" button in the upper right hand side of the screen
 
 ## 3. Conclusion
 
@@ -279,21 +317,7 @@ ARM ABI for the Android emulators)
 * using a Linux VM on a firewalled network
 (with hardware virtualization enabled to allow ABIs other than ARM).
 
-## Footnotes
 
-<a name="android-23"><sup>[android-23]</sup></a> We discovered a bug when we upgraded our
-Travis CI to use the latest Android emulator (API 23, Marshmallow). Specifically
-our builds would fail with `com.android.ddmlib.ShellCommandUnresponsiveException`.
-The problem was posted to [StackOverflow](http://stackoverflow.com/questions/32952413/gradle-commands-fail-on-api-23-google-api-emulator-image-armeabi-v7a),
-but no solution was offered (at the time of this writing).
-The problem may lie with the image, not with Travis-CI: according to one developer, _["something is up with the API 23 Google API emulator image"](https://github.com/googlemaps/android-maps-utils/issues/207#issuecomment-144904766)_.
-
-<a name="Travis"><sup>[Travis]</sup></a> Travis CI does not permit ssh'ing into the container
-to troubleshoot the build. That, coupled with long feedback times, leads to a frustrating
-cycle of making small changes, pushing them, waiting [6 minutes](https://travis-ci.org/blabbertabber/blabbertabber/builds/85456216)
-to determine if they fixed the problem, and starting again.
-
-<a name="ELB-pricing"><sup>[ELB-pricing]</sup></a> ELB pricing, as of this writing, is [$0.025/hour](https://aws.amazon.com/elasticloadbalancing/pricing/), $0.60/day, $219.1455 / year (assuming 365.2425 days / year).
 
 <a name="workers"><sup>[workers]</sup></a> The instructions for [manually provisioning Concourse workers](http://concourse.ci/manual-workers.html) can be found on the Concourse documentation. Additional information can be found on Concourse's atc's GitHub [repo](https://github.com/concourse/tsa)
 
@@ -357,3 +381,9 @@ sudo apt-get install open-vm-tools openssh-server
 * Gearbox &rarr; System Settings &rarr; Displays
 * Resolution: **1024 &times; 768 (4:3)**
 * click **Apply**, click **Keep this Configuration**
+
+discovered that by migrating our CI to Concourse and [houdini](https://github.com/vito/houdini), the "World's worst containerizer", we were able to decrease the duration of
+our tests 400% (from [9 minutes 22 seconds](https://travis-ci.org/blabbertabber/blabbertabber/builds/84781702) to something)
+
+, who would like to reduce their feedback cycle, or
+who would like to test against a variety of ABI interfaces (currently Travis doesn't support x86-based or x86_64-based emulators, only ARM emulators).
