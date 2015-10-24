@@ -1,11 +1,8 @@
-# Replacing Travis-CI for Android with Concourse CI
+# The World's Smallest Concourse CI Server
 
-## Part 1: Creating the World's Smallest Concourse Server
-
-[Travis CI](https://travis-ci.org/) is a service the provides continuous integration. We were pleased to host our Android project on Travis-CI until we ran into a bug <sup>[[android-23]](#android-23)</sup> which was difficult to troubleshoot within Travis's parameters <sup>[[Travis]](#Travis)</sup> .
-
-This blog post may be of interest to Android developers who use Travis CI for continuous integration and who need greater control over
-their CI environment.
+In this blog post, we describe deploying a publicly-accessible, extremely lean
+[Concourse](http://concourse.ci/) [Continuous Integration](https://en.wikipedia.org/wiki/Continuous_integration)
+(CI) server.
 
 ## 0. Set Up the Concourse Server
 
@@ -14,14 +11,17 @@ their CI environment.
 We follow the bosh.io [instructions](http://bosh.io/docs/init-aws.html#prepare-aws)
 to prepare our AWS account.
 
-After we have completed this step, we have the five pieces of information
-we need to populate our BOSH deployment's manifest, e.g.:
+After we have completed this step, we have the information
+we need to populate our BOSH deployment's manifest:
 
-* ACCESS-KEY-ID:
-* SECRET-ACCESS-KEY
-* AVAILABILITY-ZONE
-* ELASTIC-IP
-* SUBNET-ID
+* Access Key ID, e.g. AKIAxxxxxxxxxxxxxxxx
+* Secret Access Key, e.g. 0+B1XW6VVxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+* Availability Zone, e.g. us-east-1a
+* Region, e.g. us-east-1
+* Elastic IP, e.g. 52.23.10.10
+* Subnet ID, e.g. subnet-1c90ef6b
+* Key Pair Name, e.g. bosh, aws_nono
+* Key Pair Path, e.g. ~/my-bosh/bosh.pem, ~/.ssh/aws_nono.pem
 
 ### 0.1 Create the *concourse* Security Group
 
@@ -52,7 +52,8 @@ We create a *concourse* Security Group via the Amazon AWS Console:
 ### 0.2 Obtain SSL Certificates
 
 We decide to use HTTPS to communicate with our Concourse server, for we will
-need to authenticate against the webserver when we configure our CI (when we transmit our credentials over the Internet we want them to be encrypted).
+need to authenticate against the webserver when we configure our CI
+(when we transmit our credentials over the Internet we want them to be encrypted).
 
 We purchase valid SSL certificates for our server. Using a self-signed certificate is also an option.
 
@@ -76,7 +77,7 @@ We configure a DNS A record for our concourse server to point to our AWS Elastic
 We have the following line in our blabbertabber.com zone file:
 
 ```
-ci.blabbertabber.com. A 52.0.76.229
+ci.blabbertabber.com. A 52.23.10.10
 ```
 
 ### 0.3 Create Private SSH Key for Remote workers
@@ -91,19 +92,24 @@ We will use the public key in the next step, when we create our BOSH manifest.
 
 ### 0.4 Create BOSH Manifest
 
-Our redacted (passwords & keys removed) BOSH manifest can be found here (TODO: insert URL of redacted manifest)
+We create the BOSH manifest for our Concourse server by doing the following:
 
-Concourse has a sample *bosh-init* [manifest](https://github.com/concourse/concourse/blob/master/manifests/bosh-init-aws.yml), and we've taken theirs and modified it as follows:
+* download the redacted (passwords & keys removed) BOSH [manifest](https://github.com/blabbertabber/blabbertabber/blob/develop/ci/concourse-aws.yml)
+* open it in an editor
+* search for every occurrence of *FIXME*
+* update the field described by the *FIXME*, e.g. update the IP address,
+  set the password, set the Subnet ID, etc....
+
+For those interested, our sample Concourse manifest was derived from
+Concourse's official sample *bosh-init* [manifest](https://github.com/concourse/concourse/blob/master/manifests/bosh-init-aws.yml) and modified as follows:
 
 * added an nginx release to avoid the cost of an ELB ($219.14/year <sup>[[ELB-pricing]](#ELB-pricing)</sup> )
-* removed the consul-agent job (in the concourse release) which is not needed
-on a single-host deployment
+This was also why we opened up ports 80 and 443.
 * removed all but the _tsa_ and _atc_ jobs (in the concourse release). We don't need the _baggageclaim_ or _groundcrew_ jobs
 because we have no local workers (we only need workers if we're running containers,
 which would be overly ambitious on a t2.micro instance). Note: we will provision workers in a follow-on blog post.
-* configured the web interface to be publicly-viewable but require authorization to
-make changes
-* add our remote worker's public key to *jobs.properties.tsa.authorized_keys*.
+* configured the web interface to be publicly-viewable but require authorization to make changes
+* add our remote worker's public key to *jobs.properties.tsa.authorized_keys*
 
 ### 0.5 Deploy the Concourse Server
 
@@ -122,7 +128,8 @@ bosh-init deploy concourse-aws.yml
   Cleaning up rendered CPI jobs... Finished (00:00:00)
 ```
 
-A deployment can take ~12 minutes.
+A deployment takes ~12 minutes.This [gist](https://gist.github.com/cunnie/088794c9566a707aed71) contains
+the complete output of the *bosh-init* deployment.
 
 ### 0.6 Verify Deployment and Download Concourse CLI
 
@@ -135,13 +142,54 @@ We download the `fly` CLI by clicking on the Apple icon (assuming that your work
 ```bash
 install ~/Downloads/fly /usr/local/bin
 ```
+### 0.7 Create *Hello World* Concourse job
 
+We follow Concourse's [Getting Started](http://concourse.ci/getting-started.html)
+instructions to create our first pipeline.
+
+```bash
+cat > hello-world.yml <<EOF
+jobs:
+- name: hello-world
+  plan:
+  - task: say-hello
+    config:
+      platform: linux
+      image: "docker:///ubuntu"
+      run:
+        path: echo
+        args: ["Hello, world!"]
+EOF
+```
+
+We configure the pipeline:
+
+```
+fly -t https://user:password@ci.blabbertabber.com configure really-cool-pipeline -c hello-world.yml
+```
+
+### 0.8 Browse to Concourse and Kick off Job
+
+We browse to our CI server to verify the pipeline has been created: We browse to [https://ci.blabbertabber.com](https://ci.blabbertabber.com).
+
+<img src="http://i.imgur.com/fajNqoc.png" title="source: imgur.com" />
+
+Next we unpause the job
+
+* click the "&equiv;" (hamburger) in the upper left hand corner
+* click the "&#x25b6;" (play button) that appears below the hamburger
+* authenticate with the *atc*'s account and password. The banner at the top of the screen will switch from light-blue to black. The page should look like this:
+
+<img src="http://i.imgur.com/uzAqd3D.png" title="source: imgur.com" />
+
+* click the *hello-world* rectangle in the middle of the screen.
+* click the "**&oplus;**" button in the upper right hand side of the screen
 
 ## 1. Concourse Yearly Costs: $80.34
 
 The yearly cost of running a Concourse server is $80.34. Note that this
 does not include the cost of the worker, which for the purposes of this
-blog post is considered "free" (i.e. our worker is our personal workstation); however,
+blog post is considered "free" (i.e. our worker will be a VM on our personal workstation); however,
 had we chosen to use the recommended m3.large EC2 instance for a worker, it
 would have increased our yearly cost by $713.54 <sup>[[m3.large]](#m3.large)</sup> .
 
@@ -171,11 +219,30 @@ to determine if they fixed the problem, and starting again.
 
 <a name="ELB-pricing"><sup>[ELB-pricing]</sup></a> ELB pricing, as of this writing, is [$0.025/hour](https://aws.amazon.com/elasticloadbalancing/pricing/), $0.60/day, $219.1455 / year (assuming 365.2425 days / year).
 
+<a name="inexpensive-SSL"><sup>[inexpensive-SSL]</sup></a> One shouldn't pay more than
+$25 for a 3-year certificate. We used [SSLSHOP](https://www.cheapsslshop.com/comodo-positive-ssl) to purchase our *Comodo Positive SSL*, but there are many good SSL vendors, and we don't endorse one over
+the other.
 
+<a name="t2.micro"><sup>[t2.micro]</sup></a> Amazon effectively charges [$0.0086/hour](https://aws.amazon.com/ec2/pricing/) for a 1 year term all-upfront t2.micro reserved instance.
 
+<a name="m3.large"><sup>[m3.large]</sup></a> Amazon effectively charges [$0.0814/hour](https://aws.amazon.com/ec2/pricing/) for a 1 year term all-upfront m3.large reserved instance.
 
+# Replacing Travis-CI for Android with Concourse CI
 
+We discovered that by migrating our Android application's
+[Continuous Integration](https://en.wikipedia.org/wiki/Continuous_integration) (CI)
+from [Travis CI](https://travis-ci.org/) (a CI service provider)
+to a custom solution using [Concourse CI](http://concourse.ci/), a
+CI server developed internally at Pivotal Software, we were able to assert
+greater control over our CI environment (i.e. we were able to connect to
+our build containers to troubleshoot failed builds and had more flexibility
+choosing our target SDK (i.e. we were able to target Android-23, Marshmallow)).
 
+This blog post may be of interest to Android developers who use continuous integration
+and who need greater control over
+their CI environment. It describes setting up a Concourse Server on Amazon AWS.
+Subsequent posts will discuss configuring and provisioning the Concourse workers
+and containers.
 
 ## 1. Configure Concourse Worker, Pipeline, and Job
 
@@ -247,48 +314,7 @@ We check Concourse to make sure our worker is registered: https://ci.blabbertabb
 
 If instead you see ``[ ]``, then you'll need to troubleshoot the _tsa_  <sup>[[tsa]](#tsa)</sup> daemon.
 
-### 1.1 Create *Hello World* Concourse job
 
-We follow Concourse's [Getting Started](http://concourse.ci/getting-started.html)
-instructions to create our first pipeline.
-
-```bash
-cat > hello-world.yml <<EOF
-jobs:
-- name: hello-world
-  plan:
-  - task: say-hello
-    config:
-      platform: linux
-      image: "docker:///ubuntu"
-      run:
-        path: echo
-        args: ["Hello, world!"]
-EOF
-```
-
-Then we configure the pipeline:
-
-```
-fly -t https://user:password@ci.blabbertabber.com configure really-cool-pipeline -c hello-world.yml
-```
-
-### 1.2 Browse to Concourse and Kick off Job
-
-We browse to our CI server to verify the pipeline has been created: We browse to [https://ci.blabbertabber.com](https://ci.blabbertabber.com).
-
-<img src="http://i.imgur.com/fajNqoc.png" title="source: imgur.com" />
-
-Next we unpause the job
-
-* click the "hamburger" in the upper left hand corner
-* click the "&#x25b6;" (play button) that appears below the hamburger
-* authenticate with the *atc*'s account and password. The banner at the top of the screen will switch from light-blue to black. The page should look like this:
-
-<img src="http://i.imgur.com/uzAqd3D.png" title="source: imgur.com" />
-
-* click the *hello-world* rectangle in the middle of the screen.
-* click the "**+**" button in the upper right hand side of the screen
 
 ## 3. Conclusion
 
@@ -354,14 +380,6 @@ an important clue).
 {"timestamp":"1445599186.677824974","source":"tsa","message":"tsa.connection.forward-worker.register.start","log_level":1,"data":{"session":"20.2.31","worker-address":"127.0.0.1:52502","worker-platform":"darwin","worker-tags":""}}
 {"timestamp":"1445599186.868321419","source":"tsa","message":"tsa.connection.forward-worker.register.bad-response","log_level":2,"data":{"session":"20.2.31","status-code":401}}
 ```
-
-<a name="inexpensive-SSL"><sup>[inexpensive-SSL]</sup></a> One shouldn't pay more than
-$25 for a 3-year certificate. We used [SSLSHOP](https://www.cheapsslshop.com/comodo-positive-ssl) to purchase our *Comodo Positive SSL*, but there are many good SSL vendors, and we don't endorse one over
-the other.
-
-<a name="t2.micro"><sup>[t2.micro]</sup></a> Amazon effectively charges [$0.0086/hour](https://aws.amazon.com/ec2/pricing/) for a 1 year term all-upfront t2.micro reserved instance.
-
-<a name="m3.large"><sup>[m3.large]</sup></a> Amazon effectively charges [$0.0814/hour](https://aws.amazon.com/ec2/pricing/) for a 1 year term all-upfront m3.large reserved instance.
 
 
 VMware Fusion
