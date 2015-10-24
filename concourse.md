@@ -315,3 +315,22 @@ the other.
 <a name="t2.micro"><sup>[t2.micro]</sup></a> Amazon effectively charges [$0.0086/hour](https://aws.amazon.com/ec2/pricing/) for a 1 year term all-upfront t2.micro reserved instance.
 
 <a name="m3.large"><sup>[m3.large]</sup></a> Amazon effectively charges [$0.0814/hour](https://aws.amazon.com/ec2/pricing/) for a 1 year term all-upfront m3.large reserved instance.
+
+
+VMware Fusion
+
+* Ubuntu 14.04.3
+* 2 CPUs
+* 10240 MB RAM
+* 30 GB Disk
+
+(in my case I set it to bridging on the ethernet, hard-coded the MAC address,
+added an entry in DHCP)
+
+```
+sudo apt-get install open-vm-tools openssh-server
+
+```
+* Gearbox &rarr; System Settings &rarr; Displays
+* Resolution: **1024 &times; 768 (4:3)**
+* click **Apply**, click **Keep this Configuration**
