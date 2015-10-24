@@ -173,7 +173,7 @@ mkdir -p ~/workspace/houdini
 cd ~/workspace/houdini
 cat > worker.json <<EOF
 {
-    "platform": "osx",
+    "platform": "darwin",
     "tags": [],
     "resource_types": []
 }
@@ -196,11 +196,43 @@ Allocated port 35509 for remote forward to 0.0.0.0:7777
 2015/10/22 13:11:58 heartbeat took 177.775696ms
 ```
 
-### 1.0 Verify There Is One Concourse Workers
+### 1.0 Verify There Is One Concourse Worker
 
 We check Concourse to make sure our worker is registered: https://ci.blabbertabber.com/api/v1/workers (substitute your server's URL as appropriate; you will need to authenticate). We should see the following JSON:
 
-If instead you see "[ ]", then you'll need to troubleshoot TSA  <sup>[[tsa]](#tsa)</sup> .
+```
+[{"addr":"127.0.0.1:47274","baggageclaim_url":"","active_containers":0,"resource_types":null,"platform":"darwin","tags":[],"name":"127.0.0.1:47274"}]
+```
+
+If instead you see ``[ ]``, then you'll need to troubleshoot TSA  <sup>[[tsa]](#tsa)</sup> .
+
+### 1.1 Create *Hello World* Concourse job
+
+We follow Concourse's [Getting Started](http://concourse.ci/getting-started.html)
+instructions to create our first pipeline.
+
+```bash
+cat > hello-world.yml <<EOF
+jobs:
+- name: hello-world
+  plan:
+  - task: say-hello
+    config:
+      platform: linux
+      image: "docker:///ubuntu"
+      run:
+        path: echo
+        args: ["Hello, world!"]
+EOF
+```
+
+Then we configure the pipeline:
+
+```
+fly -t https://user:password@ci.blabbertabber.com configure really-cool-pipeline -c hello-world.yml
+```
+
+### 1.2 Browse to Concourse and Kick off Job
 
 ## 2. Concourse Yearly Costs: $80.34
 
@@ -298,15 +330,6 @@ an important clue).
 {"timestamp":"1445599186.677824974","source":"tsa","message":"tsa.connection.forward-worker.register.start","log_level":1,"data":{"session":"20.2.31","worker-address":"127.0.0.1:52502","worker-platform":"darwin","worker-tags":""}}
 {"timestamp":"1445599186.868321419","source":"tsa","message":"tsa.connection.forward-worker.register.bad-response","log_level":2,"data":{"session":"20.2.31","status-code":401}}
 ```
-
-FIXME:
-
-```json
-{"timestamp":"1445629584.477599382","source":"tsa","message":"tsa.connection.forward-worker.register.bad-response","log_level":2,"data":{"session":"9.2.6","status-code":401}}
-{"timestamp":"1445629584.477698088","source":"tsa","message":"tsa.connection.forward-worker.register.done","log_level":1,"data":{"session":"9.2.6","worker-address":"127.0.0.1:49925","worker-platform":"osx","worker-tags":""}}
-{"timestamp":"1445629585.477985620","source":"tsa","message":"tsa.connection.forward-worker.register.start","log_level":1,"data":{"session":"9.2.7","worker-address":"127.0.0.1:49925","worker-platform":"osx","worker-tags":""}}
-```
-
 
 <a name="inexpensive-SSL"><sup>[inexpensive-SSL]</sup></a> One shouldn't pay more than
 $25 for a 3-year certificate. We used [SSLSHOP](https://www.cheapsslshop.com/comodo-positive-ssl) to purchase our *Comodo Positive SSL*, but there are many good SSL vendors, and we don't endorse one over
