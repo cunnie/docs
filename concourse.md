@@ -381,6 +381,10 @@ an important clue).
 {"timestamp":"1445599186.868321419","source":"tsa","message":"tsa.connection.forward-worker.register.bad-response","log_level":2,"data":{"session":"20.2.31","status-code":401}}
 ```
 
+Although Travis CI is free for Open Source projects, the price climbs to $1,548/year
+([$129/month](https://travis-ci.com/plans)) for closed source projects.
+
+
 
 VMware Fusion
 
@@ -405,3 +409,18 @@ our tests 400% (from [9 minutes 22 seconds](https://travis-ci.org/blabbertabber/
 
 , who would like to reduce their feedback cycle, or
 who would like to test against a variety of ABI interfaces (currently Travis doesn't support x86-based or x86_64-based emulators, only ARM emulators).
+
+### Footnotes
+
+
+<a name="android-23"><sup>[android-23]</sup></a> We discovered a bug when we upgraded our
+Travis CI to use the latest Android emulator (API 23, Marshmallow). Specifically
+our builds would fail with `com.android.ddmlib.ShellCommandUnresponsiveException`.
+The problem was posted to [StackOverflow](http://stackoverflow.com/questions/32952413/gradle-commands-fail-on-api-23-google-api-emulator-image-armeabi-v7a),
+but no solution was offered (at the time of this writing).
+The problem may lie with the image, not with Travis-CI: according to one developer, _["something is up with the API 23 Google API emulator image"](https://github.com/googlemaps/android-maps-utils/issues/207#issuecomment-144904766)_.
+
+<a name="Travis"><sup>[Travis]</sup></a> Travis CI does not permit ssh'ing into the container
+to troubleshoot the build. That, coupled with long feedback times, leads to a frustrating
+cycle of making small changes, pushing them, waiting [6 minutes](https://travis-ci.org/blabbertabber/blabbertabber/builds/85456216)
+to determine if they fixed the problem, and starting again.
