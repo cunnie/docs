@@ -1,10 +1,41 @@
-# The World's Smallest Concourse CI Server
+---
+author: cunnie
+categories:
+- BOSH
+date: 2015-10-24T13:52:48-07:00
+draft: true
+short: |
+  How to deploy a publicly-accessible, extremely lean Concourse CI server
+title: The World's Smallest Concourse CI Server
+---
 
-In this blog post, we describe deploying a publicly-accessible, extremely lean
-[Concourse](http://concourse.ci/) [Continuous Integration](https://en.wikipedia.org/wiki/Continuous_integration)
-(CI) server.
+[Continuous Integration](https://en.wikipedia.org/wiki/Continuous_integration)
+(CI) is often used in conjunction with test-driven development (TDD);
+however, CI servers often
+bring their own set of challenges: they are usually "snowflakes",
+uniquely configured machines that are difficult to upgrade, re-configure, or
+re-install. <sup>[[snowflakes]](#snowflakes)</sup>
+
+In this blog post, we describe deploying a publicly-accessible, lean
+(1GB RAM, 1 vCPU, 15GB disk)
+[Concourse](http://concourse.ci/) CI server using a 350-line manifest.
+Upgrades/re-configurations/re-installs are as simple as editing a file
+and typing one command (*bosh-init*).
+
+We must confess to sleight-of-hand: although we describe deploying a CI
+server, we can't use it because it doesn't have any workers, which are needed to run the
+tests.  **The deployed CI Server we describe can't run any tests**.
+
+We will address that shortcoming in a future blog post where we describe
+the manual provisioning of local workers. The process isn't difficult, but
+including it would have made the blog post undesirably long.
 
 ## 0. Set Up the Concourse Server
+
+In the following steps, we demonstrate creating a Concourse
+CI server, [ci.blabbertabber.com](https://ci.blabbertabber.com/)
+for our open source Android project,
+[BlabberTabber](https://github.com/blabbertabber/blabbertabber).
 
 ### 0.0 Prepare an AWS Account
 
@@ -33,14 +64,14 @@ We create a *concourse* Security Group via the Amazon AWS Console:
 * click **Create Security Group**
   * Name tag: **concourse**
   * Description: **Rules for accessing Concourse CI server**
-  * VPC: *select the VPC in which your server will be deployed*
+  * VPC: *select the VPC in which you created in the previous step*
   * click **Yes, Create**
 * click **Inbound Rules** tab
 * click **Edit**
 * add the following rules:
 
-| Type            | Protocol  | Port Range | Source    | Notes |
-| :-------------  | :-------- | ---------: | :-------- | :---- |
+| Type of Traffic | Protocol  | Port Range | Source IP CIDR   | Notes |
+| :-------------  | :-------- | ---------: | --------: | :---- |
 | SSH (22)        | TCP (6)   | 22         | 0.0.0.0/0 | debugging, agents |
 | HTTP (80)       | TCP (6)   | 80         | 0.0.0.0/0 | redirect |
 | HTTPS (443)     | TCP (6)   | 443        | 0.0.0.0/0 | web |
@@ -103,13 +134,13 @@ We create the BOSH manifest for our Concourse server by doing the following:
 For those interested, our sample Concourse manifest was derived from
 Concourse's official sample *bosh-init* [manifest](https://github.com/concourse/concourse/blob/master/manifests/bosh-init-aws.yml) and modified as follows:
 
-* added an nginx release to avoid the cost of an ELB ($219.14/year <sup>[[ELB-pricing]](#ELB-pricing)</sup> )
+* added an nginx release to avoid the cost of an ELB ($219.14/year <sup>[[ELB-pricing]](#ELB-pricing)</sup> ).
 This was also why we opened up ports 80 and 443.
 * removed all but the _tsa_ and _atc_ jobs (in the concourse release). We don't need the _baggageclaim_ or _groundcrew_ jobs
 because we have no local workers (we only need workers if we're running containers,
 which would be overly ambitious on a t2.micro instance). Note: we will provision workers in a follow-on blog post.
 * configured the web interface to be publicly-viewable but require authorization to make changes
-* add our remote worker's public key to *jobs.properties.tsa.authorized_keys*
+* added our remote worker's public key to *jobs.properties.tsa.authorized_keys*
 
 ### 0.5 Deploy the Concourse Server
 
@@ -135,7 +166,7 @@ the complete output of the *bosh-init* deployment.
 
 We browse to [https://ci.blabbertabber.com](https://ci.blabbertabber.com).
 
-<a href="http://imgur.com/bEbLF1Y"><img src="http://i.imgur.com/hTt2iWV.png" title="source: imgur.com" /></a>
+<img src="http://i.imgur.com/hTt2iWV.png" title="source: imgur.com" />
 
 We download the `fly` CLI by clicking on the Apple icon (assuming that your workstation is an OS X machine) and move it into place:
 
@@ -162,7 +193,10 @@ jobs:
 EOF
 ```
 
-We configure the pipeline:
+We configure the pipeline (remember to substitute the username and password in the manifest,
+*jobs.properties.atc.basic_auth_username* and *jobs.properties.atc.basic_auth_password*,
+for "user:password" below):
+
 
 ```
 fly -t https://user:password@ci.blabbertabber.com configure really-cool-pipeline -c hello-world.yml
@@ -177,24 +211,48 @@ We browse to our CI server to verify the pipeline has been created: We browse to
 Next we unpause the job
 
 * click the "&equiv;" (hamburger) in the upper left hand corner
-* click the "&#x25b6;" (play button) that appears below the hamburger
-* authenticate with the *atc*'s account and password. The banner at the top of the screen will switch from light-blue to black. The page should look like this:
+* click the "&#x25b6;" (play button) that appears below the hamburger.
+  This will un-pause our pipeline and allow builds to run.
+* authenticate with the *atc*'s account and password (these can be found in the manifest,
+*jobs.properties.atc.basic_auth_username* and *jobs.properties.atc.basic_auth_password*)
+The banner at the top of the screen will switch from light-blue to black. The page should look like this:
 
 <img src="http://i.imgur.com/uzAqd3D.png" title="source: imgur.com" />
+
+
+### 0.9 Epic Fail
+
+We attempt to run the job though we have no workers:
 
 * click the *hello-world* rectangle in the middle of the screen.
 * click the "**&oplus;**" button in the upper right hand side of the screen
 
-## 1. Concourse Yearly Costs: $80.34
+We expect the run to fail (it does). Note the burnt-orange color of a failed build:
+
+<img src="http://i.imgur.com/EIREMYa.png" title="source: imgur.com" />
+
+## 1.0 Conclusion
+
+We have demonstrated with the ease with which one can deploy a CI server
+using a combination of *Concourse* and *bosh-init*, a deployment which takes
+less than a quarter hour from start (no disk, no OS) to finish (a publicly-accessible,
+up-and-running CI server) and which is easily re-deployed.
+
+We recognize that our deployment is incomplete, that it lacks the workers
+necessary to run jobs.  We will describe how to manually provision workers
+in our next blog post.
+
+One of the benefits of the *Concourse/bosh-init* combination is that *Concourse*
+stores its state on a [persistent disk](https://bosh.io/docs/persistent-disks.html),
+so that re-deploying the CI server (e.g. new OS, new Concourse) won't cause the loss
+of the pipeline configuration or build history.
+
+## Appendix A. Concourse Yearly Costs: $80.34
 
 The yearly cost of running a Concourse server is $80.34. Note that this
-does not include the cost of the worker, which for the purposes of this
-blog post is considered "free" (i.e. our worker will be a VM on our personal workstation); however,
-had we chosen to use the recommended m3.large EC2 instance for a worker, it
+does not include the cost of the worker.
+Had we chosen to implement the recommended m3.large EC2 instance for a worker, it
 would have increased our yearly cost by $713.54 <sup>[[m3.large]](#m3.large)</sup> .
-
-Although Travis CI is free for Open Source projects, the price climbs to $1,548/year
-([$129/month](https://travis-ci.com/plans)) for closed source projects.
 
 Here are our costs:
 
@@ -203,29 +261,30 @@ Here are our costs:
 |*ci.blabbertabber.com* cert|cheapsslshop.com|$14.85 3-year  <sup>[[inexpensive-SSL]](#inexpensive-SSL)</sup>|$4.95
 |EC2 t2.micro instance|Amazon AWS|$0.0086 / hour <sup>[[t2.micro]](#t2.micro)</sup>|$75.39
 
+## Acknowledgements
+
+We'd like to thank [Rob Dimsdale](https://github.com/robdimsdale) of the Concourse team
+for reviewing the manuscript for accuracy and completeness.
+
 ## Footnotes
 
-<a name="android-23"><sup>[android-23]</sup></a> We discovered a bug when we upgraded our
-Travis CI to use the latest Android emulator (API 23, Marshmallow). Specifically
-our builds would fail with `com.android.ddmlib.ShellCommandUnresponsiveException`.
-The problem was posted to [StackOverflow](http://stackoverflow.com/questions/32952413/gradle-commands-fail-on-api-23-google-api-emulator-image-armeabi-v7a),
-but no solution was offered (at the time of this writing).
-The problem may lie with the image, not with Travis-CI: according to one developer, _["something is up with the API 23 Google API emulator image"](https://github.com/googlemaps/android-maps-utils/issues/207#issuecomment-144904766)_.
-
-<a name="Travis"><sup>[Travis]</sup></a> Travis CI does not permit ssh'ing into the container
-to troubleshoot the build. That, coupled with long feedback times, leads to a frustrating
-cycle of making small changes, pushing them, waiting [6 minutes](https://travis-ci.org/blabbertabber/blabbertabber/builds/85456216)
-to determine if they fixed the problem, and starting again.
+<a name="snowflakes"><sup>[snowflakes]</sup></a>
+Even the most innocuous changes to a CI server can be fraught with anxiety: two years
+ago when we were migrating one of our development team's Jenkins CI server VM
+from one datastore to another (a very low-risk operation),
+we needed to have several meetings with the Team's
+project manager and the anchor before they were willing to allow us to proceed
+with the migration.
 
 <a name="ELB-pricing"><sup>[ELB-pricing]</sup></a> ELB pricing, as of this writing, is [$0.025/hour](https://aws.amazon.com/elasticloadbalancing/pricing/), $0.60/day, $219.1455 / year (assuming 365.2425 days / year).
+
+<a name="m3.large"><sup>[m3.large]</sup></a> Amazon effectively charges [$0.0814/hour](https://aws.amazon.com/ec2/pricing/) for a 1 year term all-upfront m3.large reserved instance.
 
 <a name="inexpensive-SSL"><sup>[inexpensive-SSL]</sup></a> One shouldn't pay more than
 $25 for a 3-year certificate. We used [SSLSHOP](https://www.cheapsslshop.com/comodo-positive-ssl) to purchase our *Comodo Positive SSL*, but there are many good SSL vendors, and we don't endorse one over
 the other.
 
 <a name="t2.micro"><sup>[t2.micro]</sup></a> Amazon effectively charges [$0.0086/hour](https://aws.amazon.com/ec2/pricing/) for a 1 year term all-upfront t2.micro reserved instance.
-
-<a name="m3.large"><sup>[m3.large]</sup></a> Amazon effectively charges [$0.0814/hour](https://aws.amazon.com/ec2/pricing/) for a 1 year term all-upfront m3.large reserved instance.
 
 # Replacing Travis-CI for Android with Concourse CI
 
@@ -424,3 +483,11 @@ The problem may lie with the image, not with Travis-CI: according to one develop
 to troubleshoot the build. That, coupled with long feedback times, leads to a frustrating
 cycle of making small changes, pushing them, waiting [6 minutes](https://travis-ci.org/blabbertabber/blabbertabber/builds/85456216)
 to determine if they fixed the problem, and starting again.
+
+<a name="android-23"><sup>[android-23]</sup></a> We discovered a bug when we upgraded our
+Travis CI to use the latest Android emulator (API 23, Marshmallow). Specifically
+our builds would fail with `com.android.ddmlib.ShellCommandUnresponsiveException`.
+The problem was posted to [StackOverflow](http://stackoverflow.com/questions/32952413/gradle-commands-fail-on-api-23-google-api-emulator-image-armeabi-v7a),
+but no solution was offered (at the time of this writing).
+The problem may lie with the image, not with Travis-CI: according to one developer, _["something is up with the API 23 Google API emulator image"](https://github.com/googlemaps/android-maps-utils/issues/207#issuecomment-144904766)_.
+
