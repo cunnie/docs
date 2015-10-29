@@ -2,6 +2,7 @@
 author: cunnie
 categories:
 - BOSH
+- Concourse
 date: 2015-10-24T13:52:48-07:00
 draft: true
 short: |
@@ -23,8 +24,8 @@ Upgrades/re-configurations/re-installs are as simple as editing a file
 and typing one command (*bosh-init*).
 
 We must confess to sleight-of-hand: although we describe deploying a CI
-server, we can't use it because it doesn't have any workers, which are needed to run the
-tests.  **The deployed CI Server we describe can't run any tests**.
+server, the worker is too lean to run any but the smallest tests.
+**The deployed CI Server we describe can't run large tests**.
 
 We will address that shortcoming in a future blog post where we describe
 the manual provisioning of local workers. The process isn't difficult, but
@@ -86,7 +87,8 @@ We decide to use HTTPS to communicate with our Concourse server, for we will
 need to authenticate against the webserver when we configure our CI
 (when we transmit our credentials over the Internet we want them to be encrypted).
 
-We purchase valid SSL certificates for our server. Using a self-signed certificate is also an option.
+We purchase valid SSL certificates for our server <sup>[[Let's Encrypt]](#lets_encrypt)</sup> .
+Using a self-signed certificate is also an option.
 
 We use the following command to create our key and CSR. Note that you
 should substitute your information where appropriate, especially for the
@@ -134,11 +136,11 @@ We create the BOSH manifest for our Concourse server by doing the following:
 For those interested, our sample Concourse manifest was derived from
 Concourse's official sample *bosh-init* [manifest](https://github.com/concourse/concourse/blob/master/manifests/bosh-init-aws.yml) and modified as follows:
 
-* added an nginx release to avoid the cost of an ELB ($219.14/year <sup>[[ELB-pricing]](#ELB-pricing)</sup> ).
-This was also why we opened up ports 80 and 443.
-* removed all but the _tsa_ and _atc_ jobs (in the concourse release). We don't need the _baggageclaim_ or _groundcrew_ jobs
-because we have no local workers (we only need workers if we're running containers,
-which would be overly ambitious on a t2.micro instance). Note: we will provision workers in a follow-on blog post.
+* added an nginx release to provide SSL termination (i.e. HTTPS)
+while bypassing the need for an ELB ($219.14/year <sup>[[ELB-pricing]](#ELB-pricing)</sup> ).
+This was also why we enabled ports 80 and 443 in our AWS Security Group.
+* added a postgres job and configured our Concourse server to use that instead of Amazon RDS in order
+to eliminate RDS charges, but we suspect the savings to be insignificant.
 * configured the web interface to be publicly-viewable but require authorization to make changes
 * added our remote worker's public key to *jobs.properties.tsa.authorized_keys*
 
@@ -166,7 +168,7 @@ the complete output of the *bosh-init* deployment.
 
 We browse to [https://ci.blabbertabber.com](https://ci.blabbertabber.com).
 
-<img src="http://i.imgur.com/hTt2iWV.png" title="source: imgur.com" />
+<img style="max-width:100%;" src="http://i.imgur.com/yqpzcp0.png" />
 
 We download the `fly` CLI by clicking on the Apple icon (assuming that your workstation is an OS X machine) and move it into place:
 
@@ -176,7 +178,13 @@ install ~/Downloads/fly /usr/local/bin
 ### 0.7 Create *Hello World* Concourse job
 
 We follow Concourse's [Getting Started](http://concourse.ci/getting-started.html)
-instructions to create our first pipeline.
+instructions to create our first pipeline. We
+add `tags [ "micro" ]` to the sample Concourse pipeline
+so that the job is run on our "micro" worker (in
+our BOSH manifest, we tag the worker that
+is colocated on our _t2.micro_ Concourse
+server "micro" so that we can steer small jobs
+to it).
 
 ```bash
 cat > hello-world.yml <<EOF
@@ -187,6 +195,7 @@ jobs:
     config:
       platform: linux
       image: "docker:///ubuntu"
+      tags: [ "micro" ]
       run:
         path: echo
         args: ["Hello, world!"]
@@ -199,37 +208,46 @@ for "user:password" below):
 
 
 ```
-fly -t https://user:password@ci.blabbertabber.com configure really-cool-pipeline -c hello-world.yml
+fly -t "https://user:password@ci.blabbertabber.com" set-pipeline -p really-cool-pipeline -c hello-world.yml
 ```
+
+You can see the gist of the output [here](https://gist.github.com/cunnie/a3a125e9069e493ef8ca).
+
+Type **y** when prompted to apply the configuration.
 
 ### 0.8 Browse to Concourse and Kick off Job
 
-We browse to our CI server to verify the pipeline has been created: We browse to [https://ci.blabbertabber.com](https://ci.blabbertabber.com).
+Refresh [https://ci.blabbertabber.com](https://ci.blabbertabber.com) to
+see our newly-created pipeline:
 
-<img src="http://i.imgur.com/fajNqoc.png" title="source: imgur.com" />
+<img style="max-width:100%;" src="http://i.imgur.com/rmDujWu.png" />
 
 Next we unpause the job
 
 * click the "&equiv;" (hamburger) in the upper left hand corner
 * click the "&#x25b6;" (play button) that appears below the hamburger.
   This will un-pause our pipeline and allow builds to run.
+* click **Log in with Basic Auth**
 * authenticate with the *atc*'s account and password (these can be found in the manifest,
 *jobs.properties.atc.basic_auth_username* and *jobs.properties.atc.basic_auth_password*)
-The banner at the top of the screen will switch from light-blue to black. The page should look like this:
+* click the "&equiv;" (hamburger) in the upper left hand corner (yes, again)
+* click the "&#x25b6;" (play button) that appears below the hamburger.
+The banner at the top of the screen will switch from light-blue to black.
+The page should look like this:
 
-<img src="http://i.imgur.com/uzAqd3D.png" title="source: imgur.com" />
+<img style="max-width:100%;" src="http://i.imgur.com/QzOX9zR.png" />
 
+### 0.9 Our First Integration Test: Hello World
 
-### 0.9 Epic Fail
-
-We attempt to run the job though we have no workers:
+We kick off our job:
 
 * click the *hello-world* rectangle in the middle of the screen.
 * click the "**&oplus;**" button in the upper right hand side of the screen
 
-We expect the run to fail (it does). Note the burnt-orange color of a failed build:
+We see that the  job completes successfully by the
+pea-green color. We click "**>_ say-hello**" to see the output:
 
-<img src="http://i.imgur.com/EIREMYa.png" title="source: imgur.com" />
+<img style="max-width:100%;" src="http://i.imgur.com/bGuH3aX.png" />
 
 ## 1.0 Conclusion
 
@@ -239,8 +257,8 @@ less than a quarter hour from start (no disk, no OS) to finish (a publicly-acces
 up-and-running CI server) and which is easily re-deployed.
 
 We recognize that our deployment is incomplete, that it lacks the workers
-necessary to run jobs.  We will describe how to manually provision workers
-in our next blog post.
+necessary to run jobs of any consequence.  We will describe how to manually
+provision workers in our next blog post.
 
 One of the benefits of the *Concourse/bosh-init* combination is that *Concourse*
 stores its state on a [persistent disk](https://bosh.io/docs/persistent-disks.html),
@@ -273,8 +291,14 @@ Even the most innocuous changes to a CI server can be fraught with anxiety: two 
 ago when we were migrating one of our development team's Jenkins CI server VM
 from one datastore to another (a very low-risk operation),
 we needed to have several meetings with the Team's
-project manager and the anchor before they were willing to allow us to proceed
+product manager and the anchor before they were willing to allow us to proceed
 with the migration.
+
+<a name="lets_encrypt"><sup>[Let's Encrypt]</sup></a>
+[Let's Encrypt](https://letsencrypt.org/) is a "free, automated, and open"
+Certificate Authority which issues valid SSL certificates free of charge.
+We are eagerly awaiting its launch, which hopefully will happen within the
+next few weeks.
 
 <a name="ELB-pricing"><sup>[ELB-pricing]</sup></a> ELB pricing, as of this writing, is [$0.025/hour](https://aws.amazon.com/elasticloadbalancing/pricing/), $0.60/day, $219.1455 / year (assuming 365.2425 days / year).
 
@@ -285,7 +309,6 @@ $25 for a 3-year certificate. We used [SSLSHOP](https://www.cheapsslshop.com/com
 the other.
 
 <a name="t2.micro"><sup>[t2.micro]</sup></a> Amazon effectively charges [$0.0086/hour](https://aws.amazon.com/ec2/pricing/) for a 1 year term all-upfront t2.micro reserved instance.
-
 # Replacing Travis-CI for Android with Concourse CI
 
 We discovered that by migrating our Android application's
