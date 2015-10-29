@@ -6,10 +6,134 @@ categories:
 date: 2015-10-24T13:52:48-07:00
 draft: true
 short: |
-  How to deploy a publicly-accessible, extremely lean Concourse CI server
+  How to create Concourse CI workers manually using VMware Fusion VMs
 title: The World's Smallest Concourse CI Server
 ---
 
+We create a VM with VMware Fusion. We use a configuration similar to
+Amazon's [m3.large](https://aws.amazon.com/ec2/instance-types/) (i.e.
+8GiB RAM, 2 vCPU), for that is the canonical size of a Concourse
+worker.
+
+* Ubuntu 14.04.3
+* 2 CPUs
+* 8192 MB RAM
+* 30 GB Disk
+
+(in our case we set the VM's network interface to bridge on the ethernet,
+hard-code the MAC address, add an entry in our DHCP server)
+
+### Install Ubuntu 14.04
+
+* Connect the VM's CD drive to the the Ubuntu ISO image (ubuntu-14.04.3-desktop-amd64.iso)
+* boot the VM
+* go through the Ubuntu installation process
+* we log in via the console as the user we created in the
+* bring up a terminal window inside the VM and run the following commands
+  to install pre-requisite software:
+  ```bash
+sudo apt-get update
+sudo apt-get upgrade
+sudo shutdown -r now
+sudo apt-get install -y open-vm-tools openssh-server golang
+sudo tee /etc/profile.d/gopath.sh <<-EOF
+export GOPATH=~/go
+EOF
+# reboot
+sudo shutdown -r now
+  ```
+* log in via the console (or via ssh)
+```
+sudo apt-get -y install git automake autoconf
+sudo apt-get -y install e2fsprogs e2fslibs e2fslibs-dev libblkid-dev
+sudo apt-get -y install zlib1g-dev gcc liblzo2-dev
+sudo apt-get -y install zlib1g-dev gcc liblzo2-dev
+# fixes
+# root@ci:~/go/src/github.com/docker/docker# make
+#   mkdir bundles
+#   docker build -t "docker-dev:master" .
+#   /bin/sh: 1: docker: not found
+sudo apt-get -y install docker.io
+sudo su -
+```
+
+* Gearbox &rarr; System Settings &rarr; Displays
+* Resolution: **1024 &times; 768 (4:3)**
+* click **Apply**, click **Keep this Configuration**
+
+We need to get garden-linux dependencies
+<sup>[[Docker]](#docker)</sup> :
+
+```
+mkdir $GOPATH
+go get -d github.com/docker/docker
+cd $GOPATH/src/github.com/docker/docker
+make
+bash project/make/.go-autogen
+hack/make.sh ubuntu
+go get github.com/cloudfoundry-incubator/garden-linux
+
+cd $GOPATH
+...
+imports github.com/docker/docker/autogen/dockerversion: cannot find package "github.com/docker/docker/autogen/dockerversion" in any of:
+	/usr/lib/go/src/pkg/github.com/docker/docker/autogen/dockerversion (from $GOROOT)
+	/root/go/src/github.com/docker/docker/autogen/dockerversion (from $GOPATH)
+...
+
+imports github.com/docker/docker/pkg/transport: cannot find package "github.com/docker/docker/pkg/transport" in any of:
+	/usr/lib/go/src/pkg/github.com/docker/docker/pkg/transport (from $GOROOT)
+	/root/go/src/github.com/docker/docker/pkg/transport (from $GOPATH)
+```
+
+We install Garden Linux using the
+[README](https://github.com/cloudfoundry-incubator/garden-linux):
+
+```
+sudo su -
+apt-get update
+apt-get install -y asciidoc xmlto --no-install-recommends
+apt-get install -y pkg-config autoconf
+apt-get build-dep -y btrfs-tools
+
+mkdir -p /tmp/btrfs
+cd /tmp/btrfs
+git clone git://git.kernel.org/pub/scm/linux/kernel/git/kdave/btrfs-progs.git
+cd btrfs-progs
+./autogen.sh
+./configure
+make && make install
+```
+
+## Caveats
+
+Note that our decision to manually create a VM and install garden-linux
+by hand
+(an admittedly unnatural act) was borne of 2 requirements:
+
+1. a desire to expose hardware virtualization to the worker VMs/Containers
+2. financial (we wouldn't mind spending $80 for a VMware Fusion license;
+however, we balked at spending
+[$3,495](http://www.vmware.com/products/vsphere/pricing)
+for a _VMware vSphere Enterprise Plus_ license.
+
+We wanted to expose hardware virtualization to the containers to enable
+us to run Intel's Hardware Accelerated Execution Manager (HAXM), which
+"...[uses Intel Virtualization Technology (VT) to speed up Android app emulation on a host machine]
+(https://software.intel.com/en-us/blogs/2012/03/12/how-to-start-intel-hardware-assisted-virtualization-hypervisor-on-linux-to-speed-up-intel-android-x86-emulator)"
+
+Had we not needed to expose hardware virtualization, we would have opted
+for a [BOSH Lite](https://github.com/cloudfoundry/bosh-lite)
+deployment (sample manifest
+[here](https://github.com/concourse/concourse/blob/master/manifests/bosh-lite.yml))
+Unfortunately, BOSH Lite only supports the Virtual Box and AWS Vagrant
+providers, not the VMware Fusion provider, and the VirtualBox does not
+support nested virtualization <sup>[[VirtualBox]](#virtualbox)</sup>
+
+discovered that by migrating our CI to Concourse and [houdini](https://github.com/vito/houdini), the "World's worst containerizer", we were able to decrease the duration of
+our tests 400% (from [9 minutes 22 seconds](https://travis-ci.org/blabbertabber/blabbertabber/builds/84781702) to something)
+
+, who would like to reduce their feedback cycle, or
+who would like to test against a variety of ABI interfaces (currently Travis doesn't support x86-based or x86_64-based emulators, only ARM emulators).
 We discovered that by migrating our Android application's
 [Continuous Integration](https://en.wikipedia.org/wiki/Continuous_integration) (CI)
 from [Travis CI](https://travis-ci.org/) (a CI service provider)
@@ -96,7 +220,6 @@ We check Concourse to make sure our worker is registered: https://ci.blabbertabb
 If instead you see ``[ ]``, then you'll need to troubleshoot the _tsa_  <sup>[[tsa]](#tsa)</sup> daemon.
 
 
-
 ## 3. Conclusion
 
 We were pleased with our switch to Concourse; however, switching CI platforms is
@@ -167,31 +290,36 @@ Although Travis CI is free for Open Source projects, the price climbs to $1,548/
 
 
 
-VMware Fusion
-
-* Ubuntu 14.04.3
-* 2 CPUs
-* 10240 MB RAM
-* 30 GB Disk
-
-(in my case I set it to bridging on the ethernet, hard-coded the MAC address,
-added an entry in DHCP)
-
-```
-sudo apt-get install open-vm-tools openssh-server
-
-```
-* Gearbox &rarr; System Settings &rarr; Displays
-* Resolution: **1024 &times; 768 (4:3)**
-* click **Apply**, click **Keep this Configuration**
-
-discovered that by migrating our CI to Concourse and [houdini](https://github.com/vito/houdini), the "World's worst containerizer", we were able to decrease the duration of
-our tests 400% (from [9 minutes 22 seconds](https://travis-ci.org/blabbertabber/blabbertabber/builds/84781702) to something)
-
-, who would like to reduce their feedback cycle, or
-who would like to test against a variety of ABI interfaces (currently Travis doesn't support x86-based or x86_64-based emulators, only ARM emulators).
 
 ### Footnotes
+
+<a name="docker"><sup>[Docker]</sup></a> Installing Garden Linux's Docker
+dependencies can be
+[problematic](https://github.com/docker/docker/issues/10922);
+blindly typing `go get github.com/cloudfoundry-incubator/garden-linux`
+without prepping the Docker build will result in the following errors:
+
+```
+imports github.com/docker/docker/autogen/dockerversion: cannot find package "github.com/docker/docker/autogen/dockerversion" in any of:
+	/usr/lib/go/src/pkg/github.com/docker/docker/autogen/dockerversion (from $GOROOT)
+	/root/go/src/github.com/docker/docker/autogen/dockerversion (from $GOPATH)
+```
+
+and
+
+```
+imports github.com/docker/docker/pkg/transport: cannot find package "github.com/docker/docker/pkg/transport" in any of:
+	/usr/lib/go/src/pkg/github.com/docker/docker/pkg/transport (from $GOROOT)
+	/root/go/src/github.com/docker/docker/pkg/transport (from $GOPATH)
+```
+
+
+
+<a name="virtualbox"><sup>[VirtualBox]</sup></a> VirtualBox as of this writing
+does not support nested virtualization (VT-in-VT), although interestingly
+the VirtualBox support
+[ticket](https://www.virtualbox.org/ticket/4032)
+has many comments from those wishing to use it for the Android emulator.
 
 <a name="android-23"><sup>[android-23]</sup></a> We discovered a bug when we upgraded our
 Travis CI to use the latest Android emulator (API 23, Marshmallow). Specifically
