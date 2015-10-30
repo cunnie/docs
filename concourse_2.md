@@ -21,9 +21,70 @@ worker.
 * 30 GB Disk
 
 (in our case we set the VM's network interface to bridge on the ethernet,
-hard-code the MAC address, add an entry in our DHCP server)
+hard-code the MAC address (02:00:da:da:b0:b0),
+and add an entry in our DHCP server)
 
-### Install Ubuntu 14.04
+### 0.0 Configure VMware Fusion VM
+
+VMware Fusion:
+* **Add &rarr; New...**
+* Select **Create a custom virtual machine**, click **Continue**
+* Choose Operating System: **Linux &rarr; Fedora 64-bit**; click **Continue**
+* click **Continue**
+* click **Customize Settings**
+  * click **Save** (location)
+  * **Processors & Memory**
+    * **2 processor cores**
+    * **8192** MB RAM
+    * Advanced Options
+      * checked: **Enable hypervisor applications in this virtual machine**
+  * click **Show All**
+  * **Hard Disk (SCSI)**
+    * Disk size: **30.00** GB
+    * click **Apply**
+    * click **Show All**
+  * **CD/DVD (IDE)**
+    * click the drop down
+    * select **Choose a disc or disc image...**
+    * browse to the Fedora ISO (e.g. *Fedora-Server-DVD-x86_64-22.iso*)
+    * click **Open**
+    * close the window
+* click the "&#x25b6;" (play) button
+
+### 0.1 Install Fedora Server 22
+
+* select **Install Fedora 22** and press **Enter**
+
+Stopped in the tracks because of this
+[issue](https://github.com/cloudfoundry-incubator/garden-linux/issues/45)
+
+per Glyn Normington "The problem is that we haven't yet started supporting centos or systemd"
+
+### 0.1 Install Ubuntu Server 15.10
+
+* **English**
+* **Install Ubuntu Server**
+* **English**
+* **United States**
+* **No** (detect keyboard layout)
+* **English (US)**
+* **English (US)** (keyboard layout)
+* hostname: **ci.nono.com**
+* new user: **cunnie**
+* username: **cunnie**
+* password ***choose-a-good-password***
+* re-enter password
+* **No** (encrypt homedir)
+* **Yes** (time zone is correct)
+* **Guided - use entire disk** (not fond of LVM for single-disk systems)
+* **SCSI33 (0,0,0) (sda)...**
+* **Yes** (write changes to disk
+
+
+### Install Ubuntu 14.04.3
+
+*I ditched the Ubuntu install when I realized it had golang 1.2.1,
+which is really ancient.*
 
 * Connect the VM's CD drive to the the Ubuntu ISO image (ubuntu-14.04.3-desktop-amd64.iso)
 * boot the VM
@@ -55,6 +116,8 @@ sudo apt-get -y install zlib1g-dev gcc liblzo2-dev
 #   /bin/sh: 1: docker: not found
 sudo apt-get -y install docker.io
 sudo su -
+# fixes `dd: failed to open ‘/opt/garden/btrfs_backing_store’: No such file or directory`
+sudo mkdir -p /opt/garden
 ```
 
 * Gearbox &rarr; System Settings &rarr; Displays
@@ -68,9 +131,9 @@ We need to get garden-linux dependencies
 mkdir $GOPATH
 go get -d github.com/docker/docker
 cd $GOPATH/src/github.com/docker/docker
-make
-bash project/make/.go-autogen
-hack/make.sh ubuntu
+make all
+#bash project/make/.go-autogen
+#hack/make.sh ubuntu
 go get github.com/cloudfoundry-incubator/garden-linux
 
 cd $GOPATH
