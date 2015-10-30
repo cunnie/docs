@@ -51,15 +51,6 @@ VMware Fusion:
     * close the window
 * click the "&#x25b6;" (play) button
 
-### 0.1 Install Fedora Server 22
-
-* select **Install Fedora 22** and press **Enter**
-
-Stopped in the tracks because of this
-[issue](https://github.com/cloudfoundry-incubator/garden-linux/issues/45)
-
-per Glyn Normington "The problem is that we haven't yet started supporting centos or systemd"
-
 ### 0.1 Install Ubuntu Server 15.10
 
 * **English**
@@ -79,7 +70,33 @@ per Glyn Normington "The problem is that we haven't yet started supporting cento
 * **Guided - use entire disk** (not fond of LVM for single-disk systems)
 * **SCSI33 (0,0,0) (sda)...**
 * **Yes** (write changes to disk
+* press **Enter** (no HTTP proxy)
+* press **Enter** (no automatic updates)
+* press **Spacebar** to select **OpenSSH server**
+* press **Enter** (install the GRUB boot loader)
+* press **Enter** (to reboot)
 
+```bash
+ssh cunnie@ci.nono.com
+sudo apt-get update
+sudo apt-get upgrade
+sudo apt-get install -y open-vm-tools golang
+sudo tee /etc/profile.d/gopath.sh <<-EOF
+export GOPATH=~/go
+EOF
+# log out & log back in again
+exit
+ssh cunnie@ci.nono.com
+```
+
+### 0.1 Install Fedora Server 22
+
+* select **Install Fedora 22** and press **Enter**
+
+Stopped in the tracks because of this
+[issue](https://github.com/cloudfoundry-incubator/garden-linux/issues/45)
+
+per Glyn Normington "The problem is that we haven't yet started supporting centos or systemd"
 
 ### Install Ubuntu 14.04.3
 
@@ -92,17 +109,6 @@ which is really ancient.*
 * we log in via the console as the user we created in the
 * bring up a terminal window inside the VM and run the following commands
   to install pre-requisite software:
-  ```bash
-sudo apt-get update
-sudo apt-get upgrade
-sudo shutdown -r now
-sudo apt-get install -y open-vm-tools openssh-server golang
-sudo tee /etc/profile.d/gopath.sh <<-EOF
-export GOPATH=~/go
-EOF
-# reboot
-sudo shutdown -r now
-  ```
 * log in via the console (or via ssh)
 ```
 sudo apt-get -y install git automake autoconf
