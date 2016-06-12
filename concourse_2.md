@@ -308,8 +308,7 @@ make && make install
 
 ## Caveats
 
-Note that our decision to manually create a VM and install garden-linux
-by hand
+Note that our decision to manually create a VM and install garden-linux by hand
 (an admittedly unnatural act) was borne of 2 requirements:
 
 1. a desire to expose hardware virtualization to the worker VMs/Containers
@@ -318,49 +317,57 @@ however, we balked at spending
 [$3,495](http://www.vmware.com/products/vsphere/pricing)
 for a _VMware vSphere Enterprise Plus_ license.
 
-We wanted to expose hardware virtualization to the containers to enable
-us to run Intel's Hardware Accelerated Execution Manager (HAXM), which
-"...[uses Intel Virtualization Technology (VT) to speed up Android app emulation on a host machine]
+We wanted to expose hardware virtualization to the containers to enable us to
+run Intel's Hardware Accelerated Execution Manager (HAXM), which "...[uses Intel
+Virtualization Technology (VT) to speed up Android app emulation on a host
+machine]
 (https://software.intel.com/en-us/blogs/2012/03/12/how-to-start-intel-hardware-assisted-virtualization-hypervisor-on-linux-to-speed-up-intel-android-x86-emulator)"
 
-Had we not needed to expose hardware virtualization, we would have opted
-for a [BOSH Lite](https://github.com/cloudfoundry/bosh-lite)
-deployment (sample manifest
+Had we not needed to expose hardware virtualization, we would have opted for a
+[BOSH Lite](https://github.com/cloudfoundry/bosh-lite) deployment (sample
+manifest
 [here](https://github.com/concourse/concourse/blob/master/manifests/bosh-lite.yml))
 Unfortunately, BOSH Lite only supports the Virtual Box and AWS Vagrant
-providers, not the VMware Fusion provider, and the VirtualBox does not
-support nested virtualization <sup>[[VirtualBox]](#virtualbox)</sup>
+providers, not the VMware Fusion provider, and the VirtualBox does not support
+nested virtualization <sup>[[VirtualBox]](#virtualbox)</sup>
 
-discovered that by migrating our CI to Concourse and [houdini](https://github.com/vito/houdini), the "World's worst containerizer", we were able to decrease the duration of
-our tests 400% (from [9 minutes 22 seconds](https://travis-ci.org/blabbertabber/blabbertabber/builds/84781702) to something)
+discovered that by migrating our CI to Concourse and
+[houdini](https://github.com/vito/houdini), the "World's worst containerizer",
+we were able to decrease the duration of our tests 400% (from [9 minutes 22
+seconds](https://travis-ci.org/blabbertabber/blabbertabber/builds/84781702) to
+something)
 
-, who would like to reduce their feedback cycle, or
-who would like to test against a variety of ABI interfaces (currently Travis doesn't support x86-based or x86_64-based emulators, only ARM emulators).
-We discovered that by migrating our Android application's
-[Continuous Integration](https://en.wikipedia.org/wiki/Continuous_integration) (CI)
-from [Travis CI](https://travis-ci.org/) (a CI service provider)
-to a custom solution using [Concourse CI](http://concourse.ci/), a
-CI server developed internally at Pivotal Software, we were able to assert
-greater control over our CI environment (i.e. we were able to connect to
-our build containers to troubleshoot failed builds and had more flexibility
-choosing our target SDK (i.e. we were able to target Android-23, Marshmallow)).
+, who would like to reduce their feedback cycle, or who would like to test
+against a variety of ABI interfaces (currently Travis doesn't support x86-based
+or x86_64-based emulators, only ARM emulators). We discovered that by migrating
+our Android application's [Continuous
+Integration](https://en.wikipedia.org/wiki/Continuous_integration) (CI) from
+[Travis CI](https://travis-ci.org/) (a CI service provider) to a custom solution
+using [Concourse CI](http://concourse.ci/), a CI server developed internally at
+Pivotal Software, we were able to assert greater control over our CI environment
+(i.e. we were able to connect to our build containers to troubleshoot failed
+builds and had more flexibility choosing our target SDK (i.e. we were able to
+target Android-23, Marshmallow)).
 
-This blog post may be of interest to Android developers who use continuous integration
-and who need greater control over
-their CI environment. It describes setting up a Concourse Server on Amazon AWS.
-Subsequent posts will discuss configuring and provisioning the Concourse workers
-and containers.
+This blog post may be of interest to Android developers who use continuous
+integration and who need greater control over their CI environment. It describes
+setting up a Concourse Server on Amazon AWS. Subsequent posts will discuss
+configuring and provisioning the Concourse workers and containers.
 
 ## 1. Configure Concourse Worker, Pipeline, and Job
 
 ### 1.0 Verify There Are No Concourse Workers
 
-We check Concourse to make sure no workers are registered: https://ci.blabbertabber.com/api/v1/workers (substitute your server's URL as appropriate; you will need to authenticate). We should see an
-empty JSON array (i.e. "[ ]").
+We check Concourse to make sure no workers are registered:
+https://ci.blabbertabber.com/api/v1/workers (substitute your server's URL as
+appropriate; you will need to authenticate). We should see an empty JSON array
+(i.e. "[ ]").
 
 ### 1.1 Download, Install, and Start Houdini
 
-The Concourse worker needs Houdini, "*[The World's Worst Containerizer](https://github.com/vito/houdini)*" to implement the Garden Linux container API so that the Concourse remote worker can spin up containers.
+The Concourse worker needs Houdini, "*[The World's Worst
+Containerizer](https://github.com/vito/houdini)*" to implement the Garden Linux
+container API so that the Concourse remote worker can spin up containers.
 
 ```bash
 curl -L https://github.com/vito/houdini/releases/download/2015-10-09/houdini_darwin_amd64 -o ~/Downloads/houdini
@@ -378,7 +385,8 @@ We see the following output:
 
 ### 1.2 Manually Provision Worker
 
-We follow the instructions <sup>[[workers]](#workers)</sup> to manually our remote worker:
+We follow the instructions <sup>[[workers]](#workers)</sup> to manually our
+remote worker:
 
 [FIXME: why override UserKnownHostsFile? Why not opt for the default
 or "StrictHostKeyChecking no"?]
@@ -413,13 +421,16 @@ Allocated port 35509 for remote forward to 0.0.0.0:7777
 
 ### 1.0 Verify There Is One Concourse Worker
 
-We check Concourse to make sure our worker is registered: https://ci.blabbertabber.com/api/v1/workers (substitute your server's URL as appropriate; you will need to authenticate). We should see the following JSON:
+We check Concourse to make sure our worker is registered:
+https://ci.blabbertabber.com/api/v1/workers (substitute your server's URL as
+appropriate; you will need to authenticate). We should see the following JSON:
 
 ```
 [{"addr":"127.0.0.1:47274","baggageclaim_url":"","active_containers":0,"resource_types":null,"platform":"darwin","tags":[],"name":"127.0.0.1:47274"}]
 ```
 
-If instead you see ``[ ]``, then you'll need to troubleshoot the _tsa_  <sup>[[tsa]](#tsa)</sup> daemon.
+If instead you see ``[ ]``, then you'll need to troubleshoot the _tsa_
+<sup>[[tsa]](#tsa)</sup> daemon.
 
 
 ## 3. Conclusion
@@ -436,9 +447,11 @@ Travis CI has several advantages:
 the pull request's status page.
 * badges (e.g. [![Build Status](https://travis-ci.org/blabbertabber/blabbertabber.png?branch=master)](https://travis-ci.org/blabbertabber/blabbertabber) )
 
-We have serious concerns over the security implications of using our OS X workstation as
-a remote Concourse worker. Should the Concourse server be compromised, our
-workstation will be compromised, too. Hosting a Concourse worker on one's personal workstation should be viewed as a proof-of-concept, not as a production-ready solution.
+We have serious concerns over the security implications of using our OS X
+workstation as a remote Concourse worker. Should the Concourse server be
+compromised, our workstation will be compromised, too. Hosting a Concourse
+worker on one's personal workstation should be viewed as a proof-of-concept, not
+as a production-ready solution.
 
 Alternative, more secure solutions would include the following:
 
@@ -451,9 +464,13 @@ ARM ABI for the Android emulators)
 
 
 
-<a name="workers"><sup>[workers]</sup></a> The instructions for [manually provisioning Concourse workers](http://concourse.ci/manual-workers.html) can be found on the Concourse documentation. Additional information can be found on Concourse's atc's GitHub [repo](https://github.com/concourse/tsa)
+<a name="workers"><sup>[workers]</sup></a> The instructions for [manually
+provisioning Concourse workers](http://concourse.ci/manual-workers.html) can be
+found on the Concourse documentation. Additional information can be found on
+Concourse's atc's GitHub [repo](https://github.com/concourse/tsa)
 
-<a name="tsa"><sup>[tsa]</sup></a> The Concourse server's file `/var/vcap/sys/log/tsa/tsa.stdout.log` often contains important troubleshooting
+<a name="tsa"><sup>[tsa]</sup></a> The Concourse server's file
+`/var/vcap/sys/log/tsa/tsa.stdout.log` often contains important troubleshooting
 information. For example, when troubleshooting our server, we do the following:
 
 ```bash
@@ -523,21 +540,30 @@ the VirtualBox support
 [ticket](https://www.virtualbox.org/ticket/4032)
 has many comments from those wishing to use it for the Android emulator.
 
-<a name="android-23"><sup>[android-23]</sup></a> We discovered a bug when we upgraded our
-Travis CI to use the latest Android emulator (API 23, Marshmallow). Specifically
-our builds would fail with `com.android.ddmlib.ShellCommandUnresponsiveException`.
-The problem was posted to [StackOverflow](http://stackoverflow.com/questions/32952413/gradle-commands-fail-on-api-23-google-api-emulator-image-armeabi-v7a),
-but no solution was offered (at the time of this writing).
-The problem may lie with the image, not with Travis-CI: according to one developer, _["something is up with the API 23 Google API emulator image"](https://github.com/googlemaps/android-maps-utils/issues/207#issuecomment-144904766)_.
+<a name="android-23"><sup>[android-23]</sup></a> We discovered a bug when we
+upgraded our Travis CI to use the latest Android emulator (API 23, Marshmallow).
+Specifically our builds would fail with
+`com.android.ddmlib.ShellCommandUnresponsiveException`. The problem was posted
+to
+[StackOverflow](http://stackoverflow.com/questions/32952413/gradle-commands-fail-on-api-23-google-api-emulator-image-armeabi-v7a),
+but no solution was offered (at the time of this writing). The problem may lie
+with the image, not with Travis-CI: according to one developer, _["something is
+up with the API 23 Google API emulator
+image"](https://github.com/googlemaps/android-maps-utils/issues/207#issuecomment-144904766)_.
 
-<a name="Travis"><sup>[Travis]</sup></a> Travis CI does not permit ssh'ing into the container
-to troubleshoot the build. That, coupled with long feedback times, leads to a frustrating
-cycle of making small changes, pushing them, waiting [6 minutes](https://travis-ci.org/blabbertabber/blabbertabber/builds/85456216)
-to determine if they fixed the problem, and starting again.
+<a name="Travis"><sup>[Travis]</sup></a> Travis CI does not permit ssh'ing into
+the container to troubleshoot the build. That, coupled with long feedback times,
+leads to a frustrating cycle of making small changes, pushing them, waiting [6
+minutes](https://travis-ci.org/blabbertabber/blabbertabber/builds/85456216) to
+determine if they fixed the problem, and starting again.
 
-<a name="android-23"><sup>[android-23]</sup></a> We discovered a bug when we upgraded our
-Travis CI to use the latest Android emulator (API 23, Marshmallow). Specifically
-our builds would fail with `com.android.ddmlib.ShellCommandUnresponsiveException`.
-The problem was posted to [StackOverflow](http://stackoverflow.com/questions/32952413/gradle-commands-fail-on-api-23-google-api-emulator-image-armeabi-v7a),
-but no solution was offered (at the time of this writing).
-The problem may lie with the image, not with Travis-CI: according to one developer, _["something is up with the API 23 Google API emulator image"](https://github.com/googlemaps/android-maps-utils/issues/207#issuecomment-144904766)_.
+<a name="android-23"><sup>[android-23]</sup></a> We discovered a bug when we
+upgraded our Travis CI to use the latest Android emulator (API 23, Marshmallow).
+Specifically our builds would fail with
+`com.android.ddmlib.ShellCommandUnresponsiveException`. The problem was posted
+to
+[StackOverflow](http://stackoverflow.com/questions/32952413/gradle-commands-fail-on-api-23-google-api-emulator-image-armeabi-v7a),
+but no solution was offered (at the time of this writing). The problem may lie
+with the image, not with Travis-CI: according to one developer, _["something is
+up with the API 23 Google API emulator
+image"](https://github.com/googlemaps/android-maps-utils/issues/207#issuecomment-144904766)_.
