@@ -89,6 +89,126 @@ exit
 ssh cunnie@ci.nono.com
 ```
 
+We're following the Garden Linux
+[instructions](https://github.com/cloudfoundry-incubator/garden-linux),
+but modifying them slightly because we believe
+we know better:
+
+```bash
+sudo apt-get install -y btrfs-tools
+```
+
+We follow the instuctions for setting up the backing store:
+
+```bash
+sudo su -
+backing_store=/opt/garden/btrfs_backing_store
+mkdir -p $(dirname $backing_store)
+loopback_device=/dev/btrfs_loop
+mount_point=/opt/garden/graph
+
+if [ ! -d $mount_point ]
+then
+    dd if=/dev/zero of=$backing_store bs=1M count=3000  # Here we are writing 3GB. You can adjust this value accordingly.
+    mknod $loopback_device b 7 200
+    losetup $loopback_device $backing_store
+    mkfs.btrfs $backing_store
+fi
+
+if cat /proc/mounts | grep $mount_point
+then
+    echo "btrfs volume already mounted"
+else
+    echo "mounting btrfs volume"
+    mkdir -p $mount_point
+    mount -t btrfs $loopback_device $mount_point
+fi
+```
+
+Some more modifications:
+
+```
+sudo apt-get -y install docker.io
+```
+
+```bash
+mkdir -p $GOPATH/src
+go get github.com/cloudfoundry-incubator/garden-linux
+cd $GOPATH/src/github.com/cloudfoundry-incubator/garden-linux # assuming your $GOPATH has only one entry
+make
+go build -a -tags daemon -o out/garden-linux
+```
+
+uh-oh
+
+```
+The program 'make' can be found in the following packages:
+ * make
+ * make-guile
+Try: apt-get install <selected package>
+# and..,
+package github.com/docker/docker/autogen/dockerversion: cannot find package "github.com/docker/docker/autogen/dockerversion" in any of:
+	/usr/lib/go/src/github.com/docker/docker/autogen/dockerversion (from $GOROOT)
+	/root/go/src/github.com/docker/docker/autogen/dockerversion (from $GOPATH)
+package github.com/docker/docker/pkg/transport: cannot find package "github.com/docker/docker/pkg/transport" in any of:
+	/usr/lib/go/src/github.com/docker/docker/pkg/transport (from $GOROOT)
+	/root/go/src/github.com/docker/docker/pkg/transport (from $GOPATH)
+```
+
+```bash
+apt-get install -y make docker.io
+mkdir $GOPATH
+go get -d github.com/docker/docker
+cd $GOPATH/src/github.com/docker/docker
+git checkout v1.7.1
+#time make -j 2 binary # ~10 minutes
+#time make -j 4 all # 742m21.107s
+```
+
+```bash
+mkdir -p $GOPATH/src
+go get github.com/cloudfoundry-incubator/garden-linux
+cd $GOPATH/src/github.com/cloudfoundry-incubator/garden-linux # assuming your $GOPATH has only one entry
+make
+go build -a -tags daemon -o out/garden-linux
+```
+
+Docker fails on apparmor, which is stupid & I hate it anway
+
+```
+OOPS: 991 passed, 16 skipped, 12 FAILED
+--- FAIL: Test (3637.98s)
+FAIL
+coverage: 75.9% of statements
+exit status 1
+FAIL	github.com/docker/docker/integration-cli	3638.052s
+---> Making bundle: .integration-daemon-stop (in bundles/1.9.0-dev/test-integration-cli)
++++++ cat bundles/1.9.0-dev/test-integration-cli/docker.pid
+++++ kill 8945
+++++ /etc/init.d/apparmor stop
+ * Clearing AppArmor profiles cache
+   ...done.
+All profile caches have been cleared, but no profiles have been unloaded.
+Unloading profiles will leave already running processes permanently
+unconfined, which can lead to unexpected situations.
+
+To set a process to complain mode, use the command line tool
+'aa-complain'. To really tear down all profiles, run the init script
+with the 'teardown' option."
+Makefile:42: recipe for target 'all' failed
+make: *** [all] Error 1
+```
+
+Let's try installing garden-linux:
+
+```bash
+mkdir -p $GOPATH/src
+go get github.com/cloudfoundry-incubator/garden-linux
+cd $GOPATH/src/github.com/cloudfoundry-incubator/garden-linux # assuming your $GOPATH has only one entry
+make
+go build -a -tags daemon -o out/garden-linux
+```
+
 ### 0.1 Install Fedora Server 22
 
 * select **Install Fedora 22** and press **Enter**
@@ -152,6 +272,19 @@ imports github.com/docker/docker/autogen/dockerversion: cannot find package "git
 imports github.com/docker/docker/pkg/transport: cannot find package "github.com/docker/docker/pkg/transport" in any of:
 	/usr/lib/go/src/pkg/github.com/docker/docker/pkg/transport (from $GOROOT)
 	/root/go/src/github.com/docker/docker/pkg/transport (from $GOPATH)
+```
+
+which seems to have been removed from docker ~v.1.8.0
+
+```
+git show 276c640be4b4335e3b8d684cb3562a56d3337b39
+commit 276c640be4b4335e3b8d684cb3562a56d3337b39
+Author: Tibor Vass <tibor@docker.com>
+Date:   Sun May 17 05:07:48 2015 -0400
+
+    remove pkg/transport and use the one from distribution
+
+    Signed-off-by: Tibor Vass <tibor@docker.com>
 ```
 
 We install Garden Linux using the
