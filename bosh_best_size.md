@@ -44,6 +44,12 @@ provisioned storage *Amazon EBS General Purpose SSD (gp2) volume*. This works
 out to a total yearly cost of $97.80 &mdash; $54.00 for the storage and $43.80
 for the Elastic IP address.
 
+One large corporate user deploys BOSH Directors on t3.medium instances. Their
+experience indicates that the director property
+[director.max_threads](https://github.com/cloudfoundry/bosh/blob/8762d25279c2619bca8acc648145cae018696ddd/release/jobs/director/spec#L79),
+which is set in the BOSH manifest, is too high for a t2.medium, and the
+https://github.com/cloudfoundry/bosh/issues/1263
+
 ## Footnotes
 
 <a name="default_instance"><sup>[default_instance]</sup></a> The
@@ -64,8 +70,6 @@ two components: EC2 (compute) costs and EBS (disk) cost:
 [EC2 pricing](https://aws.amazon.com/ec2/pricing/) assumes 1-year term all-upfront
 reserved instances. Prices are in US dollars and are current as of
 2016-06-12.
-
-
 
 <a name="lesser_characteristics"><sup>[lesser_characteristics]</sup></a>
 Other characteristics may affect your
