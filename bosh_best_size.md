@@ -2,37 +2,33 @@
 
 A BOSH Director is software deployed to a virtual machine (VM) which
 orchestrates the deployment of other VMs. We explore running the BOSH Director
-on VMs much smaller than the default, and we find that a BOSH Director can be
-effective even when deployed to a minimal VM. *This can reduce the annual cost of the
-director by as much as 93%*.
+on VMs much smaller (fewer CPUs, less RAM) than the default, and we find that a
+BOSH Director can be effective even when deployed to a minimal VM. *This can
+reduce the annual cost of the director by as much as 94%*.
 
 ### Instance Comparison
 
 We compare three Amazon Web Services (AWS) Elastic Compute Cloud (EC2) instance
-types: the default BOSH instance type, the m3.xlarge, and two t2 instance types,
-the t2.micro and the t2.nano (the two least expensive EC2 instance types).
+types: the default BOSH instance type, the *m3.xlarge*,
+<sup>[[default_instance]](#default_instance)</sup> and two t2 instance types,
+the *t2.micro* and the *t2.nano* (the two least expensive EC2 instance types).
 
 | [Instance Type](http://aws.amazon.com/ec2/instance-types/)   | vCPU | Mem (GiB) | Cost/yr  <sup>[[annual_cost]](#annual_cost)</sup>  |
 |--------------------------------------------------------------|-----:|----------:|----------:|
-| m3.xlarge <sup>[[default_instance]](#default_instance)</sup> |    4 |        15 |     $1482 |
+| m3.xlarge|    4 |        15 |     $1482 |
 | t2.micro                                                     |    1 |         1 |      $129 |
 | t2.nano                                                      |    1 |       0.5 |       $92 |
 
-The *Cost / yr* column includes the cost of AWS's Elastic Block Store (EBS)
-(i.e. the VMs' disks), which, for a BOSH Director with the default disk sizes,
-is $54/yr.  <sup>[[ebs_pricing]](#ebs_pricing)</sup>
 
-We have deliberately simplified the comparison by omitting what we feel to be
-less important characteristics <sup>[[lesser_characteristics]](#lesser_characteristics)</sup>
-
-Note that regardless of the instance type, a BOSH Director will accrue an additional
-$57.60 in EBS Storage.
 
 ### Testing Methodology
 
+We deployed 32 VMs using the BOSH ["Dummy"](https://github.com/pivotal-cf-experimental/dummy-boshrelease) Release (a minimal release with no
+jobs).
+
 ## Addendum
 
-The author's BOSH director is deployed to a t2.nano instances and manages two
+The author's BOSH director is deployed to a t2.nano instance and manages two
 single-VM deployments. The BOSH Director's CPU utilization is typically under 1%
 and the instance has maxed-out its CPU credits at 75.
 
@@ -42,7 +38,9 @@ the BOSH Director as a mechanism to save money. One would still need pay
 reserve the BOSH Director's elastic IP address and $0.10 per GB-month of
 provisioned storage *Amazon EBS General Purpose SSD (gp2) volume*. This works
 out to a total yearly cost of $97.80 &mdash; $54.00 for the storage and $43.80
-for the Elastic IP address.
+for the Elastic IP address. Curiously, it's more expensive to reserve an Elastic
+IP address for a year ($43.80) than it is to spin up a t2.nano instance and
+assign the Elastic IP address to that instance ($38).
 
 One large corporate user deploys BOSH Directors on t3.medium instances. Their
 experience indicates that the director property
@@ -53,26 +51,43 @@ https://github.com/cloudfoundry/bosh/issues/1263
 ## Footnotes
 
 <a name="default_instance"><sup>[default_instance]</sup></a> The
-instance type of the BOSH Director deployed to Amazon Web Services (AWS) is
-**m3.xlarge** in the [sample bosh-init
+instance type of the BOSH Director deployed to Amazon Web Services (AWS) is an
+*m3.xlarge* in the [sample bosh-init
 manifest](http://bosh.io/docs/init-aws.html).
 
 <a name="annual_cost"><sup>[annual_cost]</sup></a> AWS charges are broken into
-two components: EC2 (compute) costs and EBS (disk) cost:
+two components: EC2 (compute) costs and EBS (disk) costs:
 
-| Instance Type | EC2 cost/yr | EBS cost/yr |     Total | Annual Savings |
-|---------------|------------:|------------:|----------:|---------------:|
-| m3.xlarge     |       $1428 |         $54 | **$1482** |           0.0% |
-| t2.micro      |         $75 |         $54 |  **$129** |          91.2% |
-| t2.nano       |         $38 |         $54 |   **$92** |          93.7% |
+#### 1. EC2 Costs
+
+| Instance Type | EC2 cost/yr | EBS cost/yr |         Total | Annual Savings |
+|---------------|------------:|------------:|--------------:|---------------:|
+| m3.xlarge     |       $1428 |      $57.60 | **$1,485.60** |           0.0% |
+| t2.micro      |         $75 |      $57.60 |   **$132.60** |          91.1% |
+| t2.nano       |         $38 |      $57.60 |    **$95.60** |          93.6% |
 
 
-[EC2 pricing](https://aws.amazon.com/ec2/pricing/) assumes 1-year term all-upfront
-reserved instances. Prices are in US dollars and are current as of
-2016-06-12.
+The [EC2 cost/yr](https://aws.amazon.com/ec2/pricing/) assumes 1-year term
+all-upfront reserved instances. Prices are in US dollars and are current as of
+2016-06-14.
 
-<a name="lesser_characteristics"><sup>[lesser_characteristics]</sup></a>
-Other characteristics may affect your
+#### 2. EBS Costs
+
+The [EBS cost/yr](https://aws.amazon.com/ebs/pricing/) assumes 3 volumes
+of a combined size of 48GB for an annual cost of **$57.60**:
+
+| BOSH Volume | Mount point       | Type | Size (GB) |    cost/yr |
+|-------------|-------------------|------|----------:|-----------:|
+| root        | `/`               | gp2  |       3GB |  **$3.60** |
+| ephemeral   | `/var/vcap/data`  | gp2  |      25GB | **$30.00** |
+| persistent  | `/var/vcap/store` | gp2  |      20GB | **$24.00** |
+
+*gp2* is an ["Amazon EBS General Purpose
+SSD"](https://aws.amazon.com/ebs/pricing/); it costs $0.10 per GB-month of
+provisioned storage. Prices are in US dollars and are current as of
+2016-06-14.
+
+
 
 * The m3.xlarge instances use [2 x 40GB solid-state
   drives](https://aws.amazon.com/ec2/instance-types/) (SSDs) whereas the t2
