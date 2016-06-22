@@ -1,10 +1,14 @@
 ## BOSH Directors: Smaller, Leaner, and Cheaper
 
-A BOSH Director is software deployed to a virtual machine (VM) which
-orchestrates the deployment of other VMs. We explore running the BOSH Director
-on VMs much smaller (fewer CPUs, less RAM) than the default, and we find that a
-BOSH Director can be effective even when deployed to a minimal VM. *This can
-reduce the annual cost of the director by as much as 94%*.
+A [BOSH Director](https://bosh.io/docs/bosh-components.html#director) is
+software deployed to a virtual machine (VM) which orchestrates the deployment of
+other VMs. We explore running the BOSH Director on Amazon Web Services (AWS) on
+VMs much smaller (fewer CPU cores, less RAM) than the default
+([m3.xlarge](https://aws.amazon.com/ec2/instance-types/#m3)), and we find that a
+BOSH Director can be effective even when deployed to an instance as small as a
+[t2.micro](https://aws.amazon.com/ec2/instance-types/#t2) for small-to-medium
+sized deployments. *This can reduce the annual cost of the Director by as much
+as 91%*.
 
 ### Instance Comparison
 
@@ -13,11 +17,11 @@ types: the default BOSH instance type, the *m3.xlarge*,
 <sup>[[default_instance]](#default_instance)</sup> and two t2 instance types,
 the *t2.micro* and the *t2.nano* (the two least expensive EC2 instance types).
 
-| [Instance Type](http://aws.amazon.com/ec2/instance-types/)   | vCPU | Mem (GiB) | Cost/yr  <sup>[[annual_cost]](#annual_cost)</sup>  |
-|--------------------------------------------------------------|-----:|----------:|----------:|
-| m3.xlarge|    4 |        15 |     $1482 |
-| t2.micro                                                     |    1 |         1 |      $129 |
-| t2.nano                                                      |    1 |       0.5 |       $92 |
+| [Instance Type](http://aws.amazon.com/ec2/instance-types/)   | vCPU | Mem (GiB) | Cost/yr  <sup>[[annual_cost]](#annual_cost)</sup>  | Annual Savings |
+|--------------------------------------------------------------|-----:|----------:|----------:|---------------:|
+| m3.xlarge                                                    |    4 |        15 |     $1482 |           0.0% |
+| t2.micro                                                     |    1 |         1 |      $129 |          91.1% |
+| t2.nano                                                      |    1 |       0.5 |       $92 |          93.6% |
 
 
 
@@ -25,6 +29,17 @@ the *t2.micro* and the *t2.nano* (the two least expensive EC2 instance types).
 
 We deployed 32 VMs *simultaneously* using the BOSH ["Dummy"](https://github.com/pivotal-cf-experimental/dummy-boshrelease) Release (a minimal release with no
 jobs).
+
+#### Testing Flaws
+
+Our methodology has the following flaws:
+
+* We stress but one function of the BOSH Director: deploying. We don't test
+  exporting releases, cloud check, uploading releases or stemcells, recreating
+  instances, etc....
+* We don't test BOSH functions in parallel (e.g. uploading a release while
+  deploying).
+* We assume that
 
 Failure:
 ```
@@ -134,11 +149,11 @@ two components: EC2 (compute) costs and EBS (disk) costs:
 
 #### 1. EC2 Costs
 
-| Instance Type | EC2 cost/yr | EBS cost/yr |         Total | Annual Savings |
-|---------------|------------:|------------:|--------------:|---------------:|
-| m3.xlarge     |       $1428 |      $57.60 | **$1,485.60** |           0.0% |
-| t2.micro      |         $75 |      $57.60 |   **$132.60** |          91.1% |
-| t2.nano       |         $38 |      $57.60 |    **$95.60** |          93.6% |
+| Instance Type | EC2 cost/yr | EBS cost/yr |         Total |
+|---------------|------------:|------------:|--------------:|
+| m3.xlarge     |       $1428 |      $57.60 | **$1,485.60** |
+| t2.micro      |         $75 |      $57.60 |   **$132.60** |
+| t2.nano       |         $38 |      $57.60 |    **$95.60** |
 
 
 The [EC2 cost/yr](https://aws.amazon.com/ec2/pricing/) assumes 1-year term
