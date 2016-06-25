@@ -6,9 +6,12 @@ other VMs. We explore running the BOSH Director on Amazon Web Services (AWS) on
 VMs much smaller (fewer CPU cores, less RAM) than the default
 ([m3.xlarge](https://aws.amazon.com/ec2/instance-types/#m3)), and we find that a
 BOSH Director can be effective even when deployed to an instance as small as a
-[t2.micro](https://aws.amazon.com/ec2/instance-types/#t2) for small-to-medium
+[t2.medium](https://aws.amazon.com/ec2/instance-types/#t2) for small-to-medium
 sized deployments. *This can reduce the annual cost of the Director by as much
-as 91%*.
+as 75%*.
+
+*[We also explore installing the BOSH Director on an even-smaller instance,
+the t2.nano. The deployment failed ]*
 
 ### Instance Comparison
 
@@ -19,15 +22,14 @@ the *t2.micro* and the *t2.nano* (the two least expensive EC2 instance types).
 
 | [Instance Type](http://aws.amazon.com/ec2/instance-types/)   | vCPU | Mem (GiB) | Cost/yr  <sup>[[annual_cost]](#annual_cost)</sup>  | Annual Savings |
 |--------------------------------------------------------------|-----:|----------:|----------:|---------------:|
-| m3.xlarge                                                    |    4 |        15 |     $1482 |           0.0% |
-| t2.micro                                                     |    1 |         1 |      $129 |          91.1% |
-| t2.nano                                                      |    1 |       0.5 |       $92 |          93.6% |
-
+| m3.xlarge                                                    |    4 |        15 | $1,485.60 |           0.0% |
+| t2.medium                                                    |    2 |         4 |   $359.60 |          75.8% |
+| t2.small                                                     |    1 |         2 |   $208.60 |          86.0% |
 
 
 ### Testing Methodology
 
-We deployed 32 VMs *simultaneously* using the BOSH ["Dummy"](https://github.com/pivotal-cf-experimental/dummy-boshrelease) Release (a minimal release with no
+We deployed 64 VMs *simultaneously* using the BOSH ["Dummy"](https://github.com/pivotal-cf-experimental/dummy-boshrelease) Release (a minimal release with no
 jobs).
 
 #### Testing Flaws
@@ -39,14 +41,16 @@ Our methodology has the following flaws:
   instances, etc....
 * We don't test BOSH functions in parallel (e.g. uploading a release while
   deploying).
-* We assume that
+* Our benchmark is synthetic (i.e. the dummy release); it may have been of
+  greater interest to deploy [Cloud Foundry Elastic Runtime](http://docs.pivotal.io/pivotalcf/1-7/concepts/)
+* There *may* have been BOSH mishaps
 
 Failure:
 ```
 Started creating missing vms > dummy-centos/21 (ef0a7b45-f9b4-43ed-aa2e-9cd898405358)
 Started creating missing vms > dummy-centos/29 (f4be42ec-9800-40bb-bd18-441fb69c88ff)
- Failed creating missing vms > dummy-centos/26 (33b9b499-231d-4ca9-a8c9-e7e416021b9b): Invalid CPI response - SchemaValidationError: Expected instance of Hash, given instance of NilClass (00:03:21)
- Failed creating missing vms > dummy-centos/25 (38ac84e7-6a00-44e7-a48a-2dc49685e0da): Invalid CPI response - SchemaValidationError: Expected instance of Hash, given instance of NilClass (00:03:17)
+Failed creating missing vms > dummy-centos/26 (33b9b499-231d-4ca9-a8c9-e7e416021b9b): Invalid CPI response - SchemaValidationError: Expected instance of Hash, given instance of NilClass (00:03:21)
+Failed creating missing vms > dummy-centos/25 (38ac84e7-6a00-44e7-a48a-2dc49685e0da): Invalid CPI response - SchemaValidationError: Expected instance of Hash, given instance of NilClass (00:03:17)
 
 Error 100: Attempt to unlock a mutex which is not locked[WARNING] cannot access director, trying 4 more times...
 ```
@@ -115,7 +119,47 @@ KiB Mem:    499248 total,   402820 used,    96428 free,     4512 buffers
 KiB Swap:   506040 total,   270900 used,   235140 free.    32320 cached Mem
 ```
 
+t2.small deployed fine but the CLI lost contact with the server:
+```
+Started creating missing vms > dummy-centos/10 (38af1948-0891-4d7b-9d24-fc5cf13adaec)System call error while talking to director: Network is unreachable - connect(2) for "52.70.98.70" port 25555 (52.70.98.70:25555)
+```
+
+2nd t2.small deployment also failed:
+```
+Done creating missing vms > dummy-ubuntu/17 (cf8c1bbe-5a5d-4907-9b50-eeb715b3e861) (00:02:10)
+Failed creating missing vms > dummy-ubuntu/22 (3173ad44-fe74-47b6-bcfb-4d7986284f03): Timed out pinging to 7809e02f-19dd-47bb-b07b-b32f0aa31edf after 600 seconds (00:12:02)
+Failed creating missing vms (00:21:42)
+```
+
+3rd t2.small deployment also failed (also it created but 48 of the 64 VMs):
+```
+Done creating missing vms > dummy-centos/19 (978c7b63-e114-4c77-af82-bc71e19a06c8) (00:03:00)
+Started creating missing vms > dummy-centos/25 (cbce0158-954f-423e-ba99-a2b03e6d70ef)System call error while talking to director: Network is unreachable - connect(2) for "52.70.98.70" port 25555 (52.70.98.70:25555)
+```
+
+In neither case was it the epic failure of the t2.micro:
+```
+grep "Unresponsive client detected" /var/vcap/sys/log/director/* # nothing
+```
+In fact, all 64 VMs were successfully deployed both times.
+
+# deploying with t2.small 7 threads
+
+deploy 25.52
+
+
+
+Notes:
+* t2.small managed to swap, but only a little
+* a Director at rest (3 deployments, 66 VMs) shows 536MB
+[used by processes](http://hisham.hm/htop/index.php?page=faq) as
+shown by [htop]. During a deploy with
+`max_threads: 10`, that number climbed as high as 1828MB, which indicates
+that a deploy can consume ~1292MB of RAM, which works out to ~128MB / thread.
+
 ## Addendum
+
+AWS
 
 The author's BOSH director is deployed to a t2.nano instance and manages two
 single-VM deployments. The BOSH Director's CPU utilization is typically under 1%
@@ -131,7 +175,7 @@ for the Elastic IP address. Curiously, it's more expensive to reserve an Elastic
 IP address for a year ($43.80) than it is to spin up a t2.nano instance and
 assign the Elastic IP address to that instance ($38).
 
-One large corporate user deploys BOSH Directors on t3.medium instances. Their
+One large corporate user deploys BOSH Directors on t2.medium instances. Their
 experience indicates that the director property
 [director.max_threads](https://github.com/cloudfoundry/bosh/blob/8762d25279c2619bca8acc648145cae018696ddd/release/jobs/director/spec#L79),
 which is set in the BOSH manifest, is too high for a t2.medium, and the
@@ -147,14 +191,15 @@ manifest](http://bosh.io/docs/init-aws.html).
 <a name="annual_cost"><sup>[annual_cost]</sup></a> AWS charges are broken into
 two components: EC2 (compute) costs and EBS (disk) costs:
 
-#### 1. EC2 Costs
-
 | Instance Type | EC2 cost/yr | EBS cost/yr |         Total |
 |---------------|------------:|------------:|--------------:|
 | m3.xlarge     |       $1428 |      $57.60 | **$1,485.60** |
+| t2.medium     |        $302 |      $57.60 |   **$359.60** |
+| t2.small      |        $151 |      $57.60 |   **$208.60** |
 | t2.micro      |         $75 |      $57.60 |   **$132.60** |
 | t2.nano       |         $38 |      $57.60 |    **$95.60** |
 
+#### 1. EC2 Costs
 
 The [EC2 cost/yr](https://aws.amazon.com/ec2/pricing/) assumes 1-year term
 all-upfront reserved instances. Prices are in US dollars and are current as of
