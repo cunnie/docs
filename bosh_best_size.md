@@ -27,6 +27,20 @@ the *t2.micro* and the *t2.nano* (the two least expensive EC2 instance types).
 | t2.small                                                     |    1 |         2 |   $208.60 |          86.0% |
 
 
+We found that t2.small instance could reliably deploy a 64-instance deployment
+with `max_threads: 8` (we were able to deploy 5 times. We had a failure the
+sixth time, but it seemed to be infrastructure-related, not BOSH related (i.e.
+failure message was `Timed out pinging to c9ad83ee-f001-4ebc-bee3-1b56fae5b07c
+after 600 seconds` and AWS Console had a warning icon next to an instance)).
+
+We found that a t2.small could *not* reliably deploy with `max_threads: 8`; Of
+six deployments, 3 failed (i.e. 50% success rate).
+
+A t2.medium instance could reliable deploy a 64-instance deployment with
+`max_threads: 16` (we successfully deployed 6 times, though the results of
+one of the deployments is not in the graph &mdash; the preceding `delete
+deployment` did not finish, so its results were skewed).
+
 ### Testing Methodology
 
 We deployed 64 VMs *simultaneously* using the BOSH ["Dummy"](https://github.com/pivotal-cf-experimental/dummy-boshrelease) Release (a minimal release with no
@@ -159,7 +173,11 @@ that a deploy can consume ~1292MB of RAM, which works out to ~128MB / thread.
 
 ## Addendum
 
-AWS
+### t2 Instance Types and CPU credits
+
+*["T2 instances are Burstable Performance Instances that provide a baseline level of CPU performance with the ability to burst above the baseline. The baseline performance and ability to burst are governed by CPU Credits"](https://aws.amazon.com/ec2/instance-types/)*
+
+a t2.
 
 The author's BOSH director is deployed to a t2.nano instance and manages two
 single-VM deployments. The BOSH Director's CPU utilization is typically under 1%
