@@ -41,6 +41,51 @@ A t2.medium instance could reliable deploy a 64-instance deployment with
 one of the deployments is not in the graph &mdash; the preceding `delete
 deployment` did not finish, so its results were skewed).
 
+A t2.medium instance with `max_threads: 20` and `max_in_flight: 64` would get 16
+failed instances (up, but you need to ssh in & `monit restart director`). Am
+dropping `max_in_flight: 32`.
+
+16 of these messages. Always *director* job.
+```
+'bosh-smurf-ubuntu/8 (542d7e18-4658-4b56-9017-afbfd170cb01)' is not running after update. Review logs for failed jobs: director
+```
+
+Tried with `max_in_flight: 32`. Failed again, 18 times. Will try `max_in_flight: 16`
+failed again, but 5 directors, 2 health monitors.
+
+I dropped `update.update_watch_time` from 600s to 60s, and now I different get failures, `   Failed updating job bosh-smurf-centos > bosh-smurf-centos/1 (91099780-e522-43e7-ba64-22dd0d784480): Unknown CPI error 'Unknown' with message 'execution expired' (00:10:49)`. When I ssh into the VM and type `monit status`,
+I see the following:
+
+```
+/var/vcap/bosh/etc/monitrc:8: Warning: include files not found '/var/vcap/monit/job/*.monitrc'
+The Monit daemon 5.2.5 uptime: 38m
+
+System 'system_localhost'           running
+```
+
+`/var/vcap/{data,store}` are not mounted, obviously. Specifically, /dev/xvdb2 is
+mounted to `/tmp` instead of to `/var/vcap/data`, and `/dev/xvdf1` is not mounted
+at all (should be mounted to `/var/vcap/store`).
+
+```
+-bash-4.2# fdisk -l | grep "^Disk /dev"
+Disk /dev/xvda: 3221 MB, 3221225472 bytes, 6291456 sectors
+Disk /dev/xvdb: 2147 MB, 2147483648 bytes, 4194304 sectors
+Disk /dev/xvdf: 3221 MB, 3221225472 bytes, 6291456 sectors
+```
+
+with `max_threads` set to 16, I still see the
+
+```
+Failed updating job bosh-smurf-centos > bosh-smurf-centos/29 (eb19cc54-feef-4194-b6e9-493d2fe5a231): Unknown CPI error 'Unknown' with message 'execution expired' (00:08:31)
+```
+
+and also
+
+```
+System call error while talking to director: Network is down - connect(2) for "52.70.98.70" port 25555 (52.70.98.70:25555)
+```
+
 ### Testing Methodology
 
 We deployed 64 VMs *simultaneously* using the BOSH ["Dummy"](https://github.com/pivotal-cf-experimental/dummy-boshrelease) Release (a minimal release with no
@@ -159,9 +204,11 @@ In fact, all 64 VMs were successfully deployed both times.
 
 # deploying with t2.small 7 threads
 
-deploy 25.52
+# deploying with t2.medium 16 threads
 
-
+```
+Failed updating job bosh-smurf-centos > bosh-smurf-centos/11 (dfb06de2-86bf-4ed4-8d53-b077fdf2493d): eventmachine not initialized: evma_signal_loopbreak (00:09:05)System call error while talking to director: Network is down - connect(2) for "52.70.98.70" port 25555 (52.70.98.70:25555)
+```
 
 Notes:
 * t2.small managed to swap, but only a little
