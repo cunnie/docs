@@ -27,3 +27,26 @@ mkdir /tmp/junk
 ./bootstrap.sh --prefix=/tmp/junk
 ./b2
 ```
+
+## On macOS
+
+```
+brew install pdns
+brew list pdns
+  /usr/local/Cellar/pdns/4.0.1/bin/pdns_control
+  /usr/local/Cellar/pdns/4.0.1/bin/pdnsutil
+  /usr/local/Cellar/pdns/4.0.1/bin/zone2json
+  /usr/local/Cellar/pdns/4.0.1/bin/zone2sql
+  /usr/local/Cellar/pdns/4.0.1/etc/pdns.conf-dist
+  /usr/local/Cellar/pdns/4.0.1/homebrew.mxcl.pdns.plist
+  /usr/local/Cellar/pdns/4.0.1/lib/pdns/ (2 files)
+  /usr/local/Cellar/pdns/4.0.1/sbin/pdns_server
+  /usr/local/Cellar/pdns/4.0.1/share/doc/ (3 files)
+  /usr/local/Cellar/pdns/4.0.1/share/man/ (21 files)
+# `brew services start pdns` or `pdns_server start`
+echo 'launch=pipe:first
+pipe-command=/var/vcap/jobs/pdns/bin/pipe /var/vcap/jobs/pdns/etc/pipe.conf' |
+  /usr/local/Cellar/pdns/4.0.1/sbin/pdns_server --daemon=no \
+    --guardian=yes \
+    --config
+```
