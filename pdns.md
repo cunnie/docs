@@ -44,9 +44,11 @@ brew list pdns
   /usr/local/Cellar/pdns/4.0.1/share/doc/ (3 files)
   /usr/local/Cellar/pdns/4.0.1/share/man/ (21 files)
 # `brew services start pdns` or `pdns_server start`
-echo 'launch=pipe:first
-pipe-command=/var/vcap/jobs/pdns/bin/pipe /var/vcap/jobs/pdns/etc/pipe.conf' |
-  /usr/local/Cellar/pdns/4.0.1/sbin/pdns_server --daemon=no \
-    --guardian=yes \
-    --config
+cat > /tmp/pdns.conf <<EOF
+launch=pipe
+pipe-command=/Users/cunnie/bin/pdns_pipe.sh
+EOF
+sudo /usr/local/Cellar/pdns/4.0.1/sbin/pdns_server --daemon=no \
+  --guardian=yes \
+  --config-dir=/tmp
 ```
