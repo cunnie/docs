@@ -36,9 +36,24 @@ letsencrypt/live
 EOF
 ```
 
-/usr/local/etc/letsencrypt/live/nono.io/fullchain.pem
-
-Update nginx
 ```bash
+ # edit nginx's configuration
+sudo  vim /usr/local/etc/nginx/nginx.conf
+```
 
+```diff
+-      ssl_certificate     nono.io.chained.crt;
+-      ssl_certificate_key nono.io.key;
++      ssl_certificate     /usr/local/etc/letsencrypt/live/nono.io/fullchain.pem;
++      ssl_certificate_key /usr/local/etc/letsencrypt/live/nono.io/privkey.pem;
+```
+
+```bash
+ # restart nginx
+sudo /usr/local/etc/rc.d/nginx restart
+ # check for new certs once a day
+sudo tee /usr/local/etc/periodic/daily/450.letsencrypt-certbot <<EOF
+/usr/local/bin/certbot renew --quiet
+EOF
+sudo chmod +x /usr/local/etc/periodic/daily/450.letsencrypt-certbot
 ```
