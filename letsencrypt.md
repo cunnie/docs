@@ -35,3 +35,10 @@ letsencrypt/keys
 letsencrypt/live
 EOF
 ```
+
+/usr/local/etc/letsencrypt/live/nono.io/fullchain.pem
+
+Update nginx
+```bash
+
+```
