@@ -108,4 +108,104 @@ azure network nsg rule create --resource-group bosh-res-group --nsg-name nsg-bos
 azure network nsg rule create --resource-group bosh-res-group --nsg-name nsg-bosh --access Allow --protocol Tcp --direction Inbound --priority 204 --source-address-prefix Internet --source-port-range '*' --destination-address-prefix '*' --name 'http' --destination-port-range 80
 azure network nsg rule create --resource-group bosh-res-group --nsg-name nsg-bosh --access Allow --protocol Tcp --direction Inbound --priority 205 --source-address-prefix Internet --source-port-range '*' --destination-address-prefix '*' --name 'https' --destination-port-range 443
 azure network nsg rule create --resource-group bosh-res-group --nsg-name nsg-bosh --access Allow --protocol '*' --direction Inbound --priority 206 --source-address-prefix Internet --source-port-range '*' --destination-address-prefix '*' --name 'ntp' --destination-port-range 123
+
+azure storage account create boshstore --resource-group bosh-res-group --location "Central US"
+	info:    Executing command storage account create
+	+ Checking availability of the storage account name
+	error:   The storage account named "boshstore" is already taken
+	error:   Error information has been recorded to /Users/cunnie/.azure/azure.err
+	error:   storage account create command failed
+
+azure storage account create cunniestore --resource-group bosh-res-group --location "Southeast Asia"
+	info:    Executing command storage account create
+	+ Checking availability of the storage account name
+	help:    SKU Name:
+		1) LRS
+		2) ZRS
+		3) GRS
+		4) RAGRS
+		5) PLRS
+	: 1
+	help:    Kind:
+		1) Storage
+		2) BlobStorage
+	: 1
+	+ Creating storage account
+	error:   The subscription is not registered to use namespace 'Microsoft.Storage'. See https://aka.ms/rps-not-found for how to register subscriptions.
+	error:   Error information has been recorded to /Users/cunnie/.azure/azure.err
+	error:   storage account create command failed
+	# "LRS is less expensive than GRS, and also offers higher throughput. If your application stores data that can be easily reconstructed, you may opt for LRS."
+
+azure provider register Microsoft.Storage
+	+ Registering provider Microsoft.Storage with subscription a1ac8d5a-7a97-4ed5-bfd1-d7822e19cae9
+	info:    provider register command OK
+
+azure storage account create cunniestore --resource-group bosh-res-group --location "Southeast Asia"
+info:    Executing command storage account create
++ Checking availability of the storage account name
+help:    SKU Name:
+  1) LRS
+  2) ZRS
+  3) GRS
+  4) RAGRS
+  5) PLRS
+: 1
+help:    Kind:
+  1) Storage
+  2) BlobStorage
+: 1
++ Creating storage account
+info:    storage account create command OK
+
+azure storage account keys list cunniestore --resource-group bosh-res-group
++ Getting storage account keys
+data:    Name  Key                                                                                       Permissions
+data:    ----  ----------------------------------------------------------------------------------------  -----------
+data:    key1  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxnC1OrA==  Full
+data:    key2  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxMLSO8Q==  Full
+info:    storage account keys list command OK
+
+azure storage container create --container bosh     --account-name cunniestore --account-key xxx
+	info:    Executing command storage container create
+	+ Creating storage container bosh
+	+ Getting storage container information
+	data:    {
+	data:        name: 'bosh',
+	data:        metadata: {},
+	data:        etag: '"0x8D3F46AE50CCF02"',
+	data:        lastModified: 'Fri, 14 Oct 2016 19:47:13 GMT',
+	data:        lease: { status: 'unlocked', state: 'available' },
+	data:        requestId: '050cf707-0001-001c-7653-26bdb2000000',
+	data:        publicAccessLevel: 'Off'
+	data:    }
+	info:    storage container create command OK
+azure storage container create --container stemcell --account-name cunniestore --account-key xxx
+	info:    Executing command storage container create
+	+ Creating storage container stemcell
+	+ Getting storage container information
+	data:    {
+	data:        name: 'stemcell',
+	data:        metadata: {},
+	data:        etag: '"0x8D3F46B3407C66A"',
+	data:        lastModified: 'Fri, 14 Oct 2016 19:49:26 GMT',
+	data:        lease: { status: 'unlocked', state: 'available' },
+	data:        requestId: 'a4a257bf-0001-0045-1f54-26b834000000',
+	data:        publicAccessLevel: 'Off'
+	data:    }
+	info:    storage container create command OK
+azure network public-ip create --name ns-azure --allocation-method Static --resource-group bosh-res-group --location "Southeast Asia"
+	info:    Executing command network public-ip create
+	warn:    Using default --idle-timeout 4
+	warn:    Using default --ip-version IPv4
+	+ Looking up the public ip "ns-azure"
+	+ Creating public ip address "ns-azure"
+	data:    Id                              : /subscriptions/a1ac8d5a-7a97-4ed5-bfd1-d7822e19cae9/resourceGroups/bosh-res-group/providers/Microsoft.Network/publicIPAddresses/ns-azure
+	data:    Name                            : ns-azure
+	data:    Type                            : Microsoft.Network/publicIPAddresses
+	data:    Location                        : southeastasia
+	data:    Provisioning state              : Succeeded
+	data:    Allocation method               : Static
+	data:    IP version                      : IPv4
+	data:    Idle timeout in minutes         : 4
+	data:    IP Address                      : 52.187.42.158
 ```
