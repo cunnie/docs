@@ -218,3 +218,11 @@ cp ~/.ssh/google bosh
 chmod 400 bosh
 echo bosh >> .gitignore
 ```
+
+```bash
+azure provider register Microsoft.Compute
+  + Registering provider Microsoft.Compute with subscription a1ac8d5a-7a97-4ed5-bfd1-d7822e19cae9
+  + error:   Namespace Microsoft.Compute Registration took too long to complete
+  + error:   Error information has been recorded to /Users/cunnie/.azure/azure.err
+  + error:   provider register command failed
+```
