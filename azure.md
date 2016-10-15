@@ -209,3 +209,12 @@ azure network public-ip create --name ns-azure --allocation-method Static --reso
 	data:    Idle timeout in minutes         : 4
 	data:    IP Address                      : 52.187.42.158
 ```
+
+The ssh-key is a bit of a hack &mdash; one needs to copy the public portion into the
+manifest and the private portion into the manifest directory:
+
+```bash
+cp ~/.ssh/google bosh
+chmod 400 bosh
+echo bosh >> .gitignore
+```
