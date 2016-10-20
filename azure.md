@@ -226,3 +226,44 @@ azure provider register Microsoft.Compute
   + error:   Error information has been recorded to /Users/cunnie/.azure/azure.err
   + error:   provider register command failed
 ```
+
+Check quotas:
+
+```
+azure quotas show "Southeast Asia"
+```
+
+Get IPv6 address
+
+```
+azure network public-ip create --name ns-azure --allocation-method Static --resource-group bosh-res-group --location "Southeast Asia" --ip-version IPv6
+  info:    Executing command network public-ip create
+  warn:    Using default --idle-timeout 4
+  + Looking up the public ip "ns-azure"
+  error:   A public ip address with name "ns-azure" already exists in the resource group "bosh-res-group"
+  error:   Error information has been recorded to /Users/cunnie/.azure/azure.err
+  error:   network public-ip create command failed
+azure network public-ip create --name ns-azure-6 --allocation-method Static --resource-group bosh-res-group --location "Southeast Asia" --ip-version IPv6
+  info:    Executing command network public-ip create
+  warn:    Using default --idle-timeout 4
+  + Looking up the public ip "ns-azure-6"
+  + Creating public ip address "ns-azure-6"
+  error:   Cannot specify publicIpAllocationMethod as Static for IPv6 PublicIp '/subscriptions/a1ac8d5a-7a97-4ed5-bfd1-d7822e19cae9/resourceGroups/bosh-res-group/providers/Microsoft.Network/publicIPAddresses/ns-azure-6'.
+  error:   Error information has been recorded to /Users/cunnie/.azure/azure.err
+  error:   network public-ip create command failed
+azure network public-ip create --name ns-azure-6 --resource-group bosh-res-group --location "Southeast Asia" --ip-version IPv6
+info:    Executing command network public-ip create
+warn:    Using default --idle-timeout 4
+warn:    Using default --allocation-method Dynamic
++ Looking up the public ip "ns-azure-6"
++ Creating public ip address "ns-azure-6"
+data:    Id                              : /subscriptions/a1ac8d5a-7a97-4ed5-bfd1-d7822e19cae9/resourceGroups/bosh-res-group/providers/Microsoft.Network/publicIPAddresses/ns-azure-6
+  data:    Name                            : ns-azure-6
+  data:    Type                            : Microsoft.Network/publicIPAddresses
+  data:    Location                        : southeastasia
+  data:    Provisioning state              : Succeeded
+  data:    Allocation method               : Dynamic
+  data:    IP version                      : IPv6
+  data:    Idle timeout in minutes         : 4
+  info:    network public-ip create command OK
+```
