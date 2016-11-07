@@ -7,6 +7,10 @@ aws configure
   AWS Secret Access Key [****************6HGN]: 
   Default region name [us-east-1]: 
   Default output format [json]: 
+# alternatively
+export AWS_ACCESS_KEY_ID=AKIAxxxxx
+export AWS_SECRET_ACCESS_KEY=xxxxxxx
+export AWS_DEFAULT_REGION=us-east-1
 # next 2 commands do the same thing
 aws s3 ls
 aws s3 ls s3://
