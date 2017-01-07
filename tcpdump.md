@@ -1,7 +1,7 @@
 to capture one packet NTP traffic
 ```
-sudo tcpdump -elnnv -i vtnet0 -c 1 port ntp
-sudo tcpdump -elnnv -i vtnet0 -c 1 ip6 and port ntp
+sudo tcpdump -ennv -i vtnet0 -c 1 port ntp
+sudo tcpdump -ennv -i vtnet0 -c 1 ip6 and port ntp
 ```
 to capture arp traffic
 ```
