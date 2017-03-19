@@ -54,6 +54,7 @@ sudo /usr/local/etc/rc.d/nginx restart
  # check for new certs once a day
 sudo tee /usr/local/etc/periodic/daily/450.letsencrypt-certbot <<EOF
 /usr/local/bin/certbot renew --quiet
+/usr/local/etc/rc.d/nginx restart
 EOF
 sudo chmod +x /usr/local/etc/periodic/daily/450.letsencrypt-certbot
 ```
