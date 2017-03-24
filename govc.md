@@ -9,7 +9,8 @@ Name:                ha-datacenter
   Virtual Machines:  3
   Networks:          1
   Datastores:        1
-govc vm.info -vm.dns=fedora
+
+govc vm.info -debug -vm.dns=fedora # `-debug` Trace requests and responses to `~/.govmomi/debug`
 Name:           fedora.nono.io
   Path:         /ha-datacenter/vm/fedora.nono.io
   UUID:         564da3d4-70fb-74e1-747e-31a7c31285ff
