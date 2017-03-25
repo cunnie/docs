@@ -17,7 +17,7 @@ zfs list -t snapshot # Aha! This is where the space has disappeared
     freenas-boot/ROOT/Corral-RELEASE@2015-09-05-21:42:33                     934M      -   935M  -
     freenas-boot/ROOT/Corral-RELEASE@2015-10-21-20:47:43                     356M      -  1015M  -
     ...
-zfs list -t snapshot | egrep -v 'NAME' | awk '{print $1'} | xargs -n 1 zfs destroy
+zfs list -t snapshot | grep freenas-boot | awk '{print $1'} | xargs -n 1 zfs destroy
 ```
 
 
