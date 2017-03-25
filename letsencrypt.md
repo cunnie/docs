@@ -1,3 +1,17 @@
+[acme-tiny](https://github.com/diafygi/acme-tiny)
+
+```
+CN=diarizer.blabbertabber.com
+openssl req \
+  -new \
+  -keyout $CN.key \
+  -newkey rsa:4096 \
+  -nodes \
+  -sha256 \
+  -subj "/C=US/ST=California/L=San Francisco/O=BlabberTabber/OU=/CN=${CN}/emailAddress=brian.cunnie@gmail.com/SubjectAltName=DNS.1=home.nono.io" \
+  -out $CN.csr
+```
+
 ```bash
 # brew install certbot # macOS
 # FreeBSD
