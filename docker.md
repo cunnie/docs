@@ -22,3 +22,18 @@ docker rmi -f cunnie/docker-whale
 docker run cunnie/docker-whale
 $ docker ps -a | awk '{print $1}' | xargs docker rm
 ```
+
+Installation for Fedora 25:
+```
+sudo dnf install docker
+sudo systemctl start docker.service
+systemctl enable docker.service
+```
+
+To not [require root](https://docs.docker.com/engine/installation/linux/linux-postinstall/#manage-docker-as-a-non-root-user)
+```
+sudo groupadd --system docker
+sudo usermod -aG docker cunnie
+sudo usermod -aG docker diarizer
+sudo shutdown -r now
+```
