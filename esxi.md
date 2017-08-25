@@ -134,3 +134,11 @@ Let's update the firmware on the Crucial SSD:
 hdiutil convert -format UDRW -o /tmp/crucial.dmg ~/Downloads/mx300_revM0CR040_bootable_media_update.iso
 sudo dd if=/tmp/crucial.dmg of=/dev/rdisk1 bs=1m
 ```
+
+Updating: Download <https://hostupdate.vmware.com/software/VUM/PRODUCTION/main/esx/vmw/vmw-ESXi-6.5.0-metadata.zip>
+and check `/profiles/`, then run the following:
+
+```
+esxcli system version getesxcli system version get
+esxcli software profile update -d https://hostupdate.vmware.com/software/VUM/PRODUCTION/main/vmw-depot-index.xml -p ESXi-6.5.0-20170404001-standard
+```
