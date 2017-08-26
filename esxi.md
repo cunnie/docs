@@ -142,3 +142,11 @@ and check `/profiles/`, then run the following:
 esxcli system version getesxcli system version get
 esxcli software profile update -d https://hostupdate.vmware.com/software/VUM/PRODUCTION/main/vmw-depot-index.xml -p ESXi-6.5.0-20170404001-standard
 ```
+
+When installing vcenter:
+* IPv4
+  * 10.0.9.105 / 24
+  * 10.0.9.1
+* IPv6
+  * 2601:646:102:95::105/64
+  * fe80::82ea:96ff:fee7:5524
