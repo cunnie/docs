@@ -13,8 +13,8 @@ serial            = $dir/serial
 RANDFILE          = $dir/private/.rand
 
 # The root key and root certificate.
-private_key       = $dir/private/ca.key.pem
-certificate       = $dir/certs/ca.cert.pem
+private_key       = $dir/private/secp256k1-key.pem
+certificate       = $dir/certs/ca.pem
 
 # For certificate revocation lists.
 crlnumber         = $dir/crlnumber
@@ -71,7 +71,7 @@ stateOrProvinceName             = California
 localityName                    = San Francisco
 0.organizationName              = Pivotal
 organizationalUnitName          = Ops Manager
-commonName                      = PivotalOpsMan
+commonName                      = CommonName
 emailAddress                    = brian.cunnie@gmail.com
 
 # Optionally, specify some defaults.
@@ -106,15 +106,6 @@ authorityKeyIdentifier = keyid,issuer
 keyUsage = critical, nonRepudiation, digitalSignature, keyEncipherment
 extendedKeyUsage = clientAuth, emailProtection
 
-[ server_cert ]
-# Extensions for server certificates (`man x509v3_config`).
-basicConstraints = CA:FALSE
-nsCertType = server
-nsComment = "OpenSSL Generated Server Certificate"
-subjectKeyIdentifier = hash
-authorityKeyIdentifier = keyid,issuer:always
-keyUsage = critical, digitalSignature, keyEncipherment
-extendedKeyUsage = serverAuth
 
 [ crl_ext ]
 # Extension for CRLs (`man x509v3_config`).
@@ -128,4 +119,12 @@ authorityKeyIdentifier = keyid,issuer
 keyUsage = critical, digitalSignature
 extendedKeyUsage = critical, OCSPSigning
 
-
+[ server_cert ]
+# Extensions for server certificates (`man x509v3_config`).
+basicConstraints = CA:FALSE
+nsCertType = server
+nsComment = "OpenSSL Generated Server Certificate"
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid,issuer:always
+keyUsage = critical, digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth, clientAuth
