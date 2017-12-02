@@ -16,8 +16,10 @@ https://jamielinux.com/docs/openssl-certificate-authority/sign-server-and-client
 openssl ecparam -in secp256k1.pem -genkey -noout -out secp256k1-key.pem
 openssl req -config openssl.cnf -key private/secp256k1-key.pem -new -x509 -days 7300 -sha256 -extensions v3_ca -out certs/ca.pem
 openssl req -config openssl.cnf -key auth/admin-key.pem -new -x509 -days 7300 -sha256 -extensions auth_cert -out auth/admin.pem
-for WORKER in k8s-worker-{0,1,2}; do openssl ecparam -name secp256k1 -genkey -noout -out certs/${WORKER}-key.pem; done
-for WORKER in k8s-worker-{0,1,2}; do
+
+# ssl certs for workers
+for WORKER in worker-{0,1,2}; do openssl ecparam -name secp256k1 -genkey -noout -out certs/${WORKER}-key.pem; done
+for WORKER in worker-{0,1,2}; do
   IPV4=$(dig +short a ${WORKER}.nono.io)
   IPV6=$(dig +short aaaa ${WORKER}.nono.io)
   openssl req \
@@ -29,7 +31,7 @@ for WORKER in k8s-worker-{0,1,2}; do
   -sha256 \
   -out certs/${WORKER}-csr.pem
 done
-for WORKER in k8s-worker-{0,1,2}; do
+for WORKER in worker-{0,1,2}; do
   IPV4=$(dig +short a ${WORKER}.nono.io)
   IPV6=$(dig +short aaaa ${WORKER}.nono.io)
   openssl ca -config <(cat openssl.cnf \
@@ -41,4 +43,50 @@ for WORKER in k8s-worker-{0,1,2}; do
   -in certs/$WORKER-csr.pem \
   -out certs/$WORKER.cert.pem
 done
+
+# kube-proxy global cert
+openssl ecparam -name secp256k1 -genkey -noout -out certs/kube-proxy-key.pem
+openssl req \
+  -config openssl.cnf \
+  -subj "/C=US/ST=California/O=Pivotal/CN=system:kube-proxy" \
+  -key certs/kube-proxy-key.pem \
+  -new \
+  -sha256 \
+  -out certs/kube-proxy-csr.pem
+
+openssl ca -config openssl.cnf \
+  -extensions server_cert \
+  -days 3750 \
+  -notext \
+  -md sha256 \
+  -in certs/kube-proxy-csr.pem \
+  -out certs/kube-proxy.cert.pem
+  
+# api server
+for CONTROLLER in controller-{0,1,2}; do openssl ecparam -name secp256k1 -genkey -noout -out certs/${CONTROLLER}-key.pem; done
+for CONTROLLER in controller-{0,1,2}; do
+  IPV4=$(dig +short a ${CONTROLLER}.nono.io)
+  IPV6=$(dig +short aaaa ${CONTROLLER}.nono.io)
+  openssl req \
+  -config <(cat openssl.cnf \
+        <(printf "subjectAltName=DNS:$CONTROLLER.nono.io,DNS:kubernetes.default,IP:10.32.0.1,IP:127.0.0.1,IP:$IPV4,IP:$IPV6\n")) \
+  -subj "/C=US/ST=California/O=Pivotal/CN=system:node:${CONTROLLER}" \
+  -key certs/${CONTROLLER}-key.pem \
+  -new \
+  -sha256 \
+  -out certs/${CONTROLLER}-csr.pem
+done
+for CONTROLLER in controller-{0,1,2}; do
+  IPV4=$(dig +short a ${CONTROLLER}.nono.io)
+  IPV6=$(dig +short aaaa ${CONTROLLER}.nono.io)
+  openssl ca -config <(cat openssl.cnf \
+        <(printf "subjectAltName=DNS:$CONTROLLER.nono.io,DNS:kubernetes.default,IP:73.189.219.4,IP:10.32.0.1,IP:127.0.0.1,IP:$IPV4,IP:$IPV6\n")) \
+  -extensions server_cert \
+  -days 3750 \
+  -notext \
+  -md sha256 \
+  -in certs/$CONTROLLER-csr.pem \
+  -out certs/$CONTROLLER.cert.pem
+done
+  
 ```
