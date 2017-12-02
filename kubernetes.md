@@ -17,6 +17,28 @@ openssl ecparam -in secp256k1.pem -genkey -noout -out secp256k1-key.pem
 openssl req -config openssl.cnf -key private/secp256k1-key.pem -new -x509 -days 7300 -sha256 -extensions v3_ca -out certs/ca.pem
 openssl req -config openssl.cnf -key auth/admin-key.pem -new -x509 -days 7300 -sha256 -extensions auth_cert -out auth/admin.pem
 for WORKER in k8s-worker-{0,1,2}; do openssl ecparam -name secp256k1 -genkey -noout -out certs/${WORKER}-key.pem; done
-for WORKER in k8s-worker-{0,1,2}; do openssl req -config openssl.cnf -key certs/${WORKER}-key.pem -new -sha256 -out certs/${WORKER}-csr.pem; done
-for WORKER in k8s-worker-{0,1,2}; do openssl ca -config openssl.cnf -extensions server_cert -days 3750 -notext -md sha256 -in certs/$WORKER-csr.pem -out certs/$WORKER.cert.pem; done
+for WORKER in k8s-worker-{0,1,2}; do
+  IPV4=$(dig +short a ${WORKER}.nono.io)
+  IPV6=$(dig +short aaaa ${WORKER}.nono.io)
+  openssl req \
+  -config <(cat openssl.cnf \
+        <(printf "subjectAltName=DNS:$WORKER.nono.io,IP:$IPV4,IP:$IPV6\n")) \
+  -subj "/C=US/ST=California/O=Pivotal/CN=system:node:${WORKER}" \
+  -key certs/${WORKER}-key.pem \
+  -new \
+  -sha256 \
+  -out certs/${WORKER}-csr.pem
+done
+for WORKER in k8s-worker-{0,1,2}; do
+  IPV4=$(dig +short a ${WORKER}.nono.io)
+  IPV6=$(dig +short aaaa ${WORKER}.nono.io)
+  openssl ca -config <(cat openssl.cnf \
+        <(printf "subjectAltName=DNS:$WORKER.nono.io,IP:$IPV4,IP:$IPV6\n")) \
+  -extensions server_cert \
+  -days 3750 \
+  -notext \
+  -md sha256 \
+  -in certs/$WORKER-csr.pem \
+  -out certs/$WORKER.cert.pem
+done
 ```
