@@ -138,3 +138,101 @@ kubectl config set-context default \
   --user=kube-proxy \
   --kubeconfig=configs/kube-proxy.kubeconfig
 ```
+
+Copy config files to workers:
+```
+for machine in worker; do for num in 0 1 2; do scp configs/$machine-$num.kubeconfig configs/kube-proxy.kubeconfig cunnie@${machine}-${num}.nono.io:~/; done; done
+```
+
+Copy ssl certs and keys:
+```
+for machine in controller worker; do 
+  for num in 0 1 2; do 
+    scp ssl/certs/$machine-$num-key.pem ssl/certs/$machine-$num.cert.pem ssl/certs/ca.pem cunnie@${machine}-${num}.nono.io:~/
+  done
+done
+```
+
+Data Encryption Key
+```
+export ENCRYPTION_KEY=$(head -c 32 /dev/urandom | base64)
+
+cat > configs/encryption-config.yaml <<EOF
+kind: EncryptionConfig
+apiVersion: v1
+resources:
+  - resources:
+      - secrets
+    providers:
+      - aescbc:
+          keys:
+            - name: key1
+              secret: ${ENCRYPTION_KEY}
+      - identity: {}
+EOF
+```
+
+Copy files to controllers:
+```
+for machine in controller; do for num in 0 1 2; do scp configs/encryption-config.yaml cunnie@${machine}-${num}.nono.io:~/; done; done
+```
+
+Disabling SELinux which cost us an hour
+```
+for machine in controller worker; do 
+  for num in 0 1 2; do 
+    ssh cunnie@${machine}-${num}.nono.io <<-EOF
+      sudo sed -i"" 's/^SELINUX=enforcing/SELINUX=disabled/' /etc/sysconfig/selinux
+      sudo shutdown -r now
+EOF
+  done
+done
+```
+
+Bootstrapping the etcd Cluster on the controllers:
+```
+for machine in controller; do 
+  for num in 0 1 2; do 
+    ssh cunnie@${machine}-${num}.nono.io <<-EOF1
+      wget -q --show-progress --https-only --timestamping \
+        "https://github.com/coreos/etcd/releases/download/v3.2.11/etcd-v3.2.11-linux-amd64.tar.gz"
+      tar -xvf etcd-v3.2.11-linux-amd64.tar.gz
+      sudo mv etcd-v3.2.11-linux-amd64/etcd* /usr/local/bin/
+      sudo mv etcd-v3.2.11-linux-amd64/etcd* /usr/local/bin/
+      sudo cp ca.pem kubernetes-key.pem kubernetes.pem /etc/etcd/
+      cat > etcd.service <<EOF
+[Unit]
+Description=etcd
+Documentation=https://github.com/coreos
+
+[Service]
+ExecStart=/usr/local/bin/etcd \\
+  --name ${ETCD_NAME} \\
+  --cert-file=/etc/etcd/kubernetes.pem \\
+  --key-file=/etc/etcd/kubernetes-key.pem \\
+  --peer-cert-file=/etc/etcd/kubernetes.pem \\
+  --peer-key-file=/etc/etcd/kubernetes-key.pem \\
+  --trusted-ca-file=/etc/etcd/ca.pem \\
+  --peer-trusted-ca-file=/etc/etcd/ca.pem \\
+  --peer-client-cert-auth \\
+  --client-cert-auth \\
+  --initial-advertise-peer-urls https://${INTERNAL_IP}:2380 \\
+  --listen-peer-urls https://${INTERNAL_IP}:2380 \\
+  --listen-client-urls https://${INTERNAL_IP}:2379,http://127.0.0.1:2379 \\
+  --advertise-client-urls https://${INTERNAL_IP}:2379 \\
+  --initial-cluster-token etcd-cluster-0 \\
+  --initial-cluster controller-0=https://10.240.0.10:2380,controller-1=https://10.240.0.11:2380,controller-2=https://10.240.0.12:2380 \\
+  --initial-cluster-state new \\
+  --data-dir=/var/lib/etcd
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    EOF1
+  done
+done
+
+```
