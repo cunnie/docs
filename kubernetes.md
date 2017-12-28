@@ -7,22 +7,28 @@ Important variations:
 - Use Fedora instead of Ubuntu because I like Fedora
 - Use IPv6 as well as IPv4 because I like IPv4
 - Use OpenSSL instead of Cloudflare's CLI because I'd rather use the canonical CLI
-- Use elliptic-curve cryptography instead of RSA because the keys are much shorter
+- ~~Use elliptic-curve cryptography instead of RSA because the keys are much shorter~~
 
 You should be able to find `openssl.cnf` in this directory.
 
 https://jamielinux.com/docs/openssl-certificate-authority/sign-server-and-client-certificates.html
 ```
-mkdir -p certs configs
+mkdir -p certs private crl auth newcerts
+rm rf index* serial*
+touch index.txt
+echo 01 > serial
 
 ### Create certs for everyone!
 
-openssl ecparam -in secp256k1.pem -genkey -noout -out secp256k1-key.pem
-openssl req -config openssl.cnf -key private/secp256k1-key.pem -new -x509 -days 7300 -sha256 -extensions v3_ca -out certs/ca.pem
+# openssl ecparam -in secp256k1.pem -genkey -noout -out private/secp256k1-key.pem
+openssl genrsa -out private/ca.key 2048
+openssl genrsa -out auth/admin-key.pem 2048
+openssl req -config openssl.cnf -key private/ca.key -new -x509 -days 7300 -sha256 -extensions v3_ca -out certs/ca.pem
 openssl req -config openssl.cnf -key auth/admin-key.pem -new -x509 -days 7300 -sha256 -extensions auth_cert -out auth/admin.pem
 
 # ssl certs for workers
-for WORKER in worker-{0,1,2}; do openssl ecparam -name secp256k1 -genkey -noout -out certs/${WORKER}-key.pem; done
+# for WORKER in worker-{0,1,2}; do openssl ecparam -name secp256k1 -genkey -noout -out certs/${WORKER}-key.pem; done
+for WORKER in worker-{0,1,2}; do openssl genrsa -out certs/${WORKER}-key.pem 2048; done
 for WORKER in worker-{0,1,2}; do
   IPV4=$(dig +short a ${WORKER}.nono.io)
   IPV6=$(dig +short aaaa ${WORKER}.nono.io)
@@ -49,7 +55,8 @@ for WORKER in worker-{0,1,2}; do
 done
 
 # kube-proxy global cert
-openssl ecparam -name secp256k1 -genkey -noout -out certs/kube-proxy-key.pem
+# openssl ecparam -name secp256k1 -genkey -noout -out certs/kube-proxy-key.pem
+openssl genrsa -out certs/kube-proxy-key.pem 2048
 openssl req \
   -config openssl.cnf \
   -subj "/C=US/ST=California/O=Pivotal/CN=system:kube-proxy" \
@@ -67,13 +74,14 @@ openssl ca -config openssl.cnf \
   -out certs/kube-proxy.cert.pem
   
 # api server
-for CONTROLLER in controller-{0,1,2}; do openssl ecparam -name secp256k1 -genkey -noout -out certs/${CONTROLLER}-key.pem; done
+# for CONTROLLER in controller-{0,1,2}; do openssl ecparam -name secp256k1 -genkey -noout -out certs/${CONTROLLER}-key.pem; done
+for CONTROLLER in controller-{0,1,2}; do openssl genrsa -out certs/${CONTROLLER}-key.pem 2048; done
 for CONTROLLER in controller-{0,1,2}; do
   IPV4=$(dig +short a ${CONTROLLER}.nono.io)
   IPV6=$(dig +short aaaa ${CONTROLLER}.nono.io)
   openssl req \
   -config <(cat openssl.cnf \
-        <(printf "subjectAltName=DNS:$CONTROLLER.nono.io,DNS:kubernetes.default,IP:10.32.0.1,IP:127.0.0.1,IP:$IPV4,IP:$IPV6\n")) \
+        <(printf "subjectAltName=DNS:$CONTROLLER.nono.io,DNS:kubernetes.default,IP:73.189.219.4,IP:10.32.0.1,IP:127.0.0.1,IP:$IPV4,IP:$IPV6\n")) \
   -subj "/C=US/ST=California/O=Pivotal/CN=system:node:${CONTROLLER}" \
   -key certs/${CONTROLLER}-key.pem \
   -new \
@@ -177,30 +185,31 @@ Copy files to controllers:
 for machine in controller; do for num in 0 1 2; do scp configs/encryption-config.yaml cunnie@${machine}-${num}.nono.io:~/; done; done
 ```
 
-Disabling SELinux which cost us an hour
+Disabling SELinux which cost us ~~an hour~~ two hours
 ```
-for machine in controller worker; do 
-  for num in 0 1 2; do 
+for machine in controller worker; do
+  for num in 0 1 2; do
     ssh cunnie@${machine}-${num}.nono.io <<-EOF
-      sudo sed -i"" 's/^SELINUX=enforcing/SELINUX=disabled/' /etc/sysconfig/selinux
+      sudo sed -i\"\" 's/^SELINUX=enforcing/SELINUX=disabled/' /etc/sysconfig/selinux  # this one is a decoy
+      sudo sed -i\"\" 's/^SELINUX=enforcing/SELINUX=disabled/' /etc/selinux/config     # this one is the real deal
+      sudo systemctl stop firewalld
+      sudo systemctl mask firewalld
       sudo shutdown -r now
 EOF
   done
 done
 ```
+Use `getenforce` to check the SELinux settings to make sure it's disabled.
 
-Bootstrapping the etcd Cluster on the controllers:
+Bootstrapping the etcd Cluster on the controllers (run the following in `bash`, not `zsh`; `zsh` won't interpolate properly):
 ```
 for machine in controller; do 
   for num in 0 1 2; do 
-    ssh cunnie@${machine}-${num}.nono.io <<-EOF1
-      wget -q --show-progress --https-only --timestamping \
-        "https://github.com/coreos/etcd/releases/download/v3.2.11/etcd-v3.2.11-linux-amd64.tar.gz"
-      tar -xvf etcd-v3.2.11-linux-amd64.tar.gz
-      sudo mv etcd-v3.2.11-linux-amd64/etcd* /usr/local/bin/
-      sudo mv etcd-v3.2.11-linux-amd64/etcd* /usr/local/bin/
-      sudo cp ca.pem kubernetes-key.pem kubernetes.pem /etc/etcd/
-      cat > etcd.service <<EOF
+    FQDN_HOSTNAME=${machine}-${num}.nono.io
+    ETCD_NAME=${FQDN_HOSTNAME%%.*}
+    IPV4=$(dig +short ${FQDN_HOSTNAME})
+    IPV6=$(dig +short aaaa ${FQDN_HOSTNAME})
+    cat > etcd.service <<EOF
 [Unit]
 Description=etcd
 Documentation=https://github.com/coreos
@@ -208,18 +217,18 @@ Documentation=https://github.com/coreos
 [Service]
 ExecStart=/usr/local/bin/etcd \\
   --name ${ETCD_NAME} \\
-  --cert-file=/etc/etcd/kubernetes.pem \\
-  --key-file=/etc/etcd/kubernetes-key.pem \\
-  --peer-cert-file=/etc/etcd/kubernetes.pem \\
-  --peer-key-file=/etc/etcd/kubernetes-key.pem \\
+  --cert-file=/etc/etcd/${ETCD_NAME}.cert.pem \\
+  --key-file=/etc/etcd/${ETCD_NAME}-key.pem \\
+  --peer-cert-file=/etc/etcd/${ETCD_NAME}.cert.pem \\
+  --peer-key-file=/etc/etcd/${ETCD_NAME}-key.pem \\
   --trusted-ca-file=/etc/etcd/ca.pem \\
   --peer-trusted-ca-file=/etc/etcd/ca.pem \\
   --peer-client-cert-auth \\
   --client-cert-auth \\
-  --initial-advertise-peer-urls https://${INTERNAL_IP}:2380 \\
-  --listen-peer-urls https://${INTERNAL_IP}:2380 \\
-  --listen-client-urls https://${INTERNAL_IP}:2379,http://127.0.0.1:2379 \\
-  --advertise-client-urls https://${INTERNAL_IP}:2379 \\
+  --initial-advertise-peer-urls https://${FQDN_HOSTNAME}:2380 \\
+  --listen-peer-urls https://$IPV4:2380,https://[${IPV6}]:2380 \\
+  --listen-client-urls https://${IPV4}:2379,https://[${IPV6}]:2379,http://[::1]:2379,http://127.0.0.1:2379 \\
+  --advertise-client-urls https://${FQDN_HOSTNAME}:2379 \\
   --initial-cluster-token etcd-cluster-0 \\
   --initial-cluster controller-0=https://10.240.0.10:2380,controller-1=https://10.240.0.11:2380,controller-2=https://10.240.0.12:2380 \\
   --initial-cluster-state new \\
@@ -230,9 +239,31 @@ RestartSec=5
 [Install]
 WantedBy=multi-user.target
 EOF
+    scp etcd.service cunnie@${machine}-${num}.nono.io:~/
+    ssh cunnie@${machine}-${num}.nono.io <<-EOF1
+      sudo mkdir -p /etc/etcd
+      wget -q --show-progress --https-only --timestamping \
+        "https://github.com/coreos/etcd/releases/download/v3.2.11/etcd-v3.2.11-linux-amd64.tar.gz"
+      tar -xvf etcd-v3.2.11-linux-amd64.tar.gz
+      sudo mv etcd-v3.2.11-linux-amd64/etcd* /usr/local/bin/
+      sudo cp ca.pem ${ETCD_NAME}-key.pem ${ETCD_NAME}.cert.pem /etc/etcd/
+EOF1
+  done
+done
 
-    EOF1
+for machine in controller; do 
+  for num in 0 1 2; do 
+    echo "doing #{machine}-${num}"
+    ssh cunnie@${machine}-${num}.nono.io <<-EOF1
+      sudo cp etcd.service /etc/systemd/system
+      sudo systemctl daemon-reload
+      sudo systemctl enable --now etcd
+      sudo systemctl start etcd
+EOF1
+    echo "finished with #{machine}-${num}"
   done
 done
 
 ```
+
+
