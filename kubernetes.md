@@ -14,21 +14,22 @@ You should be able to find `openssl.cnf` in this directory.
 https://jamielinux.com/docs/openssl-certificate-authority/sign-server-and-client-certificates.html
 ```
 mkdir -p certs private crl auth newcerts
-rm rf index* serial*
+rm -rf index* serial*
 touch index.txt
 echo 01 > serial
 
 ### Create certs for everyone!
 
-# openssl ecparam -in secp256k1.pem -genkey -noout -out private/secp256k1-key.pem
-openssl genrsa -out private/ca.key 2048
-openssl genrsa -out auth/admin-key.pem 2048
+openssl ecparam -name prime256v1 -genkey -noout -out private/ca.key
+openssl ecparam -name prime256v1 -genkey -noout -out auth/admin-key.pem
+# openssl genrsa -out private/ca.key 2048
+# openssl genrsa -out auth/admin-key.pem 2048
 openssl req -config openssl.cnf -key private/ca.key -new -x509 -days 7300 -sha256 -extensions v3_ca -out certs/ca.pem
 openssl req -config openssl.cnf -key auth/admin-key.pem -new -x509 -days 7300 -sha256 -extensions auth_cert -out auth/admin.pem
 
 # ssl certs for workers
-# for WORKER in worker-{0,1,2}; do openssl ecparam -name secp256k1 -genkey -noout -out certs/${WORKER}-key.pem; done
-for WORKER in worker-{0,1,2}; do openssl genrsa -out certs/${WORKER}-key.pem 2048; done
+for WORKER in worker-{0,1,2}; do openssl ecparam -name prime256v1 -genkey -noout -out certs/${WORKER}-key.pem; done
+# for WORKER in worker-{0,1,2}; do openssl genrsa -out certs/${WORKER}-key.pem 2048; done
 for WORKER in worker-{0,1,2}; do
   IPV4=$(dig +short a ${WORKER}.nono.io)
   IPV6=$(dig +short aaaa ${WORKER}.nono.io)
@@ -55,8 +56,8 @@ for WORKER in worker-{0,1,2}; do
 done
 
 # kube-proxy global cert
-# openssl ecparam -name secp256k1 -genkey -noout -out certs/kube-proxy-key.pem
-openssl genrsa -out certs/kube-proxy-key.pem 2048
+openssl ecparam -name prime256v1 -genkey -noout -out certs/kube-proxy-key.pem
+# openssl genrsa -out certs/kube-proxy-key.pem 2048
 openssl req \
   -config openssl.cnf \
   -subj "/C=US/ST=California/O=Pivotal/CN=system:kube-proxy" \
@@ -74,8 +75,8 @@ openssl ca -config openssl.cnf \
   -out certs/kube-proxy.cert.pem
   
 # api server
-# for CONTROLLER in controller-{0,1,2}; do openssl ecparam -name secp256k1 -genkey -noout -out certs/${CONTROLLER}-key.pem; done
-for CONTROLLER in controller-{0,1,2}; do openssl genrsa -out certs/${CONTROLLER}-key.pem 2048; done
+for CONTROLLER in controller-{0,1,2}; do openssl ecparam -name prime256v1 -genkey -noout -out certs/${CONTROLLER}-key.pem; done
+# for CONTROLLER in controller-{0,1,2}; do openssl genrsa -out certs/${CONTROLLER}-key.pem 2048; done
 for CONTROLLER in controller-{0,1,2}; do
   IPV4=$(dig +short a ${CONTROLLER}.nono.io)
   IPV6=$(dig +short aaaa ${CONTROLLER}.nono.io)
@@ -123,7 +124,8 @@ for WORKER in worker-{0,1,2}; do
   kubectl config set-context default \
     --cluster=nono \
     --user=system:node:${WORKER} \
-    --kubeconfig=configs/${WORKER}.kubeconfig
+    --
+    config=configs/${WORKER}.kubeconfig
 
   kubectl config use-context default --kubeconfig=configs/${WORKER}.kubeconfig
 done
@@ -137,7 +139,7 @@ kubectl config set-cluster nono \
   --server=https://${KUBERNETES_PUBLIC_ADDRESS}:6443 \
   --kubeconfig=configs/kube-proxy.kubeconfig
 kubectl config set-credentials kube-proxy \
-  --client-certificate=kube-proxy.pem \
+  --client-certificate=ssl/certs/kube-proxy.cert.pem \
   --client-key=ssl/certs/kube-proxy-key.pem \
   --embed-certs=true \
   --kubeconfig=configs/kube-proxy.kubeconfig
@@ -149,14 +151,14 @@ kubectl config set-context default \
 
 Copy config files to workers:
 ```
-for machine in worker; do for num in 0 1 2; do scp configs/$machine-$num.kubeconfig configs/kube-proxy.kubeconfig cunnie@${machine}-${num}.nono.io:~/; done; done
+for machine in worker; do for num in 0 1 2; do scp configs/$machine-$num.kubeconfig configs/kube-proxy.kubeconfig ${machine}-${num}.nono.io:~/; done; done
 ```
 
 Copy ssl certs and keys:
 ```
 for machine in controller worker; do 
   for num in 0 1 2; do 
-    scp ssl/certs/$machine-$num-key.pem ssl/certs/$machine-$num.cert.pem ssl/certs/ca.pem cunnie@${machine}-${num}.nono.io:~/
+    scp ssl/certs/$machine-$num-key.pem ssl/certs/$machine-$num.cert.pem ssl/certs/ca.pem ${machine}-${num}.nono.io:~/
   done
 done
 ```
@@ -182,14 +184,14 @@ EOF
 
 Copy files to controllers:
 ```
-for machine in controller; do for num in 0 1 2; do scp configs/encryption-config.yaml cunnie@${machine}-${num}.nono.io:~/; done; done
+for machine in controller; do for num in 0 1 2; do scp configs/encryption-config.yaml ${machine}-${num}.nono.io:~/; done; done
 ```
 
 Disabling SELinux which cost us ~~an hour~~ two hours
 ```
 for machine in controller worker; do
   for num in 0 1 2; do
-    ssh cunnie@${machine}-${num}.nono.io <<-EOF
+    ssh ${machine}-${num}.nono.io <<-EOF
       sudo sed -i\"\" 's/^SELINUX=enforcing/SELINUX=disabled/' /etc/sysconfig/selinux  # this one is a decoy
       sudo sed -i\"\" 's/^SELINUX=enforcing/SELINUX=disabled/' /etc/selinux/config     # this one is the real deal
       sudo systemctl stop firewalld
@@ -230,7 +232,7 @@ ExecStart=/usr/local/bin/etcd \\
   --listen-client-urls https://${IPV4}:2379,https://[${IPV6}]:2379,http://[::1]:2379,http://127.0.0.1:2379 \\
   --advertise-client-urls https://${FQDN_HOSTNAME}:2379 \\
   --initial-cluster-token etcd-cluster-0 \\
-  --initial-cluster controller-0=https://10.240.0.10:2380,controller-1=https://10.240.0.11:2380,controller-2=https://10.240.0.12:2380 \\
+  --initial-cluster controller-0=https://controller-0.nono.io:2380,controller-1=https://controller-1.nono.io:2380,controller-2=https://controller-2.nono.io:2380 \\
   --initial-cluster-state new \\
   --data-dir=/var/lib/etcd
 Restart=on-failure
@@ -239,8 +241,8 @@ RestartSec=5
 [Install]
 WantedBy=multi-user.target
 EOF
-    scp etcd.service cunnie@${machine}-${num}.nono.io:~/
-    ssh cunnie@${machine}-${num}.nono.io <<-EOF1
+    scp etcd.service ${machine}-${num}.nono.io:~/
+    ssh ${machine}-${num}.nono.io <<-EOF1
       sudo mkdir -p /etc/etcd
       wget -q --show-progress --https-only --timestamping \
         "https://github.com/coreos/etcd/releases/download/v3.2.11/etcd-v3.2.11-linux-amd64.tar.gz"
@@ -254,7 +256,7 @@ done
 for machine in controller; do 
   for num in 0 1 2; do 
     echo "doing #{machine}-${num}"
-    ssh cunnie@${machine}-${num}.nono.io <<-EOF1
+    ssh ${machine}-${num}.nono.io <<-EOF1
       sudo cp etcd.service /etc/systemd/system
       sudo systemctl daemon-reload
       sudo systemctl enable --now etcd
