@@ -415,6 +415,7 @@ Start the Worker Services
 ```
 for num in 0 1 2; do
   ssh worker-${num}.nono.io <<EOF5
+    sudo swapoff -a
     sudo cp kubelet.service kube-proxy.service /etc/systemd/system/
     sudo systemctl daemon-reload
     sudo systemctl enable containerd cri-containerd kubelet kube-proxy
@@ -425,6 +426,28 @@ done
 Verification
 ```
 for num in 0 1 2; do
+  ssh worker-${num}.nono.io sudo cp worker-${num}.cert.pem /var/lib/kubelet
   ssh worker-${num}.nono.io kubectl get nodes
 done
+```
+
+Currently not working because we cannot hit the API endpoint through the firewall.
+```
+[pivotal@worker-0 ~]$ curl -k https://73.189.219.4:6443/api/v1/pods
+curl: (7) Failed to connect to 73.189.219.4 port 6443: Connection refused
+[pivotal@worker-0 ~]$ curl -k https://controller-0.nono.io:6443/api/v1/pods
+{
+  "kind": "Status",
+  "apiVersion": "v1",
+  "metadata": {
+
+  },
+  "status": "Failure",
+  "message": "pods is forbidden: User \"system:anonymous\" cannot list pods at the cluster scope",
+  "reason": "Forbidden",
+  "details": {
+    "kind": "pods"
+  },
+  "code": 403
+}
 ```
