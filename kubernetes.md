@@ -345,3 +345,69 @@ EOF1
   echo "finished with worker-${num}"
 done
 ```
+Configure the Kubelet (bash again! No zsh!)
+```
+cat > kube-proxy.service <<EOF5
+[Unit]
+Description=Kubernetes Kube Proxy
+Documentation=https://github.com/kubernetes/kubernetes
+
+[Service]
+ExecStart=/usr/local/bin/kube-proxy \\
+  --cluster-cidr=10.200.0.0/16 \\
+  --kubeconfig=/var/lib/kube-proxy/kubeconfig \\
+  --proxy-mode=iptables \\
+  --v=2
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF5
+
+for num in 0 1 2; do
+    POD_CIDR=10.200.${num}.0/24
+    HOSTNAME=worker-${num}
+cat > kubelet.service <<EOF2
+[Unit]
+Description=Kubernetes Kubelet
+Documentation=https://github.com/kubernetes/kubernetes
+After=cri-containerd.service
+Requires=cri-containerd.service
+
+[Service]
+ExecStart=/usr/local/bin/kubelet \\
+  --allow-privileged=true \\
+  --anonymous-auth=false \\
+  --authorization-mode=Webhook \\
+  --client-ca-file=/var/lib/kubernetes/ca.pem \\
+  --cloud-provider= \\
+  --cluster-dns=10.32.0.10 \\
+  --cluster-domain=cluster.local \\
+  --container-runtime=remote \\
+  --container-runtime-endpoint=unix:///var/run/cri-containerd.sock \\
+  --image-pull-progress-deadline=2m \\
+  --kubeconfig=/var/lib/kubelet/kubeconfig \\
+  --network-plugin=cni \\
+  --pod-cidr=${POD_CIDR} \\
+  --register-node=true \\
+  --runtime-request-timeout=15m \\
+  --tls-cert-file=/var/lib/kubelet/${HOSTNAME}.cert.pem \\
+  --tls-private-key-file=/var/lib/kubelet/${HOSTNAME}-key.pem \\
+  --v=2
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF2
+    scp kubelet.service kube-proxy.service worker-${num}.nono.io:
+    ssh worker-${num}.nono.io <<EOF1
+      sudo cp worker-${num}-key.pem worker-${num}-cert.pem /var/lib/kubelet/
+      sudo cp worker-${num}.kubeconfig /var/lib/kubelet/kubeconfig
+      sudo cp ca.pem /var/lib/kubernetes/
+      sudo cp kube-proxy.kubeconfig /var/lib/kube-proxy/kubeconfig
+
+EOF1
+done
+```
