@@ -268,4 +268,17 @@ done
 
 ```
 
-
+Download the control plane binaries
+```
+for num in 0 1 2; do
+  echo "downloading binaries on controller-${num}"
+  ssh controller-${num}.nono.io <<-EOF1
+  wget -q --show-progress --https-only --timestamping \
+    "https://storage.googleapis.com/kubernetes-release/release/v1.9.0/bin/linux/amd64/kube-apiserver" \
+    "https://storage.googleapis.com/kubernetes-release/release/v1.9.0/bin/linux/amd64/kube-controller-manager" \
+    "https://storage.googleapis.com/kubernetes-release/release/v1.9.0/bin/linux/amd64/kube-scheduler" \
+    "https://storage.googleapis.com/kubernetes-release/release/v1.9.0/bin/linux/amd64/kubectl"
+EOF1
+  echo "finished with controller-${num}"
+done
+```
