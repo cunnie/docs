@@ -278,6 +278,8 @@ for num in 0 1 2; do
     "https://storage.googleapis.com/kubernetes-release/release/v1.9.0/bin/linux/amd64/kube-controller-manager" \
     "https://storage.googleapis.com/kubernetes-release/release/v1.9.0/bin/linux/amd64/kube-scheduler" \
     "https://storage.googleapis.com/kubernetes-release/release/v1.9.0/bin/linux/amd64/kubectl"
+  chmod +x kube-apiserver kube-controller-manager kube-scheduler kubectl
+  sudo cp kube-apiserver kube-controller-manager kube-scheduler kubectl /usr/local/bin
 EOF1
   echo "finished with controller-${num}"
 done
