@@ -411,3 +411,20 @@ EOF2
 EOF1
 done
 ```
+Start the Worker Services
+```
+for num in 0 1 2; do
+  ssh worker-${num}.nono.io <<EOF5
+    sudo cp kubelet.service kube-proxy.service /etc/systemd/system/
+    sudo systemctl daemon-reload
+    sudo systemctl enable containerd cri-containerd kubelet kube-proxy
+    sudo systemctl start containerd cri-containerd kubelet kube-proxy
+EOF5
+done
+```
+Verification
+```
+for num in 0 1 2; do
+  ssh worker-${num}.nono.io kubectl get nodes
+done
+```
