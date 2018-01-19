@@ -280,7 +280,68 @@ for num in 0 1 2; do
     "https://storage.googleapis.com/kubernetes-release/release/v1.9.0/bin/linux/amd64/kubectl"
   chmod +x kube-apiserver kube-controller-manager kube-scheduler kubectl
   sudo cp kube-apiserver kube-controller-manager kube-scheduler kubectl /usr/local/bin
+  sudo mkdir -p /var/lib/kubernetes/
+  sudo cp *.key *.pem encryption-config.yaml /var/lib/kubernetes/
 EOF1
   echo "finished with controller-${num}"
+done
+```
+
+Setup the controller services.
+```
+### DOC TO DO
+```
+
+Setup the workers. MUST RUN IN BASH.
+```
+cat > 99-loopback.conf <<EOF
+{
+    "cniVersion": "0.3.1",
+    "type": "loopback"
+}
+EOF
+for num in 0 1 2; do
+  echo "downloading binaries on worker-${num}"
+  cat > 10-bridge.conf <<EOF
+{
+    "cniVersion": "0.3.1",
+    "name": "bridge",
+    "type": "bridge",
+    "bridge": "cnio0",
+    "isGateway": true,
+    "ipMasq": true,
+    "ipam": {
+        "type": "host-local",
+        "ranges": [
+          [{"subnet": "10.200.${i}.0/24"}]
+        ],
+        "routes": [{"dst": "0.0.0.0/0"}]
+    }
+}
+EOF
+  scp 10-bridge.conf 99-loopback.conf worker-${num}.nono.io:~/
+  ssh worker-${num}.nono.io <<-EOF1
+    sudo yum update -y
+    sudo yum install -y socat
+    wget -q --show-progress --https-only --timestamping \
+      https://github.com/containernetworking/plugins/releases/download/v0.6.0/cni-plugins-amd64-v0.6.0.tgz \
+      https://github.com/kubernetes-incubator/cri-containerd/releases/download/v1.0.0-beta.0/cri-containerd-1.0.0-beta.0.linux-amd64.tar.gz \
+      https://storage.googleapis.com/kubernetes-release/release/v1.9.0/bin/linux/amd64/kubectl \
+      https://storage.googleapis.com/kubernetes-release/release/v1.9.0/bin/linux/amd64/kube-proxy \
+      https://storage.googleapis.com/kubernetes-release/release/v1.9.0/bin/linux/amd64/kubelet
+    sudo mkdir -p \
+      /etc/cni/net.d \
+      /opt/cni/bin \
+      /var/lib/kubelet \
+      /var/lib/kube-proxy \
+      /var/lib/kubernetes \
+      /var/run/kubernetes
+    sudo tar -xvf cni-plugins-amd64-v0.6.0.tgz -C /opt/cni/bin/
+    sudo tar -xvf cri-containerd-1.0.0-beta.0.linux-amd64.tar.gz -C /
+    chmod +x kubectl kube-proxy kubelet
+    sudo cp kubectl kube-proxy kubelet /usr/local/bin/
+    sudo cp 10-bridge.conf 99-loopback.conf /etc/cni/net.d/
+EOF1
+  echo "finished with worker-${num}"
 done
 ```
