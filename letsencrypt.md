@@ -32,6 +32,8 @@ sudo certbot certonly \
     -d www.nono.io \
     -d nono.com \
     -d www.nono.com \
+    -d 78-46-204-247.sslip.io \
+    -d 2a01-4f8-c17-b8f--2.sslip.io \
   -w /www/buzzer.nono.io \
     -d buzzer.nono.io \
   -w /www/cunnie.com \
@@ -47,6 +49,7 @@ letsencrypt/accounts
 letsencrypt/archive
 letsencrypt/keys
 letsencrypt/live
+letsencrypt/csr
 EOF
 ```
 
