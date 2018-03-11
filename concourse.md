@@ -23,3 +23,7 @@ tcpdump -ni wbrdg-0afe000c
   14:07:03.830720 IP 10.254.0.14 > 10.254.0.13: ICMP echo request, id 34, seq 0, length 64
   14:07:03.830744 IP 10.254.0.13 > 10.254.0.14: ICMP host 10.254.0.13 unreachable - admin prohibited, length 92
 ```
+Make sure forwarding is enabled on the host:
+```
+sysctl -w net.ipv4.ip_forward=1
+```
