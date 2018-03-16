@@ -1,11 +1,10 @@
 ```
-cd ~/docs-old/ssl # only do this if you're me
-CN=rita.nono.io
+CN=\*.nono.io
+openssl ecparam -name secp384r1 -genkey -out $CN.key
 openssl req \
   -new \
-  -keyout $CN.key \
+  -key $CN.key \
   -out $CN.csr \
-  -newkey rsa:2048 \
   -sha256 \
   -nodes \
   -subj "/C=US/ST=California/L=San Francisco/O=nono.io/OU=/CN=${CN}/emailAddress=brian.cunnie@gmail.com"
