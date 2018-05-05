@@ -1,57 +1,55 @@
-I'm going to spend a couple of hours figuring out CloudFlare's
-[cfssl](https://cfssl.org/). Their documentation is lacking, so I'm using
-[Kelsey
-Hightower's](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/4f5cecb5eda99eabac44ce6b6bb0a9c1a4be8122/docs/04-certificate-authority.md)
-as a template.
+### `cfssl`
 
-The compelling reason for using this is that I have difficulty
-inserting a Subject Alternative Name (SAN) into the self-signed
-certificate I'm generating without the complication of creating an
-`openssl.cnf`. To compound the problem, the stock
-`/etc/ssl/openssl.cnf` on macOS doesn't have a `[ v3_ca ]` section,
-which [is
-required](https://stackoverflow.com/questions/21488845/how-can-i-generate-a-self-signed-certificate-with-subjectaltname-using-openssl),
-which means that you need to use homebrew's version of `openssl`,
-which greatly complicates everything.
+Let's generate a CSR for a recognized Certificate Authority (CA). Our hostname
+is _vcenter-67.nono.io_. Note that I override the algorithm and key size to
+accommodate VMware vCenter VCSA 6.7. Normally this change would not be
+necessary, and the defaults, which are the newer elliptic-curve algorithm, are
+more than adequate.
 
 ```
-cat > ca-config.json <<EOF
-{
-  "signing": {
-    "default": {
-      "expiry": "8760h"
-    },
-    "profiles": {
-      "nono.io": {
-        "usages": ["signing", "key encipherment", "server auth", "client auth"],
-        "expiry": "8760h"
-      }
-    }
-  }
-}
-EOF
-cat > ca-csr.json <<EOF
-{
-  "CN": "nono.io",
-  "key": {
-    "algo": "rsa",
-    "size": 2048
-  },
-  "names": [
-    {
-      "C": "US",
-      "L": "San Francisco",
-      "O": "nono.io",
-      "OU": "CA",
-      "ST": "California"
-    }
-  ]
-}
-EOF
-cfssl gencert -initca ca-csr.json | cfssljson -bare nono.io
+CN=vcenter-67.nono.io
+  # if vCenter Appliance (VCSA) then use RSA, otherwise skip `jq` filter
+cfssl print-defaults csr | sed s/example.net/$CN/g |
+  jq -r '.key = {"algo":"rsa","size":2048}' \
+  > $CN.json
+cfssl genkey $CN.json | cfssljson -bare $CN
+ # Let's examine the CSR
+cfssl certinfo -csr $CN.csr
 ```
 
-Let's look at the certificate, something akin to `openssl x509 -in nono.io.pem -noout -text`
+Important outputs:
+
+- CSR: **_$CN_.csr**
+- key: **_$CN_-key.pem**
+
+Changing gears, we create a Certificate Authority (CA) which we will use to
+sign additional certificates that we will create:
 
 ```
+CA=nono.io
+cfssl print-defaults config | sed s/example.net/$CA/g > ca-config.json
+  # if vCenter Appliance (VCSA) then use RSA, otherwise skip `jq` filter
+cfssl print-defaults csr | sed s/example.net/$CA/g |
+  jq -r '.key = {"algo":"rsa","size":2048}' \
+  > ca-csr.json
+cfssl gencert -initca ca-csr.json | cfssljson -bare ca.$CA
+ # Let's examine the certificate
+cfssl certinfo -cert ca.$CA.pem
 ```
+
+Now let's generate and sign the certificates using our newly-created CA:
+
+```
+CN=vcenter-67.nono.io
+  # if vCenter Appliance (VCSA) then use RSA, otherwise skip `jq` filter
+cfssl print-defaults csr | sed s/example.net/$CN/g |
+  jq -r '.key = {"algo":"rsa","size":2048}' \
+  > $CN.json
+cfssl gencert -ca=ca.$CA.pem -ca-key=ca.$CA-key.pem -config=ca-config.json -profile=www $CN.json | cfssljson -bare $CN
+ # Let's examine the certificate
+cfssl certinfo -cert $CN.pem
+```
+
+### Acknowledgements
+
+[CoreOS](https://coreos.com/os/docs/latest/generate-self-signed-certificates.html)
