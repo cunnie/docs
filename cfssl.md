@@ -6,11 +6,17 @@ accommodate VMware vCenter VCSA 6.7. Normally this change would not be
 necessary, and the defaults, which are the newer elliptic-curve algorithm, are
 more than adequate.
 
+Comodo, the CA that we use, requests, in addition to the defaults, an email
+address and an organization, so we supply those. [`cfssl` doesn't
+seem](https://github.com/cloudflare/cfssl/issues/826) to allow the injection of
+an email address in the standard place, so I'm re-purposing Organization Unit
+(OU).
+
 ```
 CN=vcenter-67.nono.io
   # if vCenter Appliance (VCSA) then use RSA, otherwise skip `jq` filter
 cfssl print-defaults csr | sed s/example.net/$CN/g |
-  jq -r '.key = {"algo":"rsa","size":2048}' \
+  jq -r '.key = {"algo":"rsa","size":2048} | .names[0].O = "nono.io" | .names[0].OU = "brian.cunnie@gmail.com"' \
   > $CN.json
 cfssl genkey $CN.json | cfssljson -bare $CN
  # Let's examine the CSR
