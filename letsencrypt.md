@@ -12,6 +12,17 @@ openssl req \
   -out $CN.csr
 ```
 
+```
+CN=nono.io
+openssl ecparam -name prime256v1 -genkey -out $CN.key openssl req \
+ -new \
+ -key $CN.key \
+ -out $CN.csr \
+ -sha256 \
+ -nodes \
+ -subj "/C=US/ST=California/L=San Francisco/O=http://nono.io/OU=/CN= ${CN}/emailAddress=brian.cunnie@gmail.com"
+```
+
 ```bash
 # brew install certbot # macOS
 # FreeBSD
