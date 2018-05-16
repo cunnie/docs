@@ -41,3 +41,7 @@ to screen out bcast & mcast
 ```
 sudo tcpdump -i en2 -lnvv '! ether broadcast and ip[16] < 224'
 ```
+To capture IPv6 router advertisements:
+```
+sudo tcpdump -vvvv -ttt -i en0 icmp6 and 'ip6[40] = 134'
+```
