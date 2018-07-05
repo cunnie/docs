@@ -5,9 +5,47 @@ Follow instructions at <https://github.com/kelseyhightower/kubernetes-the-hard-w
 Important variations:
 
 - Use Fedora instead of Ubuntu because I like Fedora
-- Use IPv6 as well as IPv4 because I like IPv4
-- Use OpenSSL instead of Cloudflare's CLI because I'd rather use the canonical CLI
-- ~~Use elliptic-curve cryptography instead of RSA because the keys are much shorter~~
+- Use IPv6 as well as IPv4 because I like IPv6
+- ~~Use OpenSSL instead of Cloudflare's CLI because I'd rather use the canonical CLI~~
+- 1 Core/4 GiB/200 GiB
+- Fedora Server F28
+- set the mac address to `02:00:00:00:f0:09`
+
+| mountpoint | size | type |
+|----|------|------|
+| /boot | 1024 MB | standard/ext4 |
+| /     | 183 GiB | btrfs/btrfs |
+| swap  | 16 GiB  | LVM/swap |
+
+```
+sudo dnf -y update
+sudo shutdown -r now
+set up ssh in as root & cunnie with ~/.ssh/authorized_keys
+set NOPASSWD: for wheel sudoers
+sudo btrfs balance --full-balance /
+sudo dnf install vim git
+# do the following for root, too
+git config --global user.name "Brian Cunnie"
+git config --global user.email brian.cunnie@gmail.com
+git config --global alias.co checkout
+git config --global alias.ci commit
+git config --global alias.st status
+cd /etc
+sudo -E git init
+sudo -E git add .
+sudo -E git ci -m"initial version"
+/etc/sysconfig/selinux -> SELINUX=disabled
+sudo shutdown -r now
+sudo systemctl disable firewalld
+sudo systemctl mask firewalld
+```
+
+Cloned VMs: reset hostname: `for i in {controller,worker}-{0,1,2}; do echo $i.nono.io | ssh $i sudo tee /etc/hostname; done` #fedora
+
+Cloned VMs: reset UUID to get global IPv6: `sudo sed -i "s/UUID=.*/UUID=$(uuidgen)/" /etc/sysconfig/network-scripts/ifcfg-ens192` #fedora
+
+
+---
 
 You should be able to find `openssl.cnf` in this directory.
 
@@ -73,7 +111,7 @@ openssl ca -config openssl.cnf \
   -md sha256 \
   -in certs/kube-proxy-csr.pem \
   -out certs/kube-proxy.cert.pem
-  
+
 # api server
 for CONTROLLER in controller-{0,1,2}; do openssl ecparam -name prime256v1 -genkey -noout -out certs/${CONTROLLER}-key.pem; done
 # for CONTROLLER in controller-{0,1,2}; do openssl genrsa -out certs/${CONTROLLER}-key.pem 2048; done
@@ -156,8 +194,8 @@ for machine in worker; do for num in 0 1 2; do scp configs/$machine-$num.kubecon
 
 Copy ssl certs and keys:
 ```
-for machine in controller worker; do 
-  for num in 0 1 2; do 
+for machine in controller worker; do
+  for num in 0 1 2; do
     scp ssl/certs/$machine-$num-key.pem ssl/certs/$machine-$num.cert.pem ssl/certs/ca.pem ${machine}-${num}.nono.io:~/
   done
 done
@@ -205,8 +243,8 @@ Use `getenforce` to check the SELinux settings to make sure it's disabled.
 
 Bootstrapping the etcd Cluster on the controllers (run the following in `bash`, not `zsh`; `zsh` won't interpolate properly):
 ```
-for machine in controller; do 
-  for num in 0 1 2; do 
+for machine in controller; do
+  for num in 0 1 2; do
     FQDN_HOSTNAME=${machine}-${num}.nono.io
     ETCD_NAME=${FQDN_HOSTNAME%%.*}
     IPV4=$(dig +short ${FQDN_HOSTNAME})
@@ -253,8 +291,8 @@ EOF1
   done
 done
 
-for machine in controller; do 
-  for num in 0 1 2; do 
+for machine in controller; do
+  for num in 0 1 2; do
     echo "doing #{machine}-${num}"
     ssh ${machine}-${num}.nono.io <<-EOF1
       sudo cp etcd.service /etc/systemd/system
