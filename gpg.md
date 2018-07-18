@@ -1,9 +1,24 @@
+Create your key using the 25519 curve — it's cool, and it's short:
 ```
-gpg --gen-key
+gpg --expert --full-gen-key
+  9 # ECC and ECC
+  1 # 25519
+  6y # 6 years
+```
 
-# tip: first list your keys in GPG
+Integrate gpg with GitHub: <https://help.github.com/articles/signing-commits-with-gpg/>
+
+List your keys
+```
 gpg -K --keyid-format long --with-colons --with-fingerprint
+```
 
-# then export the one you want (look next to `fpr`)
-gpg --export -a A4AA3A5BDBD40EA549CABAF9FBC07D6A97016CB3
+Export the one you want (look next to `sec:u:256:22`)
+```
+gpg --export -a 93B3BB2C9F7F5BA4
+```
+
+Configure git to use your key:
+```
+git config --global user.signingkey 93B3BB2C9F7F5BA4
 ```
