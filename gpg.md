@@ -23,3 +23,8 @@ Configure git to use your key:
 git config --global user.signingkey 93B3BB2C9F7F5BA4
 git config --global commit.gpgsign true
 ```
+
+To fix `error: gpg failed to sign the data` when committing
+```
+export GPG_TTY=$(tty)
+```
