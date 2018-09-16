@@ -1,7 +1,17 @@
 ## Setting up PowerDNS on FreeBSD (shay.nono.io)
 
+`/usr/local/etc/pdns/pdns.conf`
+
+```diff
++webserver=yes
 ```
+Then restart `pdns` and set up an `ssh` tunnel:
 ```
+sudo /usr/local/etc/rc.d/pdns restart
+exit
+ssh -L 8081:localhost:8081 nono.io
+```
+browse to <http://localhost:8081>.
 
 ## NOTES for building PowerDNS from scratch, to be used to create BOSH release
 
