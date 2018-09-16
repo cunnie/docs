@@ -1,4 +1,9 @@
-NOTES for building PowerDNS from scratch, to be used to create BOSH release
+## Setting up PowerDNS on FreeBSD (shay.nono.io)
+
+```
+```
+
+## NOTES for building PowerDNS from scratch, to be used to create BOSH release
 
 ```
 ssh ci.blabbertabber.com
@@ -28,7 +33,7 @@ mkdir /tmp/junk
 ./b2
 ```
 
-## On macOS
+### On macOS
 
 ```
 brew install pdns
