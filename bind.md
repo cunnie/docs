@@ -22,3 +22,13 @@ Edit `/etc/rc.conf`:
 +named_enable="YES"
 +named_chrootdir="/usr/local/etc/named_chroot"
 ```
+
+Let's make it work with
+[acme.sh](https://github.com/Neilpang/acme.sh/tree/master/dnsapi), thank you,
+[Cris Van Pelt](https://melkfl.es/article/2017/05/acme-bind/)
+
+```
+sudo rndc-confgen \
+  -c /usr/local/etc/namedb/letsencrypt.key \
+  -k letsencrypt-key
+```
