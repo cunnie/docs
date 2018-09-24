@@ -47,6 +47,6 @@ export NSUPDATE_KEY="/usr/local/etc/namedb/letsencrypt.key"
   -d pas.nono.io \
   -d *.pas.nono.io \
   -k ec-384
-cat /home/cunnie/.acme.sh/pas.nono.io_ecc/pas.nono.io.cer
-cat /home/cunnie/.acme.sh/pas.nono.io_ecc/pas.nono.io.key
+cat /home/cunnie/.acme.sh/pas.nono.io_ecc/fullchain.cer \
+  /home/cunnie/.acme.sh/pas.nono.io_ecc/pas.nono.io.key
 ```
