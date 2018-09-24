@@ -24,11 +24,29 @@ Edit `/etc/rc.conf`:
 ```
 
 Let's make it work with
-[acme.sh](https://github.com/Neilpang/acme.sh/tree/master/dnsapi), thank you,
-[Cris Van Pelt](https://melkfl.es/article/2017/05/acme-bind/)
+[acme.sh](https://github.com/Neilpang/acme.sh/tree/master/dnsapi#7-use-nsupdate-to-automatically-issue-cert)
+(thank you, [Cris Van Pelt](https://melkfl.es/article/2017/05/acme-bind/)).
 
 ```
 sudo rndc-confgen \
   -c /usr/local/etc/namedb/letsencrypt.key \
-  -k letsencrypt-key
+  -k letsencrypt-key | \
+  head -5 | \
+  sudo tee /usr/local/etc/namedb/letsencrypt.key
+sudo chmod 600 /usr/local/etc/namedb/letsencrypt.key
+sudo chown cunnie /usr/local/etc/namedb/letsencrypt.key
+sudo touch /usr/local/etc/namedb/nono.{com,io}.jnl
+sudo chown -R bind:wheel /usr/local/etc/namedb/{slave,master}
+tail -f /var/log/message & # watching bind logs for important messages
+```
+```
+export NSUPDATE_SERVER="ns-he.nono.io"
+export NSUPDATE_KEY="/usr/local/etc/namedb/letsencrypt.key"
+~/workspace/acme.sh/acme.sh --issue \
+  --dns dns_nsupdate \
+  -d pas.nono.io \
+  -d *.pas.nono.io \
+  -k ec-384
+cat /home/cunnie/.acme.sh/pas.nono.io_ecc/pas.nono.io.cer
+cat /home/cunnie/.acme.sh/pas.nono.io_ecc/pas.nono.io.key
 ```
