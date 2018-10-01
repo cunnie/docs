@@ -56,5 +56,5 @@ To sync the journal file to the zone file (prior to checking in changes, for
 example):
 
 ```
-sudo rndc sync -clean nono.io
+sudo rndc sync -clean
 ```
