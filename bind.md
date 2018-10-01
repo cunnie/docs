@@ -35,8 +35,7 @@ sudo rndc-confgen \
   sudo tee /usr/local/etc/namedb/letsencrypt.key
 sudo chmod 600 /usr/local/etc/namedb/letsencrypt.key
 sudo chown cunnie /usr/local/etc/namedb/letsencrypt.key
-sudo touch /usr/local/etc/namedb/nono.{com,io}.jnl
-sudo chown -R bind:wheel /usr/local/etc/namedb/{slave,master}
+sudo chown -R bind:wheel /usr/local/etc/namedb/{slave,dynamic} # (necessary?)
 tail -f /var/log/message & # watching bind logs for important messages
 ```
 ```
@@ -51,4 +50,11 @@ export NSUPDATE_KEY="/usr/local/etc/namedb/letsencrypt.key"
  #  /home/cunnie/.acme.sh/pas.nono.io_ecc/pas.nono.io.key
 cat /home/cunnie/.acme.sh/pas.nono.io/fullchain.cer \
  /home/cunnie/.acme.sh/pas.nono.io/pas.nono.io.key
+```
+
+To sync the journal file to the zone file (prior to checking in changes, for
+example):
+
+```
+sudo rndc sync -clean nono.io
 ```
