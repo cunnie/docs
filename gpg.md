@@ -1,6 +1,10 @@
 Create your key using the 25519 curve — it's cool, and it's short:
 ```
 gpg --expert --full-gen-key
+```
+
+Enter the following at each of the prompts:
+```
   9 # ECC and ECC
   1 # 25519
   6y # 6 years
