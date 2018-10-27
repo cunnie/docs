@@ -1,16 +1,23 @@
 Create a new node project
+
 ```bash
 npm init
 ```
+
 Add a dependency (e.g. lite-server)
+
 ```bash
 npm install lite-server --save-dev
 ```
+
 Create an entrypoint:
+
 ```bash
 vim package.json
 ```
-make the following changes:
+
+Make the following changes:
+
 ```diff
    "scripts": {
 -    "test": "echo \"Error: no test specified\" && exit 1"
@@ -19,7 +26,24 @@ make the following changes:
 +    "lite": "lite-server"
    },
 ```
+
 Run your app:
+
 ```bash
 npm start
+```
+
+Note that `npm start` will run whatever is in your `.main` of your `package.json`. For example, let's say it's `index.html`, and these are
+its contents:
+
+```html
+<html>
+<title>Dawgs</title>
+<body>
+	<h1>I love muh dawg!</h1>
+	<p>I really do</p>
+	<h2>I love muh cat!</h2>
+	<p>but not as much as muh dawg!</p>
+</body>
+</html>
 ```
