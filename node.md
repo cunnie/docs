@@ -33,8 +33,9 @@ Run your app:
 npm start
 ```
 
-Note that `npm start` will run whatever is in your `.main` of your `package.json`. For example, let's say it's `index.html`, and these are
-its contents:
+Note that `npm start` will run whatever is in your `.scripts.start` of your
+`package.json`; `.main` is the entrypoint. For example, let's say `.main`
+`index.html`, and these are its contents:
 
 ```html
 <html>
@@ -47,3 +48,6 @@ its contents:
 </body>
 </html>
 ```
+
+In that case, the above HTML is displayed on <http://localhost:3000> when `npm
+start` is run.
