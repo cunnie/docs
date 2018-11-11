@@ -90,6 +90,16 @@ ssh esxi-1 ls -l /vmfs/volumes/SSD-1
 reboot the ESXi host & make sure that `ScratchConfig.ConfiguredScratchLocation`
 is on persistent storage.
 
+### Set up NTP Client
+
+- Select `esxi-1.nono.io`
+  - Configure → System → Services
+    - Time Configuration → Edit  
+      Use Network Time Protocol (Enable NTP client)  
+      NTP Servers: time.google.com  
+      NTP Service Status:  Start NTP Service  
+      NTP Service Startup Policy: Start and stop with host
+
 ### Add Host to DVS (Distributed Virtual Switch)
 
 - Networking
@@ -124,6 +134,14 @@ Add iSCSI from vCenter:
       - Rescan Adapter
         - Devices  
           Make sure the iSCSI disk appears, "FreeNAS iSCSI disk"
+
+### Set up vMotion
+
+- Select `esxi-1.nono.io`
+  - Configure → Networking → VMkernel Adapters
+    - Select `vmk0`  
+      Edit  
+      vMotion
 
 ---
 
