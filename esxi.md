@@ -56,6 +56,22 @@ From the KB Article:
 > until they are restarted. Press ESC several times until you logout of the
 > DCUI. Exit the host from Maintenance Mode.
 
+Add the ESXi Host to the Cluster:
+- Log into the vCenter
+- Right-click on the cluster
+- Select "Add Hosts..."
+  - Add Hosts:
+    IP address or FQDN: esxi-1.nono.io
+    Username: root
+    Password: xxx
+
+Add iSCSI from vCenter:
+- Select Host
+  - Configure
+    - Storage → Storage Adapters
+      - ➕ Add Software Adapter
+        Add software iSCSI adapter
+
 ---
 
 To find an [ESXi's mac address](http://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=1031111):
