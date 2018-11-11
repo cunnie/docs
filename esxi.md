@@ -25,7 +25,7 @@ On the console: press F2 to "customize system".
     - Use the following DNS server addresses and hostname
       - Hostname: esxi-1.nono.io
 - Apply changes and restart management newtork? **Y**
-- Test Managment Network
+- Test Management Network
 - Troubleshooting Options
   - Enable ESXi Shell
   - Enable SSH
@@ -35,6 +35,10 @@ On the console: press F2 to "customize system".
 ssh root@esxi-1.nono.io
 echo ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIWiAzxc4uovfaphO0QVC2w00YmzrogUpjAzvuqaQ9tD cunnie@nono.io > /etc/ssh/keys-root/authorized_keys
 ```
+
+### Install Commercial Certificates
+
+_[This process may be flawed; we noticed that on reboot, when the vCenter was down, it reverted to a self-signed certificate]_
 
 Let's install the cert. Put the ESXi host in maintenance mode. [KB
 Article](https://kb.vmware.com/s/article/2113926) for reference.
@@ -86,6 +90,23 @@ ssh esxi-1 ls -l /vmfs/volumes/SSD-1
 reboot the ESXi host & make sure that `ScratchConfig.ConfiguredScratchLocation`
 is on persistent storage.
 
+### Add Host to DVS (Distributed Virtual Switch)
+
+- Networking
+  - DVS → Right Click
+    - Add and Manage Hosts...  
+      Add Hosts  
+      Select Hosts
+      - ➕ New Hosts...  
+        `esxi-1.nono.io`
+      - Manage Physical Adapters  
+        `vmnic2`  
+        Assign Uplink
+      - Manage VMkernel adapters  
+        `vmk0`  
+        Assign Port Group  
+        `nono`
+
 ### Set up iSCSI Storage
 
 Add iSCSI from vCenter:
@@ -94,6 +115,15 @@ Add iSCSI from vCenter:
     - Storage → Storage Adapters
       - ➕ Add Software Adapter
         Add software iSCSI adapter
+      - Select the newly-added iSCSI adapter (`vmhba64`)
+        - Dynamic Discovery → Add  
+          iSCSI server: 10.0.9.80 (use IP address, not hostname) (force IPv4 binding?)
+        - Network Port Binding
+          ➕ Add...  
+          nono (dvs)
+      - Rescan Adapter
+        - Devices  
+          Make sure the iSCSI disk appears, "FreeNAS iSCSI disk"
 
 ---
 
