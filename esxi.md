@@ -31,6 +31,31 @@ On the console: press F2 to "customize system".
   - Enable SSH
 - ESC
 
+```
+ssh root@esxi-1.nono.io
+echo ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIWiAzxc4uovfaphO0QVC2w00YmzrogUpjAzvuqaQ9tD cunnie@nono.io > /etc/ssh/keys-root/authorized_keys
+```
+
+Let's install the cert. Put the ESXi host in maintenance mode. [KB
+Article](https://kb.vmware.com/s/article/2113926) for reference.
+
+```
+ssh root@esxi-1.nono.io
+mkdir /etc/vmware/ssl/bak
+mv /etc/vmware/ssl/rui.crt /etc/vmware/ssl/rui.key \
+  /etc/vmware/ssl/bak/
+exit
+scp /Users/cunnie/docs-old/ssl/nono.io.pem esxi-1:/etc/vmware/ssl/rui.crt
+scp /Users/cunnie/docs-old/ssl/nono.io.key esxi-1:/etc/vmware/ssl/rui.key
+```
+
+From the KB Article:
+
+> Switch back to the DCUI of the host and select Troubleshooting Options >
+> Restart Management Agents. When prompted press F11 to restart the agents. Wait
+> until they are restarted. Press ESC several times until you logout of the
+> DCUI. Exit the host from Maintenance Mode.
+
 ---
 
 To find an [ESXi's mac address](http://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=1031111):
