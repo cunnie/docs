@@ -65,6 +65,29 @@ Add the ESXi Host to the Cluster:
     Username: root
     Password: xxx
 
+### Fix `System logs are stored on non-persistent storage`
+
+_[This lengthy process may be unnecessary; try rebooting the ESXi host to see if the message returns; if it does, follow the procedure below]_
+
+[KB Article](https://kb.vmware.com/s/article/2032823).
+
+The fix is to set the scratch location to non-persistent storage.
+First, determine the GUID, the real directory, that the symbolic link of datastore `SSD-1` points to, i.e.:
+
+```
+ssh esxi-1 ls -l /vmfs/volumes/SSD-1
+```
+
+1. Browse to the host in the vSphere Web Client navigator.
+1. Click the Manage tab, then click Settings.
+1. Under System, click Advanced System Settings.
+1. Set `ScratchConfig.ConfiguredScratchLocation` to `/vmfs/volumes/5be7ada3-5d63c00d-9974-ac1f6bac3394/.locker`.
+
+reboot the ESXi host & make sure that `ScratchConfig.ConfiguredScratchLocation`
+is on persistent storage.
+
+### Set up iSCSI Storage
+
 Add iSCSI from vCenter:
 - Select Host
   - Configure
