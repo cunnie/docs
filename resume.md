@@ -1,23 +1,39 @@
 <h2 style='text-align: center'>Brian Cunnie</h2>
 
-
--> 1711 Washington St. Apt 8<br />San Francisco, CA  94109<-
+-> 1711 Washington St. Apt 8<br />San Francisco, CA  94109 <-
 
 -> cell: 650.968.6262<br />brian.cunnie@gmail.com <-
 
 ### Objective
 
-A four-day workweek sysadmin/developer position in the San Francisco Bay Area, one accessible by public transportation.
+A four-day workweek developer position in the San Francisco Bay Area, one
+accessible by public transportation.
 
 ### Skills
 
-**Operating Systems**: OS X, ESXi, Linux (Ubuntu, Red Hat), FreeBSD, MS Windows (7, Vista, 2008 Server, 2003 Server)
+**Programming Languages (Test Frameworks)**:
 
-**Programming Languages**: Ruby, Python, Perl(/Tk), C, C++, PHP, APL, Assembler
+Golang (Ginkgo), Ruby (rspec), Python (unittest), Javascript/ReactJS (Jasmine,
+Jest), Java, Perl, C, C++, PHP, APL, Assembler
 
-**Scripting, Declarative Languages, and Tools**: git, bash, RubyMine, Chef, CSS, HTML, Jenkins, ZFS, MySQL, DD-WRT, svn (subversion), OpenVPN (+OATH TOTP), Google Apps, NetApp, VMWare (Fusion, vCenter Server)
+**Scripting, Declarative Languages, and Tools**:
 
-**Network Protocols & Services**: TCP/IP (static routes, subnet masks, ping, traceroute, tcpdump/wireshark), NFS (servers, clients, automount/amd/autofs, tuning), DNS/bind/named (SOA, NS, A, MX, PTR, CNAME), DHCP, OpenLDAP 2.x (slapd), Sendmail (8.12+, m4, domain masquerading, etc.), Apache webserver (1.3+, 2.x, virtual nameservers, SSL, CGI), pop3 & imap (qpopper, cyrus-imapd), NIS (master server, clients), Samba 3, SquirrelMail, firewalls (FreeBSD (pf), Linux (iptables))
+git, bash, JetBrains's IDEs (Goland, RubyMine, WebStorm, PyCharm), Android
+Studio, CSS, HTML, Jenkins, ZFS, MySQL, svn (subversion), OpenVPN (+OATH TOTP),
+Google Apps, VMWare (Fusion, vCenter Server)
+
+**Operating Systems**:
+
+macOS, Linux, FreeBSD, ESXi (vSphere), FreeBSD, MS Windows
+
+**Network Protocols & Services**:
+
+TCP/IP (static routes, subnet masks, ping, traceroute, tcpdump/wireshark), NFS
+(servers, clients, automount/amd/autofs, tuning), DNS/bind/named (SOA, NS, A,
+MX, PTR, CNAME), DHCP, OpenLDAP 2.x (slapd), Sendmail (8.12+, m4, domain
+masquerading, etc.), Apache webserver (1.3+, 2.x, virtual nameservers, SSL,
+CGI), pop3 & imap (qpopper, cyrus-imapd), NIS (master server, clients), Samba 3,
+SquirrelMail, firewalls (FreeBSD (pf), Linux (iptables))
 
 ### Experience
 
@@ -25,9 +41,15 @@ A four-day workweek sysadmin/developer position in the San Francisco Bay Area, o
 6/11 to present**
 
 * Maintained vSphere environments (vCenter (5.x) and ESXi (5.x)) used by the development team (VCE Vblock 340, 12 &times; Cisco C220 M3, 5 &times; Dell R720 located in German colo)
+
 * Helped write the tooling that tested the final release of the Cloud Foundry software (Ruby)
-* Architected and implemented an OS X-based VPN solution for all Pivotal offices using single sign-on (i.e. Open Directory (OpenLDAP))
-* Used Chef to create/update a set of recipes to build an OS X workstation to suit the developers' needs (an open source project at GitHub ([1](https://github.com/pivotal-sprout)))
+
+- Architected and implemented an OS X-based VPN solution for all Pivotal offices
+  using single sign-on (i.e. Open Directory (OpenLDAP))
+
+- Used Chef to create/update a set of recipes to build an OS X workstation to
+  suit the developers' needs (an open source project at GitHub
+  ([1](https://github.com/pivotal-sprout)))
 
 **Systems Administrator, [Arda Technologies](http://www.ardatech.com/) (acquired by Google), Mountain View, CA<br />
 12/07 to 6/11**
