@@ -121,7 +121,7 @@ the disk speed of IaaSes
 ([1](http://engineering.pivotal.io/post/gobonniego_results/)), deploying BOSH
 VMs with IPv6 addresses to vSphere
 ([1](http://engineering.pivotal.io/post/bosh-on-ipv6-2/)) and to AWS
-([1](http://engineering.pivotal.io/post/bosh-on-ipv6/)), maintaining BOSH
+([2](http://engineering.pivotal.io/post/bosh-on-ipv6/)), maintaining BOSH
 Directors with Concourse CI and bosh-deployment
 ([1](http://engineering.pivotal.io/post/bosh-deployed-with-concourse/)), why is
 my NTP server costing me $500/year
@@ -166,7 +166,11 @@ locking down an ethernet network
 many more. I've written blog posts as part of my job as well, and do not include
 those posts in the above list.
 
-Educations keeps my skills current:
+I play rugby and swim in the San Francisco Bay.
+
+### Education
+
+Ongoing, non-degree-related education:
 
 - Build a Modern Computer from First Principles: Nand to Tetris: Parts
   [1](https://www.coursera.org/account/accomplishments/records/3GXLPXU6MFRM) and
@@ -179,10 +183,6 @@ Educations keeps my skills current:
 - [Web Application
   Architectures](https://www.coursera.org/account/accomplishments/records/BT4R5EZX9Z)
   (Ruby on Rails)
-
-I enjoy open water swimming and rugby.
-
-### Education
 
 [Stevens Institute of Technology](http://www.stevens.edu/sit/), June 1989<br />
 Master of Science and Engineering, Major in Telecommunications Engineering
