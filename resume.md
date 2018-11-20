@@ -1,8 +1,11 @@
 <h2 style='text-align: center'>Brian Cunnie</h2>
 
--> 1711 Washington St. Apt 8<br />San Francisco, CA  94109 <-
-
--> cell: 650.968.6262<br />brian.cunnie@gmail.com <-
+<p align="center">
+1711 Washington St. Apt 8<br />
+San Francisco, CA  94109<br />
+cell: 650.968.6262<br />
+brian.cunnie@gmail.com
+</p>
 
 ### Objective
 
@@ -14,13 +17,12 @@ accessible by public transportation.
 **Programming Languages (Test Frameworks)**:
 
 Golang (Ginkgo), Ruby (rspec), Python (unittest), Javascript/ReactJS (Jasmine,
-Jest), Java, Perl, C, C++, PHP, APL, Assembler
+Jest), Java, bash, Perl, C, C++, PHP, APL, Assembler
 
-**Scripting, Declarative Languages, and Tools**:
+**Tools and Declarative Languages**:
 
-git, bash, JetBrains's IDEs (Goland, RubyMine, WebStorm, PyCharm), Android
-Studio, CSS, HTML, Jenkins, ZFS, MySQL, svn (subversion), OpenVPN (+OATH TOTP),
-Google Apps, VMWare (Fusion, vCenter Server)
+Cloud Foundry CLI, BOSH, git, JetBrains's IDEs (Goland, RubyMine, WebStorm,
+PyCharm), Android Studio, CSS, HTML, Concourse CI, ZFS, SQL, svn, VMWare vSphere
 
 **Operating Systems**:
 
@@ -43,13 +45,6 @@ SquirrelMail, firewalls (FreeBSD (pf), Linux (iptables))
 * Maintained vSphere environments (vCenter (5.x) and ESXi (5.x)) used by the development team (VCE Vblock 340, 12 &times; Cisco C220 M3, 5 &times; Dell R720 located in German colo)
 
 * Helped write the tooling that tested the final release of the Cloud Foundry software (Ruby)
-
-- Architected and implemented an OS X-based VPN solution for all Pivotal offices
-  using single sign-on (i.e. Open Directory (OpenLDAP))
-
-- Used Chef to create/update a set of recipes to build an OS X workstation to
-  suit the developers' needs (an open source project at GitHub
-  ([1](https://github.com/pivotal-sprout)))
 
 **Systems Administrator, [Arda Technologies](http://www.ardatech.com/) (acquired by Google), Mountain View, CA<br />
 12/07 to 6/11**
@@ -98,14 +93,94 @@ Provided computer support for a Venture Capital incubator and its various startu
 * Troubleshot and tuned as needed. Spec'ed and purchased equipment as needed
 * Maintained websites
 
-**Systems Administrator, [Collab.net](http://www.collab.net/), San Francisco, CA<br />
-7/99 to 8/00**
+### Extracurricular Activities
 
-Was one of first employees at a dot-com startup. Provided almost every type of computer-related support imaginable. Built most of the company IT infrastructure from ground-up, with heavy but realistic emphasis on open-source solutions.
+I run [sslip.io](https://sslip.io/), a DNS service which maps
+specially-crafted hostnames to IP addresses.
 
-**Systems Administrator, [Wells Fargo Bank](https://www.wellsfargo.com/), San Francisco, CA**
+I also run six servers in the [NTP
+pool](https://www.ntppool.org/user/cunnie) which carry an aggregate of 1% of the
+US NTP pool traffic (my Singapore server carries an even higher percentage).
 
-Provided UNIX systems support for ~200 production UNIX machines that comprised a portion of Wells Fargo Bank’s production environment.
+I am the maintainer of several BOSH releases that support my interest in DNS,
+NTP, and HTTP:
+[PowerDNS](https://github.com/cloudfoundry-community/pdns-release),
+[NTP](https://github.com/cloudfoundry-community/ntp-release), and
+[nginx](https://github.com/cloudfoundry-community/nginx-release).
+
+I worked with Dmitriy Kalinin to add [IPv6 support to
+BOSH](https://bosh.io/docs/guide-ipv6-on-vsphere/). As a collateral
+contribution, updated Ruby's core library, openssl, to [correctly verify
+abbreviated IPv6
+SANs](https://github.com/ruby/openssl/commit/9322a104d16b02c7a79f9ab589859c9d63fabf52).
+
+I [blog](http://engineering.pivotal.io/authors/cunnie/) what captures my
+interest, including how to install a TLS Certificate on vCenter server appliance
+(VCSA) ([1](http://engineering.pivotal.io/post/vcenter_6.7_tls/)), benchmarking
+the disk speed of IaaSes
+([1](http://engineering.pivotal.io/post/gobonniego_results/)), deploying BOSH
+VMs with IPv6 addresses to vSphere
+([1](http://engineering.pivotal.io/post/bosh-on-ipv6-2/)) and to AWS
+([1](http://engineering.pivotal.io/post/bosh-on-ipv6/)), maintaining BOSH
+Directors with Concourse CI and bosh-deployment
+([1](http://engineering.pivotal.io/post/bosh-deployed-with-concourse/)), why is
+my NTP server costing me $500/year
+([1](https://content.pivotal.io/blog/why-is-my-ntp-server-costing-500-year-part-1),
+[2](https://content.pivotal.io/blog/why-is-my-ntp-server-costing-me-500-year-part-2-characterizing-the-ntp-clients),
+[3](http://engineering.pivotal.io/post/ntp-costs-500/)), deploying a BOSH
+Director With SSL certificates issued by a commercial CA
+([1](http://engineering.pivotal.io/post/bosh-ssl/)), how to customize a BOSH
+stemcell ([1](http://engineering.pivotal.io/post/bosh-customize-stemcell/)),
+updating a BOSH Release
+([1](http://engineering.pivotal.io/post/updating-a-bosh-release/)), Concourse CI
+has badges ([1](http://engineering.pivotal.io/post/concourse-badges/)),
+Concourse CI without a load balancer
+([1](http://engineering.pivotal.io/post/concourse-no-elb/)), the world's
+smallest Concourse CI server
+([1](http://engineering.pivotal.io/post/worlds-smallest-concourse-server/)),
+setting up and benchmarking the iSCSI performance of a ZFS fileserver
+([1](http://pivotallabs.com/high-performing-mid-range-nas-server/),
+[2](http://pivotallabs.com/high-performing-mid-range-nas-server-part-2-performance-tuning-iscsi/)),
+installing Cloud Foundry in a home lab
+([1](http://pivotallabs.com/worlds-smallest-iaas-part-1/),
+[2](http://pivotallabs.com/worlds-smallest-iaas-part-2/),
+[3](http://pivotallabs.com/worlds-smallest-iaas-part-3-paas/), and
+[4](http://pivotallabs.com/worlds-smallest-iaas-part-4-hello-world/)), setting
+up a DNS, NTP and nginx server in the cloud
+([1](http://pivotallabs.com/set-freebsd-server-hetzner-part-1/),
+[2](http://pivotallabs.com/part-2-configure-secondary-dns-ns-server/),
+[3](http://pivotallabs.com/server-participated-large-scale-attack/),
+[4](http://pivotallabs.com/setting-freebsd-server-hetzner-part-4-nginx/), and
+[5](http://pivotallabs.com/setting-freebsd-server-hetzner-part-4-php-ssi-ssl-redirects/)),
+configuring and troubleshooting an IPv6 firewall
+([1](http://pivotallabs.com/configuring-freebsd-9-1-as-an-ipv6-firewallrouter/),
+[2](http://pivotallabs.com/how-i-grabbed-18-quintillion-ip-addresses-from-comcast-and-they-didnt-even-care/),
+[3](http://pivotallabs.com/configuring-freebsd-9-1-as-an-ipv6-dhcp-client/), and
+[4](http://pivotallabs.com/made-ipv6-router-unreachable-overly-aggressive-firewall-rules/)),
+using Ruby Expect to control network appliances
+([1](http://pivotallabs.com/using-ruby-expect-library-to-reboot-ruckus-wireless-access-points-via-ssh/)),
+using DNS-SD to make printing easier
+([1](http://pivotallabs.com/moving-printers-and-common-resources-to-a-separate-network-and-making-them-easily-available-via-bonjour-and-dns-sd/)),
+locking down an ethernet network
+([1](http://pivotallabs.com/shunting-ethernet-guests-to-a-safe-network/)), and
+many more. I've written blog posts as part of my job as well, and do not include
+those posts in the above list.
+
+Educations keeps my skills current:
+
+- Build a Modern Computer from First Principles: Nand to Tetris: Parts
+  [1](https://www.coursera.org/account/accomplishments/records/3GXLPXU6MFRM) and
+  [2](https://www.coursera.org/account/accomplishments/records/8PFEYLD45R)
+- An Introduction to Interactive Programming in Python: Parts
+  [1](https://www.coursera.org/account/accomplishments/records/NC9TKC5YDE) and
+  [2](https://www.coursera.org/account/accomplishments/records/6FCYBUF2MX)
+- Programming Mobile Applications for Android Handheld Systems: Part
+  [1](https://www.coursera.org/account/accomplishments/records/YCZ54M3QJU)
+- [Web Application
+  Architectures](https://www.coursera.org/account/accomplishments/records/BT4R5EZX9Z)
+  (Ruby on Rails)
+
+I enjoy open water swimming and rugby.
 
 ### Education
 
@@ -118,38 +193,3 @@ Bachelor of Science and Engineering, Major in Computer Science Engineering
 ### Honors
 
 National Merit Scholar
-
-### Interests
-
-I [blog](http://pivotallabs.com/author/cunnie/). Topics include setting up and benchmarking the iSCSI performance of a ZFS fileserver
-([1](http://pivotallabs.com/high-performing-mid-range-nas-server/),
-[2](http://pivotallabs.com/high-performing-mid-range-nas-server-part-2-performance-tuning-iscsi/)),
-installing Cloud Foundry in a home lab
-([1](http://pivotallabs.com/worlds-smallest-iaas-part-1/),
-[2](http://pivotallabs.com/worlds-smallest-iaas-part-2/),
-[3](http://pivotallabs.com/worlds-smallest-iaas-part-3-paas/), and
-[4](http://pivotallabs.com/worlds-smallest-iaas-part-4-hello-world/)), setting up a DNS, NTP and nginx server in the cloud
-([1](http://pivotallabs.com/set-freebsd-server-hetzner-part-1/),
-[2](http://pivotallabs.com/part-2-configure-secondary-dns-ns-server/), [3](http://pivotallabs.com/server-participated-large-scale-attack/), [4](http://pivotallabs.com/setting-freebsd-server-hetzner-part-4-nginx/), and
-[5](http://pivotallabs.com/setting-freebsd-server-hetzner-part-4-php-ssi-ssl-redirects/)),
-configuring and troubleshooting an IPv6 firewall
-([1](http://pivotallabs.com/configuring-freebsd-9-1-as-an-ipv6-firewallrouter/),
-[2](http://pivotallabs.com/how-i-grabbed-18-quintillion-ip-addresses-from-comcast-and-they-didnt-even-care/),
-[3](http://pivotallabs.com/configuring-freebsd-9-1-as-an-ipv6-dhcp-client/), and
-[4](http://pivotallabs.com/made-ipv6-router-unreachable-overly-aggressive-firewall-rules/)),
-using Ruby Expect to control network appliances ([1](http://pivotallabs.com/using-ruby-expect-library-to-reboot-ruckus-wireless-access-points-via-ssh/)),
-using DNS-SD to make printing easier ([1](http://pivotallabs.com/moving-printers-and-common-resources-to-a-separate-network-and-making-them-easily-available-via-bonjour-and-dns-sd/)), locking down an ethernet network ([1](http://pivotallabs.com/shunting-ethernet-guests-to-a-safe-network/)), and much more. I am currently the all-time most popular blogger at Pivotal Labs (based on number of page views).
-
-I contribute to open source projects ([1](https://github.com/cunnie?tab=contributions)).
-
-I keep my skills current (Python ([1](https://www.coursera.org/account/accomplishments/records/AtLtgPSJcMQjkQa7)), Ruby on Rails ([1](https://www.coursera.org/account/accomplishments/records/X9Xm4MFX7xhyMZZG))).
-
-I enjoy open water swimming and rugby.
-
-### A Casual Description of What I Do
-
-I am a good systems administrator. Really good. I have worked for three CTOs at three different startups, all of whom were exceptional systems administrators in their own right, and I was able to create and maintain an environment to their satisfaction&mdash;I am, if you will, a system administrator’s system administrator.
-
-I know how to do my job: I can set my own budget, work within extremely frugal constraints, and keep things running. There has been almost no downtime at the companies at which I have worked, and that’s not because I’m lucky: it’s because I had put thought and effort into making sure that, when things failed, we were prepared.
-
-I see the bigger picture. I'll happily outsource webhosting and email although I am quite capable of bringing them in-house. I purchased a commercial firewall even though I could have built a better one from that old laptop in the corner. I don’t insist that everyone runs Linux. I step in when vendors fail: I spent a week working with Marketing on the new website launch after their web designer told them that he couldn’t help them anymore.
