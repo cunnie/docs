@@ -39,7 +39,7 @@ SquirrelMail, firewalls (FreeBSD (pf), Linux (iptables))
 
 ### Experience
 
-**Pivot, [Pivotal Labs](http://pivotallabs.com/), San Francisco, CA<br />
+**Pivot, [Pivotal](https://pivotal.io/), San Francisco, CA<br />
 6/11 to present**
 
 * Maintained vSphere environments (vCenter (5.x) and ESXi (5.x)) used by the development team (VCE Vblock 340, 12 &times; Cisco C220 M3, 5 &times; Dell R720 located in German colo)
@@ -139,30 +139,30 @@ Concourse CI without a load balancer
 smallest Concourse CI server
 ([1](http://engineering.pivotal.io/post/worlds-smallest-concourse-server/)),
 setting up and benchmarking the iSCSI performance of a ZFS fileserver
-([1](http://pivotallabs.com/high-performing-mid-range-nas-server/),
-[2](http://pivotallabs.com/high-performing-mid-range-nas-server-part-2-performance-tuning-iscsi/)),
+([1](http//content.pivotal.io/blog/high-performing-mid-range-nas-server),
+[2](https://content.pivotal.io/blog/high-performing-mid-range-nas-server-part-2-performance-tuning-iscsi)),
 installing Cloud Foundry in a home lab
-([1](http://pivotallabs.com/worlds-smallest-iaas-part-1/),
-[2](http://pivotallabs.com/worlds-smallest-iaas-part-2/),
-[3](http://pivotallabs.com/worlds-smallest-iaas-part-3-paas/), and
-[4](http://pivotallabs.com/worlds-smallest-iaas-part-4-hello-world/)), setting
+([1](https://content.pivotal.io/blog/worlds-smallest-iaas-part-1),
+[2](https://content.pivotal.io/blog/worlds-smallest-iaas-part-2),
+[3](https://content.pivotal.io/blog/worlds-smallest-iaas-part-3-paas), and
+[4](https://content.pivotal.io/blog/worlds-smallest-iaas-part-4-hello-world)), setting
 up a DNS, NTP and nginx server in the cloud
-([1](http://pivotallabs.com/set-freebsd-server-hetzner-part-1/),
-[2](http://pivotallabs.com/part-2-configure-secondary-dns-ns-server/),
-[3](http://pivotallabs.com/server-participated-large-scale-attack/),
-[4](http://pivotallabs.com/setting-freebsd-server-hetzner-part-4-nginx/), and
-[5](http://pivotallabs.com/setting-freebsd-server-hetzner-part-4-php-ssi-ssl-redirects/)),
+([1](https://content.pivotal.io/blog/set-freebsd-server-hetzner-part-1),
+[2](https://content.pivotal.io/blog/part-2-configure-secondary-dns-ns-server),
+[3](https://content.pivotal.io/blog/server-participated-large-scale-attack),
+[4](https://content.pivotal.io/blog/setting-freebsd-server-hetzner-part-4-nginx), and
+[5](https://content.pivotal.io/blog/setting-freebsd-server-hetzner-part-4-php-ssi-ssl-redirects)),
 configuring and troubleshooting an IPv6 firewall
-([1](http://pivotallabs.com/configuring-freebsd-9-1-as-an-ipv6-firewallrouter/),
-[2](http://pivotallabs.com/how-i-grabbed-18-quintillion-ip-addresses-from-comcast-and-they-didnt-even-care/),
-[3](http://pivotallabs.com/configuring-freebsd-9-1-as-an-ipv6-dhcp-client/), and
-[4](http://pivotallabs.com/made-ipv6-router-unreachable-overly-aggressive-firewall-rules/)),
+([1](https://content.pivotal.io/blog/configuring-freebsd-9-1-as-an-ipv6-firewallrouter),
+[2](https://content.pivotal.io/blog/how-i-grabbed-18-quintillion-ip-addresses-from-comcast-and-they-didnt-even-care),
+[3](https://content.pivotal.io/blog/configuring-freebsd-9-1-as-an-ipv6-dhcp-client), and
+[4](https://content.pivotal.io/blog/made-ipv6-router-unreachable-overly-aggressive-firewall-rules)),
 using Ruby Expect to control network appliances
-([1](http://pivotallabs.com/using-ruby-expect-library-to-reboot-ruckus-wireless-access-points-via-ssh/)),
+([1](https://content.pivotal.io/blog/using-ruby-expect-library-to-reboot-ruckus-wireless-access-points-via-ssh)),
 using DNS-SD to make printing easier
-([1](http://pivotallabs.com/moving-printers-and-common-resources-to-a-separate-network-and-making-them-easily-available-via-bonjour-and-dns-sd/)),
+([1](https://content.pivotal.io/blog/moving-printers-and-common-resources-to-a-separate-network-and-making-them-easily-available-via-bonjour-and-dns-sd)),
 locking down an ethernet network
-([1](http://pivotallabs.com/shunting-ethernet-guests-to-a-safe-network/)), and
+([1](https://content.pivotal.io/blog/shunting-ethernet-guests-to-a-safe-network)), and
 many more. I've written blog posts as part of my job as well, and do not include
 those posts in the above list.
 
