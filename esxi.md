@@ -143,6 +143,37 @@ Add iSCSI from vCenter:
       Edit  
       vMotion
 
+### vMotion Benchmarks
+
+These benchmarks were obtained by vMotion'ing a VCSA, 10 GB RAM allotted, 2.2 GB used, between 2 ESXi hosts. We changed compute resource only. We scheduled vMotion with high priority.
+
+---
+
+11 s, 18 s, 14 s, 20 s, 12 s, 19s (curiously, `esxi-0` to `esxi-1` takes between
+11-14 seconds, but the other direction takes 18-20 seconds)
+
+Swap ports on the QNAP? See if the QNAP is the problem?
+
+12 s, 17 s (it's not the QNAP)
+
+Cables? Probably esxi-1's cables, because when it's transmitting the data that's when it's slower.
+
+13 s, 18 s
+
+It's not the cables. Maybe the time is off?
+
+```
+ssh esxi-0 date & ssh esxi-1 date
+Mon Nov 12 01:22:24 UTC 2018
+Mon Nov 12 01:22:24 UTC 2018
+```
+
+Maybe it's esxi-0's cables. 13s, 19s
+
+You know what? I no longer care.
+
+on 1Gbe: 97s, 95s, 97s, 95s, 94s, 95s
+
 ---
 
 To find an [ESXi's mac address](http://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=1031111):
