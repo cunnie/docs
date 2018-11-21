@@ -1,5 +1,7 @@
 <h2 style='text-align: center'>Brian Cunnie</h2>
 
+<h4 style='text-align: center'>Software Developer</h4>
+
 <p align="center">
 1711 Washington St. Apt 8<br />
 San Francisco, CA  94109<br />
@@ -9,20 +11,21 @@ brian.cunnie@gmail.com
 
 ### Objective
 
-A four-day workweek developer position in the San Francisco Bay Area, one
-accessible by public transportation.
+**Not currently looking**, but if I were, it would be for a four-day workweek
+software developer position in the San Francisco Bay Area, one accessible by
+public transportation, with pair programming and test driven development (TDD).
 
 ### Skills
 
 **Programming Languages (Test Frameworks)**:
 
-Golang (Ginkgo), Ruby (rspec), Python (unittest), Javascript/ReactJS (Jasmine,
-Jest), Java, bash, Perl, C, C++, PHP, APL, Assembler
+Golang (Ginkgo), Ruby (RSpec), Python (unittest), Javascript/ReactJS (Jasmine,
+Jest), Java, bash, Perl, C, C++, APL, Assembler
 
 **Tools and Declarative Languages**:
 
 Cloud Foundry CLI, BOSH, git, JetBrains's IDEs (Goland, RubyMine, WebStorm,
-PyCharm), Android Studio, CSS, HTML, Concourse CI, ZFS, SQL, svn, VMWare vSphere
+PyCharm), Android Studio, CSS, HTML, Concourse CI, ZFS, SQL, svn, VMware vSphere
 
 **Operating Systems**:
 
@@ -30,23 +33,20 @@ macOS, Linux, FreeBSD, ESXi (vSphere), FreeBSD, MS Windows
 
 **Network Protocols & Services**:
 
-TCP/IP (static routes, subnet masks, ping, traceroute, tcpdump/wireshark), NFS
-(servers, clients, automount/amd/autofs, tuning), DNS/bind/named (SOA, NS, A,
-MX, PTR, CNAME), DHCP, OpenLDAP 2.x (slapd), Sendmail (8.12+, m4, domain
-masquerading, etc.), Apache webserver (1.3+, 2.x, virtual nameservers, SSL,
-CGI), pop3 & imap (qpopper, cyrus-imapd), NIS (master server, clients), Samba 3,
-SquirrelMail, firewalls (FreeBSD (pf), Linux (iptables))
+TCP/IP (routing, DHCP, IPv6, NDP, firewalls (iptables and pf)), DNS (BIND,
+named, djbdns, PowerDNS), email (Sendmail, qmail, Postfix), HTTP servers
+(Apache, nginx)
 
 ### Experience
 
-**Pivot, [Pivotal](https://pivotal.io/), San Francisco, CA<br />
+**Software Engineer, [Pivotal](https://pivotal.io/), San Francisco, CA<br />
 6/11 to present**
 
 * Maintained vSphere environments (vCenter (5.x) and ESXi (5.x)) used by the development team (VCE Vblock 340, 12 &times; Cisco C220 M3, 5 &times; Dell R720 located in German colo)
 
 * Helped write the tooling that tested the final release of the Cloud Foundry software (Ruby)
 
-**Systems Administrator, [Arda Technologies](https://www.ardatech.com/) (acquired by Google), Mountain View, CA<br />
+**Systems Administrator, Arda Technologies (acquired by [Google](https://www.google.com/)), Mountain View, CA<br />
 12/07 to 6/11**
 
 Provided computer support for an IC Design Startup.
@@ -64,34 +64,19 @@ Provided computer support for an IC Design Startup.
 * Hand-crafted two iterations of the corporate website (using XHTML, PHP, and CSS)
 * Troubleshot and tuned as needed. Spec'ed and purchased equipment as needed
 
-**Systems Administrator, [Aeluros](https://www.aeluros.com/) (acquired by Broadcom), Mountain View, CA<br />
-3/02 to 12/07**
+**Systems Administrator, Aeluros (acquired by
+[Broadcom](https://www.broadcom.com/)), Mountain View, CA<br /> 3/02 to 12/07**
 
 Provided computer support for an IC Design Startup.
 
 * Managed the following machines:
-    * 100 Linux machines (mostly 3 main cookie-cutter variations (RHEL4, RHEL5, Fedora 7)),
+    * 100 Linux machines
     * 20 Windows machines (Finance, Marketing, Sales),
     * 3 Solaris 8 (legacy license and print servers),
     * 2 HPUX machines (offline Agilent 8k testers).
-* Coded the chip-testing GUI in Perl/Tk for eval kits for our chips to the customers, modified to accommodate new product lines and new features.
-* Hand-built the external mail server using a combination of cyrus-imapd, sendmail, Apache, SquirrelMail, and OpenLDAP. Also implemented a calendar server using Apache, MySQL, OpenLDAP, and PHP.
-* Maintained DNS, YP/NIS, NFS system internally.
-* Implemented a fairly complex backup system (arkeia for Linux, amanda for solaris, BackupPC for windows, custom scripts using rsync for miscellaneous items).
-* Configured firewalls (Cisco Pix 501 and hardened Linux)
-* Configured redundant Internet connections (Nextweb 5.8MHz wireless and AT&T T1)
-* Troubleshot and tuned as needed. Spec'ed and purchased equipment as needed.
-
-**Systems Administrator, [Skymoon Ventures](https://www.skymoon.com/), Palo Alto, CA<br />
-8/00 to 3/02**
-
-Provided computer support for a Venture Capital incubator and its various startups (e.g. Freespace Communications, AON Networks, Pixonics, Sahasra Networks, Pedestal Networks).
-
-* Physical Layer: Cabling, patch-panels, HP ProCurve switches, toning, crimping, racking
-* Network Layer: Netopia DSL router, Cisco 2650 & 1720 routers, Subnet’ing, NAT’ing, Firewall’ing, VPN’s, Apache
-* Application Layer: DNS, email (MS-Exchange & sendmail, qmail (secondary MX, alternate location))
-* Troubleshot and tuned as needed. Spec'ed and purchased equipment as needed
-* Maintained websites
+* Coded the chip-testing GUI in Perl/Tk for eval kits for our chips to the customers, modified to accommodate new product lines and new features
+* Hand-built the external mail server using a combination of cyrus-imapd, sendmail, Apache, SquirrelMail, and OpenLDAP. Also implemented a calendar server using Apache, MySQL, OpenLDAP, and PHP
+* Maintained firewalls, redundant internet connections, DNS, YP/NIS, NFS system internally, backups of our corporate intellectual property (IP), spec'd and purchased equipment
 
 ### Extracurricular Activities
 
@@ -102,14 +87,16 @@ I also run six servers in the [NTP
 pool](https://www.ntppool.org/user/cunnie) which carry an aggregate of 1% of the
 US NTP pool traffic (my Singapore server carries an even higher percentage).
 
-I am the maintainer of several BOSH releases that support my interest in DNS,
-NTP, and HTTP:
+I am the maintainer of several BOSH releases that support my abiding interest in
+DNS, NTP, and HTTP:
 [PowerDNS](https://github.com/cloudfoundry-community/pdns-release),
 [NTP](https://github.com/cloudfoundry-community/ntp-release), and
 [nginx](https://github.com/cloudfoundry-community/nginx-release).
 
-I worked with Dmitriy Kalinin to add [IPv6 support to
-BOSH](https://bosh.io/docs/guide-ipv6-on-vsphere/). As a collateral
+I worked (with Dmitriy Kalinin) to add [IPv6 support to
+BOSH](https://bosh.io/docs/guide-ipv6-on-vsphere/).
+
+As a collateral
 contribution, updated Ruby's core library, openssl, to [correctly verify
 abbreviated IPv6
 SANs](https://github.com/ruby/openssl/commit/9322a104d16b02c7a79f9ab589859c9d63fabf52).
