@@ -17,34 +17,38 @@ public transportation, with pair programming and test driven development (TDD).
 
 ### Skills
 
-**Programming Languages (Test Frameworks)**:
+_Programming Languages (Test Frameworks)_: Golang (Ginkgo), Ruby (RSpec), Python
+(unittest), Javascript/ReactJS (Jasmine, Jest), Java, bash, Perl, C, C++, APL,
+Assembler
 
-Golang (Ginkgo), Ruby (RSpec), Python (unittest), Javascript/ReactJS (Jasmine,
-Jest), Java, bash, Perl, C, C++, APL, Assembler
+_Tools and Declarative Languages_: Cloud Foundry CLI, BOSH, git, JetBrains's
+IDEs (Goland, RubyMine, WebStorm, PyCharm), Android Studio, CSS, HTML, Concourse
+CI, ZFS, SQL, svn, VMware vSphere
 
-**Tools and Declarative Languages**:
+_Operating System and Infrastructures-as-a-Service (IaaSes)_: macOS, Linux,
+FreeBSD, ESXi (vSphere), FreeBSD, MS Windows, Amazon AWS, Microsoft Azure,
+Google Cloud Platform (GCP), VMware vSphere
 
-Cloud Foundry CLI, BOSH, git, JetBrains's IDEs (Goland, RubyMine, WebStorm,
-PyCharm), Android Studio, CSS, HTML, Concourse CI, ZFS, SQL, svn, VMware vSphere
-
-**Operating Systems**:
-
-macOS, Linux, FreeBSD, ESXi (vSphere), FreeBSD, MS Windows
-
-**Network Protocols & Services**:
-
-TCP/IP (routing, DHCP, IPv6, NDP, firewalls (iptables and pf)), DNS (BIND,
-named, djbdns, PowerDNS), email (Sendmail, qmail, Postfix), HTTP servers
-(Apache, nginx)
+_Network Protocols & Services_: TCP/IP (routing, DHCP, IPv6, NDP, firewalls
+(iptables and pf)), DNS (BIND, named, djbdns, PowerDNS), email (Sendmail, qmail,
+Postfix), HTTP servers (Apache, nginx)
 
 ### Experience
 
 **Software Engineer, [Pivotal](https://pivotal.io/), San Francisco, CA<br />
 6/11 to present**
 
-* Maintained vSphere environments (vCenter (5.x) and ESXi (5.x)) used by the development team (VCE Vblock 340, 12 &times; Cisco C220 M3, 5 &times; Dell R720 located in German colo)
-
-* Helped write the tooling that tested the final release of the Cloud Foundry software (Ruby)
+- PAS NSX-T: built automated test infrastructure to test interoperability
+  between Pivotal's cloud offering (PAS) and VMware's software-defined network
+  (NSX-t), addressed issues with appropriate organizations
+- Cloud Operations: maintained Pivotal Web Services (PWS), Pivotal's
+  public-facing Cloud Foundry. Deployed updates several times a week, addressed
+  GDPR compliance, and diagnosed, remedied, and reported outages
+- Operations Manager: developed and maintained Operations Manager, a Ruby on Rails application that FIXME
+- BOSH CPI:
+- BOSH:
+- Release Engineering: Helped write the tooling that tested the final release of the Cloud Foundry software (Ruby)
+- Toolsmiths: Maintained vSphere environments (vCenter (5.x) and ESXi (5.x)) used by the development team (VCE Vblock 340, 12 &times; Cisco C220 M3, 5 &times; Dell R720 located in German colo)
 
 **Systems Administrator, Arda Technologies (acquired by [Google](https://www.google.com/)), Mountain View, CA<br />
 12/07 to 6/11**
@@ -93,12 +97,12 @@ DNS, NTP, and HTTP:
 [NTP](https://github.com/cloudfoundry-community/ntp-release), and
 [nginx](https://github.com/cloudfoundry-community/nginx-release).
 
-I worked (with Dmitriy Kalinin) to add [IPv6 support to
+I (with Dmitriy Kalinin) added [IPv6 support to
 BOSH](https://bosh.io/docs/guide-ipv6-on-vsphere/).
 
-As a collateral
-contribution, updated Ruby's core library, openssl, to [correctly verify
-abbreviated IPv6
+I [contribute](https://github.com/cunnie?tab=contributions) to open source
+projects. My favorite contribution: updating Ruby's core library, openssl, to
+[correctly verify abbreviated IPv6
 SANs](https://github.com/ruby/openssl/commit/9322a104d16b02c7a79f9ab589859c9d63fabf52).
 
 I [blog](https://engineering.pivotal.io/authors/cunnie/) what captures my
@@ -157,6 +161,12 @@ I play rugby and swim in the San Francisco Bay.
 
 ### Education
 
+[Stevens Institute of Technology](https://www.stevens.edu/sit/), June 1989<br />
+Master of Science and Engineering, Major in Telecommunications Engineering
+
+[University of Pennsylvania](https://www.upenn.edu/), August 1986<br />
+Bachelor of Science and Engineering, Major in Computer Science Engineering
+
 Ongoing, non-degree-related education:
 
 - Build a Modern Computer from First Principles: Nand to Tetris: Parts
@@ -170,12 +180,6 @@ Ongoing, non-degree-related education:
 - [Web Application
   Architectures](https://www.coursera.org/account/accomplishments/records/BT4R5EZX9Z)
   (Ruby on Rails)
-
-[Stevens Institute of Technology](https://www.stevens.edu/sit/), June 1989<br />
-Master of Science and Engineering, Major in Telecommunications Engineering
-
-[University of Pennsylvania](https://www.upenn.edu/), August 1986<br />
-Bachelor of Science and Engineering, Major in Computer Science Engineering
 
 ### Honors
 
