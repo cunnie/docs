@@ -46,7 +46,7 @@ SquirrelMail, firewalls (FreeBSD (pf), Linux (iptables))
 
 * Helped write the tooling that tested the final release of the Cloud Foundry software (Ruby)
 
-**Systems Administrator, [Arda Technologies](http://www.ardatech.com/) (acquired by Google), Mountain View, CA<br />
+**Systems Administrator, [Arda Technologies](https://www.ardatech.com/) (acquired by Google), Mountain View, CA<br />
 12/07 to 6/11**
 
 Provided computer support for an IC Design Startup.
@@ -64,7 +64,7 @@ Provided computer support for an IC Design Startup.
 * Hand-crafted two iterations of the corporate website (using XHTML, PHP, and CSS)
 * Troubleshot and tuned as needed. Spec'ed and purchased equipment as needed
 
-**Systems Administrator, [Aeluros](http://www.aeluros.com/) (acquired by Broadcom), Mountain View, CA<br />
+**Systems Administrator, [Aeluros](https://www.aeluros.com/) (acquired by Broadcom), Mountain View, CA<br />
 3/02 to 12/07**
 
 Provided computer support for an IC Design Startup.
@@ -82,7 +82,7 @@ Provided computer support for an IC Design Startup.
 * Configured redundant Internet connections (Nextweb 5.8MHz wireless and AT&T T1)
 * Troubleshot and tuned as needed. Spec'ed and purchased equipment as needed.
 
-**Systems Administrator, [Skymoon Ventures](http://www.skymoon.com/), Palo Alto, CA<br />
+**Systems Administrator, [Skymoon Ventures](https://www.skymoon.com/), Palo Alto, CA<br />
 8/00 to 3/02**
 
 Provided computer support for a Venture Capital incubator and its various startups (e.g. Freespace Communications, AON Networks, Pixonics, Sahasra Networks, Pedestal Networks).
@@ -114,37 +114,37 @@ contribution, updated Ruby's core library, openssl, to [correctly verify
 abbreviated IPv6
 SANs](https://github.com/ruby/openssl/commit/9322a104d16b02c7a79f9ab589859c9d63fabf52).
 
-I [blog](http://engineering.pivotal.io/authors/cunnie/) what captures my
+I [blog](https://engineering.pivotal.io/authors/cunnie/) what captures my
 interest, including how to install a TLS Certificate on vCenter server appliance
-(VCSA) ([1](http://engineering.pivotal.io/post/vcenter_6.7_tls/)), benchmarking
+(VCSA) ([1](https://engineering.pivotal.io/post/vcenter_6.7_tls/)), benchmarking
 the disk speed of IaaSes
-([1](http://engineering.pivotal.io/post/gobonniego_results/)), deploying BOSH
+([1](https://engineering.pivotal.io/post/gobonniego_results/)), deploying BOSH
 VMs with IPv6 addresses to vSphere
-([1](http://engineering.pivotal.io/post/bosh-on-ipv6-2/)) and to AWS
-([2](http://engineering.pivotal.io/post/bosh-on-ipv6/)), maintaining BOSH
+([1](https://engineering.pivotal.io/post/bosh-on-ipv6-2/)) and to AWS
+([2](https://engineering.pivotal.io/post/bosh-on-ipv6/)), maintaining BOSH
 Directors with Concourse CI and bosh-deployment
-([1](http://engineering.pivotal.io/post/bosh-deployed-with-concourse/)), why is
+([1](https://engineering.pivotal.io/post/bosh-deployed-with-concourse/)), why is
 my NTP server costing me $500/year
 ([1](https://content.pivotal.io/blog/why-is-my-ntp-server-costing-500-year-part-1),
 [2](https://content.pivotal.io/blog/why-is-my-ntp-server-costing-me-500-year-part-2-characterizing-the-ntp-clients),
-[3](http://engineering.pivotal.io/post/ntp-costs-500/)), deploying a BOSH
+[3](https://engineering.pivotal.io/post/ntp-costs-500/)), deploying a BOSH
 Director With SSL certificates issued by a commercial CA
-([1](http://engineering.pivotal.io/post/bosh-ssl/)), how to customize a BOSH
-stemcell ([1](http://engineering.pivotal.io/post/bosh-customize-stemcell/)),
+([1](https://engineering.pivotal.io/post/bosh-ssl/)), how to customize a BOSH
+stemcell ([1](https://engineering.pivotal.io/post/bosh-customize-stemcell/)),
 updating a BOSH Release
-([1](http://engineering.pivotal.io/post/updating-a-bosh-release/)), Concourse CI
-has badges ([1](http://engineering.pivotal.io/post/concourse-badges/)),
+([1](https://engineering.pivotal.io/post/updating-a-bosh-release/)), Concourse CI
+has badges ([1](https://engineering.pivotal.io/post/concourse-badges/)),
 Concourse CI without a load balancer
-([1](http://engineering.pivotal.io/post/concourse-no-elb/)), the world's
+([1](https://engineering.pivotal.io/post/concourse-no-elb/)), the world's
 smallest Concourse CI server
-([1](http://engineering.pivotal.io/post/worlds-smallest-concourse-server/)),
+([1](https://engineering.pivotal.io/post/worlds-smallest-concourse-server/)),
 setting up and benchmarking the iSCSI performance of a ZFS fileserver
-([1](http//content.pivotal.io/blog/high-performing-mid-range-nas-server),
-[2](https://content.pivotal.io/blog/high-performing-mid-range-nas-server-part-2-performance-tuning-iscsi)),
+([1](https://content.pivotal.io/blog/high-performing-mid-range-nas-server),
+[2](https://content.pivotal.io/blog/a-high-performing-mid-range-nas-server-part-2-performance-tuning-for-iscsi)),
 installing Cloud Foundry in a home lab
 ([1](https://content.pivotal.io/blog/worlds-smallest-iaas-part-1),
 [2](https://content.pivotal.io/blog/worlds-smallest-iaas-part-2),
-[3](https://content.pivotal.io/blog/worlds-smallest-iaas-part-3-paas), and
+[3](https://content.pivotal.io/blog/worlds-smallest-iaas-part-3-the-paas), and
 [4](https://content.pivotal.io/blog/worlds-smallest-iaas-part-4-hello-world)), setting
 up a DNS, NTP and nginx server in the cloud
 ([1](https://content.pivotal.io/blog/set-freebsd-server-hetzner-part-1),
@@ -184,10 +184,10 @@ Ongoing, non-degree-related education:
   Architectures](https://www.coursera.org/account/accomplishments/records/BT4R5EZX9Z)
   (Ruby on Rails)
 
-[Stevens Institute of Technology](http://www.stevens.edu/sit/), June 1989<br />
+[Stevens Institute of Technology](https://www.stevens.edu/sit/), June 1989<br />
 Master of Science and Engineering, Major in Telecommunications Engineering
 
-[University of Pennsylvania](http://www.upenn.edu/), August 1986<br />
+[University of Pennsylvania](https://www.upenn.edu/), August 1986<br />
 Bachelor of Science and Engineering, Major in Computer Science Engineering
 
 ### Honors
