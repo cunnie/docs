@@ -53,8 +53,7 @@ Postfix), HTTP servers (Apache, nginx)
 - BOSH: maintained BOSH, a virtual machine (VM) orchestrator (Ruby)
 - Release Engineering: wrote the tooling that tested the each release of
   the Pivotal Cloud Foundry software (Ruby)
-- Toolsmiths: maintained vSphere environments (vCenter (5.x) and ESXi (5.x))
-  used by the development team
+- Toolsmiths: maintained vSphere environments used by the development teams
 
 **Systems Administrator, Arda Technologies (acquired by
 [Google](https://www.google.com/)), Mountain View, CA<br />
@@ -178,16 +177,16 @@ Bachelor of Science and Engineering, Major in Computer Science Engineering
 Ongoing, non-degree-related education:
 
 - Build a Modern Computer from First Principles: Nand to Tetris: Parts
-  [1](https://www.coursera.org/account/accomplishments/records/3GXLPXU6MFRM) and
-  [2](https://www.coursera.org/account/accomplishments/records/8PFEYLD45R)
-- An Introduction to Interactive Programming in Python: Parts
-  [1](https://www.coursera.org/account/accomplishments/records/NC9TKC5YDE) and
-  [2](https://www.coursera.org/account/accomplishments/records/6FCYBUF2MX)
+  [1](https://www.coursera.org/account/accomplishments/records/3GXLPXU6MFRM) (2015) and
+  [2](https://www.coursera.org/account/accomplishments/records/8PFEYLD45R) (2018)
 - Programming Mobile Applications for Android Handheld Systems: Part
-  [1](https://www.coursera.org/account/accomplishments/records/YCZ54M3QJU)
+  [1](https://www.coursera.org/account/accomplishments/records/YCZ54M3QJU) (2015)
 - [Web Application
   Architectures](https://www.coursera.org/account/accomplishments/records/BT4R5EZX9Z)
-  (Ruby on Rails)
+  (Ruby on Rails) (2014)
+- An Introduction to Interactive Programming in Python: Parts
+  [1](https://www.coursera.org/account/accomplishments/records/NC9TKC5YDE) and
+  [2](https://www.coursera.org/account/accomplishments/records/6FCYBUF2MX) (2013)
 
 ### Honors
 
