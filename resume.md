@@ -47,7 +47,7 @@ Postfix), HTTP servers (Apache, nginx)
 - Operations Manager: developed and maintained Operations Manager, a Ruby on
   Rails application which acts as a front end to Pivotal's commercial Cloud
   Foundry and Kubernetes offerings
-- BOSH CPI: maintained the Ruby-based Cloud Provider Interface (interface
+- BOSH CPI: maintained the Ruby-based Cloud Provider Interface (CPI,interface
   between BOSH and IaaS). Wrote the underlying API calls for AWS and vSphere.
   (Ruby)
 - BOSH: maintained BOSH, a virtual machine (VM) orchestrator (Ruby)
@@ -57,7 +57,7 @@ Postfix), HTTP servers (Apache, nginx)
   used by the development team
 
 **Systems Administrator, Arda Technologies (acquired by
-*[Google](https://www.google.com/)), Mountain View, CA<br />
+[Google](https://www.google.com/)), Mountain View, CA<br />
 12/07 to 6/11**
 
 Provided computer support for an IC Design Startup.
