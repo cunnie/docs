@@ -137,7 +137,7 @@ Concourse CI without a load balancer
 smallest Concourse CI server
 ([1](https://engineering.pivotal.io/post/worlds-smallest-concourse-server/)),
 setting up and benchmarking the iSCSI performance of a ZFS fileserver
-([1](https://content.pivotal.io/blog/high-performing-mid-range-nas-server),
+([1](https://content.pivotal.io/blog/a-high-performing-mid-range-nas-server),
 [2](https://content.pivotal.io/blog/a-high-performing-mid-range-nas-server-part-2-performance-tuning-for-iscsi)),
 installing Cloud Foundry in a home lab
 ([1](https://content.pivotal.io/blog/worlds-smallest-iaas-part-1),
