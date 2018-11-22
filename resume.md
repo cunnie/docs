@@ -151,14 +151,14 @@ up a DNS, NTP and nginx server in the cloud
 [4](https://content.pivotal.io/blog/setting-up-a-freebsd-server-on-hetzner-part-4-nginx), and
 [5](https://content.pivotal.io/blog/setting-up-a-freebsd-server-on-hetzner-part-5-php-ssi-ssl-redirects)),
 configuring and troubleshooting an IPv6 firewall
-([1](https://content.pivotal.io/blog/configuring-freebsd-9-1-as-an-ipv6-firewallrouter),
-[2](https://content.pivotal.io/blog/how-i-grabbed-18-quintillion-ip-addresses-from-comcast-and-they-didnt-even-care),
-[3](https://content.pivotal.io/blog/configuring-freebsd-9-1-as-an-ipv6-dhcp-client), and
-[4](https://content.pivotal.io/blog/made-ipv6-router-unreachable-overly-aggressive-firewall-rules)),
+([1](https://content.pivotal.io/blog/configuring-freebsd-9-1-as-a-native-ipv6-dhcp-client),
+[2](https://content.pivotal.io/blog/a-barebones-pf-ipv6-firewall-ruleset),
+[3](https://content.pivotal.io/blog/how-i-grabbed-18-quintillion-ip-addresses-from-comcast-and-they-didnt-even-care), and
+[4](https://content.pivotal.io/blog/troubleshooting-ipv6-firewall-rulesets-using-tcpdump-and-pflog)),
 using Ruby Expect to control network appliances
 ([1](https://content.pivotal.io/blog/using-ruby-expect-library-to-reboot-ruckus-wireless-access-points-via-ssh)),
 using DNS-SD to make printing easier
-([1](https://content.pivotal.io/blog/moving-printers-and-common-resources-to-a-separate-network-and-making-them-easily-available-via-bonjour-and-dns-sd)),
+([1](https://content.pivotal.io/blog/making-printers-and-common-resources-available-to-separate-network-segments-via-bonjour-and-dns-sd)),
 locking down an ethernet network
 ([1](https://content.pivotal.io/blog/shunting-ethernet-guests-to-a-safe-network)), and
 many more. I've written blog posts as part of my job as well, and do not include
