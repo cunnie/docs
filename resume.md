@@ -145,11 +145,11 @@ installing Cloud Foundry in a home lab
 [3](https://content.pivotal.io/blog/worlds-smallest-iaas-part-3-the-paas), and
 [4](https://content.pivotal.io/blog/worlds-smallest-iaas-part-4-hello-world)), setting
 up a DNS, NTP and nginx server in the cloud
-([1](https://content.pivotal.io/blog/set-freebsd-server-hetzner-part-1),
-[2](https://content.pivotal.io/blog/part-2-configure-secondary-dns-ns-server),
-[3](https://content.pivotal.io/blog/server-participated-large-scale-attack),
-[4](https://content.pivotal.io/blog/setting-freebsd-server-hetzner-part-4-nginx), and
-[5](https://content.pivotal.io/blog/setting-freebsd-server-hetzner-part-4-php-ssi-ssl-redirects)),
+([1](https://content.pivotal.io/blog/setting-up-a-freebsd-server-on-hetzner-part-1-base-install-and-ssh),
+[2](https://content.pivotal.io/blog/setting-up-a-freebsd-server-on-hetzner-part-2-dns-nameserver),
+[3](https://content.pivotal.io/blog/your-server-has-participated-in-a-very-large-scale-attack),
+[4](https://content.pivotal.io/blog/setting-up-a-freebsd-server-on-hetzner-part-4-nginx), and
+[5](https://content.pivotal.io/blog/setting-up-a-freebsd-server-on-hetzner-part-5-php-ssi-ssl-redirects)),
 configuring and troubleshooting an IPv6 firewall
 ([1](https://content.pivotal.io/blog/configuring-freebsd-9-1-as-an-ipv6-firewallrouter),
 [2](https://content.pivotal.io/blog/how-i-grabbed-18-quintillion-ip-addresses-from-comcast-and-they-didnt-even-care),
