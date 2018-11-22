@@ -1,6 +1,6 @@
-<h2 style='text-align: center'>Brian Cunnie</h2>
+<h2 align="center">Brian Cunnie</h2>
 
-<h4 style='text-align: center'>Software Developer</h4>
+<h4 align="center">Software Developer</h4>
 
 <p align="center">
 1711 Washington St. Apt 8<br />
@@ -23,7 +23,7 @@ Assembler
 
 _Tools and Declarative Languages_: Cloud Foundry CLI, BOSH, git, JetBrains's
 IDEs (Goland, RubyMine, WebStorm, PyCharm), Android Studio, CSS, HTML, Concourse
-CI, ZFS, SQL, svn, VMware vSphere
+CI, ZFS, SQL, svn
 
 _Operating System and Infrastructures-as-a-Service (IaaSes)_: macOS, Linux,
 FreeBSD, ESXi (vSphere), FreeBSD, MS Windows, Amazon AWS, Microsoft Azure,
@@ -40,17 +40,24 @@ Postfix), HTTP servers (Apache, nginx)
 
 - PAS NSX-T: built automated test infrastructure to test interoperability
   between Pivotal's cloud offering (PAS) and VMware's software-defined network
-  (NSX-t), addressed issues with appropriate organizations
+  (NSX-T), addressed issues with appropriate organizations
 - Cloud Operations: maintained Pivotal Web Services (PWS), Pivotal's
   public-facing Cloud Foundry. Deployed updates several times a week, addressed
-  GDPR compliance, and diagnosed, remedied, and reported outages
-- Operations Manager: developed and maintained Operations Manager, a Ruby on Rails application that FIXME
-- BOSH CPI:
-- BOSH:
-- Release Engineering: Helped write the tooling that tested the final release of the Cloud Foundry software (Ruby)
-- Toolsmiths: Maintained vSphere environments (vCenter (5.x) and ESXi (5.x)) used by the development team (VCE Vblock 340, 12 &times; Cisco C220 M3, 5 &times; Dell R720 located in German colo)
+  GDPR compliance, and diagnosed, remedied, and documented outages
+- Operations Manager: developed and maintained Operations Manager, a Ruby on
+  Rails application which acts as a front end to Pivotal's commercial Cloud
+  Foundry and Kubernetes offerings
+- BOSH CPI: maintained the Ruby-based Cloud Provider Interface (interface
+  between BOSH and IaaS). Wrote the underlying API calls for AWS and vSphere.
+  (Ruby)
+- BOSH: maintained BOSH, a virtual machine (VM) orchestrator (Ruby)
+- Release Engineering: wrote the tooling that tested the each release of
+  the Pivotal Cloud Foundry software (Ruby)
+- Toolsmiths: maintained vSphere environments (vCenter (5.x) and ESXi (5.x))
+  used by the development team
 
-**Systems Administrator, Arda Technologies (acquired by [Google](https://www.google.com/)), Mountain View, CA<br />
+**Systems Administrator, Arda Technologies (acquired by
+*[Google](https://www.google.com/)), Mountain View, CA<br />
 12/07 to 6/11**
 
 Provided computer support for an IC Design Startup.
@@ -69,7 +76,8 @@ Provided computer support for an IC Design Startup.
 * Troubleshot and tuned as needed. Spec'ed and purchased equipment as needed
 
 **Systems Administrator, Aeluros (acquired by
-[Broadcom](https://www.broadcom.com/)), Mountain View, CA<br /> 3/02 to 12/07**
+[Broadcom](https://www.broadcom.com/)), Mountain View, CA<br />
+3/02 to 12/07**
 
 Provided computer support for an IC Design Startup.
 
