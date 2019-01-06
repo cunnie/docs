@@ -176,17 +176,18 @@ Bachelor of Science and Engineering, Major in Computer Science Engineering
 
 Ongoing, non-degree-related education:
 
+- [Front-End Web Development with React](https://www.coursera.org/account/accomplishments/certificate/VS6C5XTSSF6K) (2019)
 - Build a Modern Computer from First Principles: Nand to Tetris: Parts
-  [1](https://www.coursera.org/account/accomplishments/records/3GXLPXU6MFRM) (2015) and
-  [2](https://www.coursera.org/account/accomplishments/records/8PFEYLD45R) (2018)
+  [1](https://www.coursera.org/account/accomplishments/certificate/3GXLPXU6MFRM) (2015) and
+  [2](https://www.coursera.org/account/accomplishments/certificate/8PFEYLD45R) (2018)
 - Programming Mobile Applications for Android Handheld Systems: Part
-  [1](https://www.coursera.org/account/accomplishments/records/YCZ54M3QJU) (2015)
+  [1](https://www.coursera.org/account/accomplishments/certificate/YCZ54M3QJU) (2015)
 - [Web Application
-  Architectures](https://www.coursera.org/account/accomplishments/records/BT4R5EZX9Z)
+  Architectures](https://www.coursera.org/account/accomplishments/certificate/BT4R5EZX9Z)
   (Ruby on Rails) (2014)
 - An Introduction to Interactive Programming in Python: Parts
-  [1](https://www.coursera.org/account/accomplishments/records/NC9TKC5YDE) and
-  [2](https://www.coursera.org/account/accomplishments/records/6FCYBUF2MX) (2013)
+  [1](https://www.coursera.org/account/accomplishments/certificate/NC9TKC5YDE) and
+  [2](https://www.coursera.org/account/accomplishments/certificate/6FCYBUF2MX) (2013)
 
 ### Honors
 
