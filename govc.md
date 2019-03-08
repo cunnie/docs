@@ -1,5 +1,7 @@
 ```bash
 export GOVC_URL=root:pass@esxi.nono.io GOVC_INSECURE=true
+ # but for vCenter
+export GOVC_USERNAME=administrator@vsphere.local GOVC_PASSWORD=pas GOVC_URL=vcenter-67.nono.io GOVC_INSECURE=true
 govc datastore.ls
 govc datacenter.info
 Name:                ha-datacenter
