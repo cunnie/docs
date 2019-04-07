@@ -5,6 +5,18 @@ git config --global user.email brian.cunnie@gmail.com
 git config --global alias.co checkout
 git config --global alias.ci commit
 git config --global alias.st status
+git config --global url."git@github.com:".insteadOf "https://github.com/"
+```
+For systems with no defaults, turn on colors
+```
+git config --global color.diff auto
+git config --global color.status auto
+git config --global color.branch auto
+git config --global core.editor vim
+```
+On FreeBSD, `less` should allow escape sequences
+```
+git config --global core.pager 'less --raw-control-chars'
 ```
 Dmitriy hacks:
 ```
@@ -18,17 +30,6 @@ try "svn co https://svn.pivotallabs.com/subversion/koda kodajunk"
 ```
 git svn clone -s https://svn.pivotallabs.com/subversion/koda --username koda
 git svn clone http://ie7-js/goodlecode.com/svn/trunk
-```
-For systems with no defaults, turn on colors
-```
-git config --global color.diff auto
-git config --global color.status auto
-git config --global color.branch auto
-git config --global core.editor vim
-```
-On FreeBSD, `less` should allow escape sequences
-```
-git config --global core.pager 'less --raw-control-chars'
 ```
 misc:
 ```
