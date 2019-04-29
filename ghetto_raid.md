@@ -666,3 +666,43 @@ We chose the final configuration (best IOPS, second-best sequential write, secon
 * We would have liked to have run some of the benchmarks a second time to eliminate the possibility that our testbed changed (e.g. intense benchmarking may have caused the SSD performance to diminish towards the end of the testing)
 * We would have liked to have been able to eliminate the limitation of the 1 gigabit ethernet link; it would be interesting to see the performance with a 10Gbe link
 * The scope of the tests were very narrow (e.g. iSCSI-only, a very specific server hardware configuration). It would be overreaching to generalize these numbers to all ZFS fileservers or even all protocols (e.g. AFP, CIFS).
+
+# A High-performing Mid-range NAS Server
+## Part 3: Performance Tuning for 10Gbps
+
+I'm seeing the following errors in `dmesg`:
+
+```
+MCA: Bank 10, Status 0x8c000047000800c1
+MCA: Global Cap 0x0000000001000c16, Status 0x0000000000000000
+MCA: Vendor "GenuineIntel", ID 0x50663, APIC ID 0
+MCA: CPU 0 COR (1) MS channel 1 memory error
+MCA: Address 0x12a65a9540
+MCA: Misc 0x908404000400e8c
+```
+
+28 of them over a 12 hour period:
+
+```
+dmesg | grep ^MCA: | sort | uniq -c sort | uniq -c`
+3 MCA: Address 0x12a65a9540
+25 MCA: Address 0x12a65a9580
+3 MCA: Bank 10, Status 0x8c000047000800c1
+12 MCA: Bank 7, Status 0x8c00004000010091
+13 MCA: Bank 7, Status 0xcc00008000010091
+3 MCA: CPU 0 COR (1) MS channel 1 memory error
+12 MCA: CPU 0 COR (1) RD channel 1 memory error
+13 MCA: CPU 0 COR (2) OVER RD channel 1 memory error
+28 MCA: Global Cap 0x0000000001000c16, Status 0x0000000000000000
+11 MCA: Misc 0x15020a086
+7 MCA: Misc 0x150222286
+2 MCA: Misc 0x15024a486
+2 MCA: Misc 0x15030b086
+3 MCA: Misc 0x150323286
+3 MCA: Misc 0x908404000400e8c
+28 MCA: Vendor "GenuineIntel", ID 0x50663, APIC ID 0
+```
+
+The address, `0x12a65a9580` is 80100365696 in decimal, and is roughly 75GiB,
+which means the error is probably somewhere in the first two DIMMs (the
+Crucial?).
