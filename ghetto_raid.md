@@ -716,6 +716,45 @@ dmesg | grep ^MCA: | sort | uniq -c sort | uniq -c`
 28 MCA: Vendor "GenuineIntel", ID 0x50663, APIC ID 0
 ```
 
+Taking the output of `dmidecode`, it appears the DIMM, based on the starting
+address and the ending address, is the **Micron** with serial number
+**164A457**:
+
+```
+Handle 0x001F, DMI type 17, 40 bytes
+Memory Device
+	Array Handle: 0x0019
+	Error Information Handle: Not Provided
+	Total Width: 72 bits
+	Data Width: 64 bits
+	Size: 32 GB
+	Form Factor: DIMM
+	Set: None
+	Locator: DIMMB1
+	Bank Locator: P0_Node0_Channel1_Dimm0
+	Type: DDR4
+	Type Detail: Synchronous
+	Speed: 2133 MT/s
+	Manufacturer: Micron
+	Serial Number: 16F4A457
+	Asset Tag: (Date:17/19)
+	Part Number: 36ASF4G72PZ-2G1B1
+	Rank: 2
+	Configured Clock Speed: 2133 MT/s
+	Minimum Voltage: Unknown
+	Maximum Voltage: Unknown
+	Configured Voltage: 0.003 V
+
+Handle 0x0020, DMI type 20, 35 bytes
+Memory Device Mapped Address
+	Starting Address: 0x01000000000
+	Ending Address: 0x017FFFFFFFF
+	Range Size: 32 GB
+	Physical Device Handle: 0x001F
+	Memory Array Mapped Address Handle: 0x001A
+	Partition Row Position: 1
+```
+
 The address, `0x12a65a9580` is 80100365696 in decimal, and is roughly 75GiB,
 which means the error is probably somewhere in the first two DIMMs (the
 Crucial?).
