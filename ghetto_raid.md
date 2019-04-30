@@ -681,6 +681,19 @@ MCA: Address 0x12a65a9540
 MCA: Misc 0x908404000400e8c
 ```
 
+`mcelog` was not useful, identifying it as a CPU error:
+
+```
+Hardware event. This is not a software error.
+CPU 0 BANK 10
+MISC 908404000400e8c ADDR 12a65a9540
+MCG status:
+MemCtrl: Corrected patrol scrub error
+STATUS 8c000047000800c1 MCGSTATUS 0
+MCGCAP 1000c16 APICID 0 SOCKETID 0
+CPUID Vendor Intel Family 6 Model 86
+```
+
 28 of them over a 12 hour period:
 
 ```
