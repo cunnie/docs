@@ -29,7 +29,7 @@ Let's make it work with
 
 ```
 sudo rndc-confgen \
-  -c /usr/local/etc/namedb/letsencrypt.key \
+ -c /usr/local/etc/namedb/letsencrypt.key \
   -k letsencrypt-key | \
   head -5 | \
   sudo tee /usr/local/etc/namedb/letsencrypt.key

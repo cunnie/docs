@@ -98,11 +98,11 @@ Setting up FreeNAS with Let's Encrypt certificates using Neilpang's
 server.
 
 To set up the DNS key, follow [Cris Van Pelt's
-instructions](https://melkfl.es/article/2017/05/acme-bind/)).
+instructions](https://melkfl.es/article/2017/05/acme-bind/).
 
 Inspired by
 <https://www.ixsystems.com/community/resources/lets-encrypt-with-freenas-11-1-and-later.82/>
-and <https://annvix.com/blog/using-letsencrypt-on-freenas>
+and <https://annvix.com/blog/using-letsencrypt-on-freenas>.
 
 ```
 ssh root@nas.nono.io
