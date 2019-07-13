@@ -45,7 +45,7 @@ export NSUPDATE_KEY="/usr/local/etc/namedb/letsencrypt.key"
   --dns dns_nsupdate \
   -d pas.nono.io \
   -d *.pas.nono.io
- # if not using PAS, try an elliptic-cure: `-k ec-256`
+ # if not using PAS for FreeNAS, try an elliptic-cure: `-k ec-256`
  # cat /home/cunnie/.acme.sh/pas.nono.io_ecc/fullchain.cer \
  #  /home/cunnie/.acme.sh/pas.nono.io_ecc/pas.nono.io.key
 cat /home/cunnie/.acme.sh/pas.nono.io/fullchain.cer \
