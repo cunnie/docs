@@ -124,3 +124,20 @@ export NSUPDATE_KEY="/root/letsencrypt.key"
   --reloadcmd /root/deploy-freenas/deploy_freenas.py
 .acme.sh/acme.sh --cron --home /root/.acme.sh
 ```
+
+### BOSH
+
+```
+ssh fedora.nono.io
+curl https://get.acme.sh | sh
+exit
+ssh fedora.nono.io
+cd ~/workspace/deployments
+git pull -r
+export NSUPDATE_SERVER="ns-he.nono.io"
+export NSUPDATE_KEY="$HOME/letsencrypt.key"
+~/.acme.sh/acme.sh --issue \
+  -d bosh-vsphere.nono.io \
+  -k ec-256 \
+  --dns dns_nsupdate \
+```
