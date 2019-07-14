@@ -129,6 +129,8 @@ export NSUPDATE_KEY="/root/letsencrypt.key"
 
 ```
 ssh fedora.nono.io
+scp cunnie@ns-he.nono.io:/usr/local/etc/namedb/letsencrypt.key .
+chmod 400 letsencrypt.key
 curl https://get.acme.sh | sh
 exit
 ssh fedora.nono.io
@@ -138,6 +140,12 @@ export NSUPDATE_SERVER="ns-he.nono.io"
 export NSUPDATE_KEY="$HOME/letsencrypt.key"
 ~/.acme.sh/acme.sh --issue \
   -d bosh-vsphere.nono.io \
-  -k ec-256 \
-  --dns dns_nsupdate \
+  --dns dns_nsupdate
+```
+Note:
+```
+Your cert is in  /home/cunnie/.acme.sh/bosh-vsphere.nono.io_ecc/bosh-vsphere.nono.io.cer
+Your cert key is in  /home/cunnie/.acme.sh/bosh-vsphere.nono.io_ecc/bosh-vsphere.nono.io.key
+The intermediate CA cert is in  /home/cunnie/.acme.sh/bosh-vsphere.nono.io_ecc/ca.cer
+And the full chain certs is there:  /home/cunnie/.acme.sh/bosh-vsphere.nono.io_ecc/fullchain.cer
 ```
