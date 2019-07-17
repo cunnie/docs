@@ -149,3 +149,19 @@ Your cert key is in  /home/cunnie/.acme.sh/bosh-vsphere.nono.io_ecc/bosh-vsphere
 The intermediate CA cert is in  /home/cunnie/.acme.sh/bosh-vsphere.nono.io_ecc/ca.cer
 And the full chain certs is there:  /home/cunnie/.acme.sh/bosh-vsphere.nono.io_ecc/fullchain.cer
 ```
+
+### PAS (Cloud Foundry)
+
+```
+ssh fedora.nono.io
+curl https://get.acme.sh | sh
+exit
+ssh fedora.nono.io
+cd ~/workspace/deployments
+git pull -r
+export NSUPDATE_SERVER="ns-he.nono.io"
+export NSUPDATE_KEY="$HOME/letsencrypt.key"
+~/.acme.sh/acme.sh --issue \
+  -d *.cf.nono.io \
+  --dns dns_nsupdate
+```
