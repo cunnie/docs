@@ -7,37 +7,88 @@ Important variations:
 - Use Fedora instead of Ubuntu because I like Fedora
 - Use IPv6 as well as IPv4 because I like IPv6
 - ~~Use OpenSSL instead of Cloudflare's CLI because I'd rather use the canonical CLI~~
-- 1 Core/4 GiB/200 GiB
-- Fedora Server F28
-- set the mac address to `02:00:00:00:f0:09`
+- Navigate to **Kubernetes** resource pool
+- Actions→New Virtual Machine...
+  - Create a new virtual machine
+  - Select a name and folder
+    - Virtual machine name: **k8s-template.nono.io**
+    - Select location for the virtual machine: **Kubernetes** resource pool
+  - Select the destination compute resource for this operation: **Kubernetes** resource pool
+  - Select storage: **NAS-0**
+  - Compatible with **ESXi 6.7 Update 2 and later**
+  - Select a guest OS
+    - Guest OS Family: **Linux**
+    - Guest OS Version: **Red Hat Fedora (64-bit)** (ignore support warning; we know what we're doing).
+  - Customize hardware
+    - CPU: **1**
+    - Memory: **4** GB
+    - New Hard Disk: **200 GB**
+      - Disk Provisioning: **Thin Provision**
+    - New Network: **k8s**
+      - MAC Address: **02:00:00:00:f0:09 Manual**
+    - New CD/DVD Drive: **Datastore ISO File**
+      - browse to **Fedora-Server-dvd-x86_64-30-1.2.iso**
+      - status: **Connect At Power On**
+
+- power on VM
+- Install Fedora 30
+- Language: **Egnlish English (United States)**
+- System Installation Destination
+  - Select disk
+  - Advanced Custom (Blivet-GUI)
+  - Done
 
 | mountpoint | size | type |
 |----|------|------|
-| /boot | 1024 MB | standard/ext4 |
+| /boot | 1024 MB | partition/ext4 |
 | /     | 183 GiB | btrfs/btrfs |
-| swap  | 16 GiB  | LVM/swap |
+| swap  | 16 GiB  | partition/swap |
+
+- set root password
+- user creation
+  - cunnie
+  - make this user administrator
 
 ```
 sudo dnf -y update
 sudo shutdown -r now
-set up ssh in as root & cunnie with ~/.ssh/authorized_keys
-set NOPASSWD: for wheel sudoers
+```
+- set up ssh in as root & cunnie with ~/.ssh/authorized_keys
+- set `NOPASSWD:` for wheel sudoers
+```
+sudo dnf install -y tmux neovim git
+tmux
+sudo btrfs balance start -v -dusage=55 /
 sudo btrfs balance --full-balance /
-sudo dnf install vim git
-# do the following for root, too
 git config --global user.name "Brian Cunnie"
 git config --global user.email brian.cunnie@gmail.com
 git config --global alias.co checkout
 git config --global alias.ci commit
 git config --global alias.st status
+ # do the following for root, too
+sudo su -
+git config --global user.name "Brian Cunnie"
+git config --global user.email brian.cunnie@gmail.com
+git config --global alias.co checkout
+git config --global alias.ci commit
+git config --global alias.st status
+exit
 cd /etc
 sudo -E git init
 sudo -E git add .
 sudo -E git ci -m"initial version"
-/etc/sysconfig/selinux -> SELINUX=disabled
-sudo shutdown -r now
+sudo sed -i 's/^SELINUX=enforcing$/SELINUX=disabled/' /etc/selinux/config
 sudo systemctl disable firewalld
 sudo systemctl mask firewalld
+sudo -E git add .
+sudo -E git ci -m"no selinux; no firewall"
+sudo shutdown -r now
+```
+
+Keep going:
+
+```
+sudo sed -i 's/^%wheel  ALL=(ALL) ALL/%wheel  ALL=(ALL) NOPASSWD: ALL/' /etc/sudoers
 ```
 
 Cloned VMs: reset hostname: `for i in {controller,worker}-{0,1,2}; do echo $i.nono.io | ssh $i sudo tee /etc/hostname; done` #fedora
