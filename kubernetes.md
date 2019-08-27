@@ -30,6 +30,19 @@ Important variations:
       - browse to **Fedora-Server-dvd-x86_64-30-1.2.iso**
       - status: **Connect At Power On**
 
+Configure DNS with the following hostname-IPv4 address & DHCP with the following
+IPv4-MAC address mappings.
+
+|       Hostname       | IPv4 Address |    MAC Address    |
+|:--------------------:|:------------:|:-----------------:|
+| k8s-template.nono.io |  10.240.0.9  | 02:00:00:00:f0:09 |
+| controller-0.nono.io |  10.240.0.10 | 02:00:00:00:f0:10 |
+| controller-1.nono.io |  10.240.0.11 | 02:00:00:00:f0:11 |
+| controller-2.nono.io | 10.240.0.12  | 02:00:00:00:f0:12 |
+| worker-0.nono.io     | 10.240.0.20  | 02:00:00:00:f0:20 |
+| worker-1.nono.io     | 10.240.0.21  | 02:00:00:00:f0:21 |
+| worker-2.nono.io     | 10.240.0.22  | 02:00:00:00:f0:22 |
+
 - power on VM
 - Install Fedora 30
 - Language: **Egnlish English (United States)**
@@ -49,21 +62,28 @@ Important variations:
   - cunnie
   - make this user administrator
 
+Configure password-less `sudo`
+```
+sudo perl -pi -e 's/^%wheel\s+ALL=\(ALL\)\s+ALL/%wheel ALL=(ALL) NOPASSWD: ALL/' /etc/sudoers
+```
+Update to the latest & greatest:
 ```
 sudo dnf -y update
+sudo dnf install -y tmux neovim git
 sudo shutdown -r now
 ```
+Balance Btrfs to avoid `ENOSPC` ("no space left on device") errors later:
 ```
-sudo dnf install -y tmux neovim git
-tmux
 sudo btrfs balance start -v -dusage=55 /
 sudo btrfs balance --full-balance /
+```
+Configure `git` for user & root, and check-in `/etc`:
+```
 git config --global user.name "Brian Cunnie"
 git config --global user.email brian.cunnie@gmail.com
 git config --global alias.co checkout
 git config --global alias.ci commit
 git config --global alias.st status
- # do the following for root, too
 sudo su -
 git config --global user.name "Brian Cunnie"
 git config --global user.email brian.cunnie@gmail.com
@@ -75,6 +95,10 @@ cd /etc
 sudo -E git init
 sudo -E git add .
 sudo -E git ci -m"initial version"
+```
+Disable the firewall and SELinux; these security mechanisms are not worth the
+trouble:
+```
 sudo sed -i 's/^SELINUX=enforcing$/SELINUX=disabled/' /etc/selinux/config
 sudo systemctl disable firewalld
 sudo systemctl mask firewalld
@@ -82,8 +106,8 @@ sudo -E git add .
 sudo -E git ci -m"no selinux; no firewall"
 sudo shutdown -r now
 ```
+Set hostname and IPv6 static address:
 ```
-sudo perl -pi -e 's/^%wheel\s+ALL=\(ALL\)\s+ALL/%wheel ALL=(ALL) NOPASSWD: ALL/' /etc/sudoers
 echo k8s-template.nono.io | sudo tee /etc/hostname
 echo IPV6ADDR=2601:646:100:69f2::9 | sudo tee -a /etc/sysconfig/network-scripts/ifcfg-ens192
 ```
