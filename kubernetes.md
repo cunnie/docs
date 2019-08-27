@@ -53,8 +53,6 @@ Important variations:
 sudo dnf -y update
 sudo shutdown -r now
 ```
-- set up ssh in as root & cunnie with ~/.ssh/authorized_keys
-- set `NOPASSWD:` for wheel sudoers
 ```
 sudo dnf install -y tmux neovim git
 tmux
@@ -84,11 +82,23 @@ sudo -E git add .
 sudo -E git ci -m"no selinux; no firewall"
 sudo shutdown -r now
 ```
-
-Keep going:
-
 ```
-sudo sed -i 's/^%wheel  ALL=(ALL) ALL/%wheel  ALL=(ALL) NOPASSWD: ALL/' /etc/sudoers
+sudo perl -pi -e 's/^%wheel\s+ALL=\(ALL\)\s+ALL/%wheel ALL=(ALL) NOPASSWD: ALL/' /etc/sudoers
+echo k8s-template.nono.io | sudo tee /etc/hostname
+echo IPV6ADDR=2601:646:100:69f2::9 | sudo tee -a /etc/sysconfig/network-scripts/ifcfg-ens192
+```
+Set up authorized ssh keys for my account & root
+```
+ssh git@github.com # we don't care about github; we're using this to create ~/.ssh
+echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIWiAzxc4uovfaphO0QVC2w00YmzrogUpjAzvuqaQ9tD cunnie@nono.io" > ~/.ssh/authorized_keys
+chmod 600 !$
+sudo su -
+ssh git@github.com # we don't care about github; we're using this to create ~/.ssh
+echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIWiAzxc4uovfaphO0QVC2w00YmzrogUpjAzvuqaQ9tD cunnie@nono.io" > ~/.ssh/authorized_keys
+chmod 600 !$
+```
+Allow root to ssh in by modifying `/etc/ssh/sshd_config`
+```
 ```
 
 Cloned VMs: reset hostname: `for i in {controller,worker}-{0,1,2}; do echo $i.nono.io | ssh $i sudo tee /etc/hostname; done` #fedora
