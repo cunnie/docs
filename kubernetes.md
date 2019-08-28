@@ -123,11 +123,21 @@ chmod 600 !$
 ```
 Allow root to ssh in by modifying `/etc/ssh/sshd_config`
 ```
+sudo sed -i 's/PermitRootLogin yes/PermitRootLogin without-password/' /etc/ssh/sshd_config
+sudo systemctl restart sshd
 ```
 
-Cloned VMs: reset hostname: `for i in {controller,worker}-{0,1,2}; do echo $i.nono.io | ssh $i sudo tee /etc/hostname; done` #fedora
+Cloned VMs: reset hostname:
+```
+for i in {controller,worker}-{0,1,2}; do
+  echo $i.nono.io | ssh $i sudo tee /etc/hostname
+done
+```
 
-Cloned VMs: reset UUID to get global IPv6: `sudo sed -i "s/UUID=.*/UUID=$(uuidgen)/" /etc/sysconfig/network-scripts/ifcfg-ens192` #fedora
+Cloned VMs: reset UUID to get global IPv6:
+```
+sudo sed -i "s/UUID=.*/UUID=$(uuidgen)/" /etc/sysconfig/network-scripts/ifcfg-ens192
+```
 
 
 ---
