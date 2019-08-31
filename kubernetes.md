@@ -113,13 +113,15 @@ echo IPV6ADDR=2601:646:100:69f2::9 | sudo tee -a /etc/sysconfig/network-scripts/
 ```
 Set up authorized ssh keys for my account & root
 ```
-ssh git@github.com # we don't care about github; we're using this to create ~/.ssh
-echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIWiAzxc4uovfaphO0QVC2w00YmzrogUpjAzvuqaQ9tD cunnie@nono.io" > ~/.ssh/authorized_keys
+mkdir ~/.ssh
+chmod 700 ~/.ssh
+sudo mkdir ~root/.ssh
+sudo chmod 700 ~root/.ssh
+SSH_KEY="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIWiAzxc4uovfaphO0QVC2w00YmzrogUpjAzvuqaQ9tD cunnie@nono.io"
+echo $SSH_KEY > ~/.ssh/authorized_keys
 chmod 600 !$
-sudo su -
-ssh git@github.com # we don't care about github; we're using this to create ~/.ssh
-echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIWiAzxc4uovfaphO0QVC2w00YmzrogUpjAzvuqaQ9tD cunnie@nono.io" > ~/.ssh/authorized_keys
-chmod 600 !$
+echo $SSH_KEY | sudo tee ~root/.ssh/authorized_keys
+chmod 600 ~root/.ssh/authorized_keys
 ```
 Allow root to ssh in by modifying `/etc/ssh/sshd_config`
 ```
@@ -138,7 +140,6 @@ Cloned VMs: reset UUID to get global IPv6:
 ```
 sudo sed -i "s/UUID=.*/UUID=$(uuidgen)/" /etc/sysconfig/network-scripts/ifcfg-ens192
 ```
-
 
 ---
 
