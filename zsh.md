@@ -28,3 +28,11 @@ unzip nord-iterm2.zip
 
 iterm2 → ⌘, (Preferences) → Profiles → Colors → Color Presets → Import... → `xml/Nord.itermcolors`
 iterm2 → ⌘, (Preferences) → Profiles → Colors → Color Presets → Nord
+
+### Fedora
+
+```
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
+sudo dnf install -y zsh zsh-syntax-highlighting zsh-lovers
+chsh
+```
