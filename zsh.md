@@ -16,6 +16,7 @@ plugins=(
 	osx
 )
 source /usr/local/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+eval "$(direnv hook zsh)"
 ```
 
 Use _nord-iterm2_ color scheme for a more pleasant terminal experience:
@@ -35,4 +36,10 @@ iterm2 → ⌘, (Preferences) → Profiles → Colors → Color Presets → Nord
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
 sudo dnf install -y zsh zsh-syntax-highlighting zsh-lovers
 chsh
+```
+```
+vim ~/.zshrc
+```
+```
+eval "$(direnv hook zsh)"
 ```
