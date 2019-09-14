@@ -6,6 +6,7 @@ Arithmetic
 5+6  % '%' is a comment
 ans = 11
 2-3; % semicolon suppresses output
+2-3, 4-7, 8-10 % comma lets you put several functions on a line but doesn't suppress output
 2^10;  % exponentation
 ```
 
@@ -113,6 +114,21 @@ cd '~/Downloads'; % change the current directory
 print -dpng 'sin_cos.png'
  % `GenericResourceDir value does not end with directory separator`
  % means follow this link to download a patched version https://github.com/octave-app/octave-app/issues/33
+close; % gets rid of old graph
+figure(1); plot(t,y1);
+figure(2); plot(t,y2); % Yay! Now I can have two plots up
+subplot(1,2,1); % Divides plot 1 x 2 grid, access 1st element (left-hand side)
+plot(t,y1)
+subplot(1,2,2); % right-hand side
+plot(t,y2)
+clf; % wipes figures clean, but does not close window, blank 1 x 2 grid
+close all;
+A = magic(5); % magic square, sums equal across columns, rows & diags
+imagesc(A); % color codes the volues: red=high blue=low
+colorbar; % puts up a colorbar so you can see the values corresponding to the color
+colormap gray; % grayscale not colors
+colormap viridis; % default colors
+colormap ocean; % current fav
 ```
 
 Functions
