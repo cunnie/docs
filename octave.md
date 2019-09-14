@@ -92,4 +92,28 @@ Graphing
 v = randn(1,1000);
 hist(v)	% histogram, default of 10 bins
 hist(v,50) % 50 bins
+ % let's try rolling 1 x 6 sided die 10,000 times
+hist(floor(rand(1,10000)*6+1),6)
+ % let's try 3 x 6 sided die
+i=10000
+hist(six_sided_die(i)+six_sided_die(i)+six_sided_die(i), 15);
+```
+
+Functions
+```
+function throws = six_sided_die(num_throws)
+  if (nargin != 1)
+    usage ("six_sided_die (num_throws)");
+  endif
+  throws = floor(rand(1,num_throws)*6+1);
+endfunction
+function die(faces, num_die, num_throws)
+  if (nargin != 3)
+    usage ("die (faces, num_die, num_throws)");
+  endif
+  throws = sum(floor(rand(num_die,num_throws)*faces+1));
+   % hist()'s 2nd argument can be an array
+   % 3 x 6-sided die, that would work out to 3:(3*6) = 3:18 = 3 4 5 ... 17 18
+  hist(throws, num_die:(num_die*faces));
+endfunction
 ```
