@@ -86,8 +86,7 @@ randn(1,3)  % Gaussian distribution mean 0 std dev (variance) 1
 eye(3)	% "eye" == "I" as in "identity"; 3x3, all 0s except for diagonal which is 1s
 ```
 
-Graphing
-
+Histograms
 ```
 v = randn(1,1000);
 hist(v)	% histogram, default of 10 bins
@@ -97,6 +96,23 @@ hist(floor(rand(1,10000)*6+1),6)
  % let's try 3 x 6 sided die
 i=10000
 hist(six_sided_die(i)+six_sided_die(i)+six_sided_die(i), 15);
+```
+
+Graphs
+```
+t = 0.0:0.01:0.98;
+y1 = sin(2*pi*4*t);
+plot(t,y1);
+hold on; % next plot don't overwrite this plot
+y2 = cos(2*pi*4*t);
+plot(t,y2)
+xlabel('time'); % set x-axis label
+ylabel('value'); % set y-axis label
+title('sin & cos vs. time'); % Set the chart title
+cd '~/Downloads'; % change the current directory
+print -dpng 'sin_cos.png'
+ % `GenericResourceDir value does not end with directory separator`
+ % means follow this link to download a patched version https://github.com/octave-app/octave-app/issues/33
 ```
 
 Functions
