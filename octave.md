@@ -22,6 +22,11 @@ ans = 1
 xor(1,0);
 ```
 
+Matrix
+```
+[1 2 3] .^ [1 3 2] == [1 8 9] % element-by-element power operator
+```
+
 Æsthetics
 
 ```
@@ -131,15 +136,41 @@ colormap viridis; % default colors
 colormap ocean; % current fav
 ```
 
-Functions
+Control Statements: for, while, if
 ```
+for i=1:10,
+  v(i) = 2^i;
+end
+indices=1:10
+for i=indices, v(i) = 2^i; end
+i=1; while i <= 5, v(i) = 100; i = i+1; end
+i=1; while true, v(i) = 999; i = i+1;
+  if i == 6,
+    break; % yes, `break` works as expected
+  end;
+end;
+if i == 6,
+  disp('You are number 6');
+elseif i == 2,
+  disp('I am number 2');
+else
+  disp('Who is number 1?');
+end;
+```
+
+Functions
+
+Put your functions in a file named `xxx.m`. Note the `.m` suffix.
+```
+cd `~/Downloads'
 function throws = six_sided_die(num_throws)
   if (nargin != 1)
     usage ("six_sided_die (num_throws)");
   endif
   throws = floor(rand(1,num_throws)*6+1);
 endfunction
-function die(faces, num_die, num_throws)
+ % put the following in a file named `dice.m`; must match fn name
+function dice(faces, num_die, num_throws)
   if (nargin != 3)
     usage ("die (faces, num_die, num_throws)");
   endif
@@ -148,4 +179,7 @@ function die(faces, num_die, num_throws)
    % 3 x 6-sided die, that would work out to 3:(3*6) = 3:18 = 3 4 5 ... 17 18
   hist(throws, num_die:(num_die*faces));
 endfunction
+addpath('~/bin') % will look in bin for functions
+ % It can return multilple values
+function [x,y] = longAndLat(person) ....
 ```
