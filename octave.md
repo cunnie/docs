@@ -1,6 +1,6 @@
 ### Octave
 
-Arithmetic
+##### Arithmetic
 
 ```octave
 5+6  % '%' is a comment
@@ -10,9 +10,9 @@ ans = 11
 2^10;  % exponentation
 ```
 
-Logical
+##### Logical
 
-```
+```octave
 1 == 2	% equals, false (0)
 ans = 0
 1 ~= 2	% not equals, true (1)
@@ -22,14 +22,15 @@ ans = 1
 xor(1,0);
 ```
 
-Matrix
-```
+##### Matrix
+
+```octave
 [1 2 3] .^ [1 3 2] == [1 8 9] % element-by-element power operator
 ```
 
 Æsthetics
 
-```
+```octave
 PS1('>> ')  % set the prompt to '>> '
 pi; % pi's a special variable, 𝛑, but you can set it.
 ans =  3.1416
@@ -44,18 +45,18 @@ pi
 ans =  3.1416
 ```
 
-Assignment
+##### Assignment
 
-```
+```octave
 a = 3; % number
 b = 'hi'; % string
 c = (3 >= 1); % boolean
 p =  3.1416
 ```
 
-Vectors and Matrices
+##### Vectors and Matrices
 
-```
+```octave
 v = [1 2 3] % row vector, aka 1 x 3 matrix
 v = [1; 2; 3] % column vector, aka 3 x 1 matrix
 v = 1:6	  % creates a vector, from 1 to 6 inclusive, with 1 increments
@@ -92,8 +93,9 @@ randn(1,3)  % Gaussian distribution mean 0 std dev (variance) 1
 eye(3)	% "eye" == "I" as in "identity"; 3x3, all 0s except for diagonal which is 1s
 ```
 
-Histograms
-```
+##### Histograms
+
+```octave
 v = randn(1,1000);
 hist(v)	% histogram, default of 10 bins
 hist(v,50) % 50 bins
@@ -104,8 +106,9 @@ i=10000
 hist(six_sided_die(i)+six_sided_die(i)+six_sided_die(i), 15);
 ```
 
-Graphs
-```
+##### Graphs
+
+```octave
 t = 0.0:0.01:0.98;
 y1 = sin(2*pi*4*t);
 plot(t,y1);
@@ -136,8 +139,9 @@ colormap viridis; % default colors
 colormap ocean; % current fav
 ```
 
-Control Statements: for, while, if
-```
+##### Control Statements: `for`, `while`, `if`
+
+```octave
 for i=1:10,
   v(i) = 2^i;
 end
@@ -158,10 +162,11 @@ else
 end;
 ```
 
-Functions
+##### Functions
 
 Put your functions in a file named `xxx.m`. Note the `.m` suffix.
-```
+
+```octave
 cd `~/Downloads'
 function throws = six_sided_die(num_throws)
   if (nargin != 1)
