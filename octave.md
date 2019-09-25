@@ -81,6 +81,11 @@ A =
    1   2
    3   4
    5   6
+transpose(A) == A' % x' is a synonym for transpose(x)
+ans =
+
+  1  1  1
+  1  1  1
 ones(2,3) % 2 x 3 matrix of ones
 ans =
 
