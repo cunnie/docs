@@ -30,32 +30,34 @@ Important variations:
       - browse to **Fedora-Server-dvd-x86_64-30-1.2.iso**
       - status: **Connect At Power On**
 
-Configure DNS with the following hostname-IPv4 address & DHCP with the following
+Configure DNS with the following hostname-IPv6-IPv4 address & DHCP with the following
 IPv4-MAC address mappings.
 
-|       Hostname       | IPv4 Address |    MAC Address    |
-|:--------------------:|:------------:|:-----------------:|
-| k8s-template.nono.io |  10.240.0.9  | 02:00:00:00:f0:09 |
-| controller-0.nono.io |  10.240.0.10 | 02:00:00:00:f0:10 |
-| controller-1.nono.io |  10.240.0.11 | 02:00:00:00:f0:11 |
-| controller-2.nono.io | 10.240.0.12  | 02:00:00:00:f0:12 |
-| worker-0.nono.io     | 10.240.0.20  | 02:00:00:00:f0:20 |
-| worker-1.nono.io     | 10.240.0.21  | 02:00:00:00:f0:21 |
-| worker-2.nono.io     | 10.240.0.22  | 02:00:00:00:f0:22 |
+|       Hostname       |      IPv6 Address      | IPv4 Address |    MAC Address    |
+|:--------------------:|:----------------------:|:------------:|:-----------------:|
+| k8s-template.nono.io | 2601:646:100:69f2::9   | 10.240.0.9   | 02:00:00:00:f0:09 |
+| controller-0.nono.io | 2601:646:100:69f2::10  | 10.240.0.10  | 02:00:00:00:f0:10 |
+| controller-1.nono.io | 2601:646:100:69f2::11  | 10.240.0.11  | 02:00:00:00:f0:11 |
+| controller-2.nono.io | 2601:646:100:69f2::12  | 10.240.0.12  | 02:00:00:00:f0:12 |
+| worker-0.nono.io     | 2601:646:100:69f2::20  | 10.240.0.20  | 02:00:00:00:f0:20 |
+| worker-1.nono.io     | 2601:646:100:69f2::21  | 10.240.0.21  | 02:00:00:00:f0:21 |
+| worker-2.nono.io     | 2601:646:100:69f2::22  | 10.240.0.22  | 02:00:00:00:f0:22 |
 
+- Do **not** use these IPv6 addresses; instead, use the IPv6 addresses you've
+  been allocated or generate your own [private IPv6 addresses](https://simpledns.com/private-ipv6)
 - power on VM
 - Install Fedora 30
-- Language: **Egnlish English (United States)**
+- Language: **English English (United States)**
 - System Installation Destination
   - Select disk
   - Advanced Custom (Blivet-GUI)
   - Done
 
-| mountpoint | size | type |
-|----|------|------|
-| /boot | 1024 MB | partition/ext4 |
-| /     | 183 GiB | btrfs/btrfs |
-| swap  | 16 GiB  | partition/swap |
+| mountpoint |    size |       type     |
+|------------|--------:|----------------|
+| /boot      |   1 GiB | partition/ext4 |
+| /          | 183 GiB | btrfs/btrfs    |
+| swap       |  16 GiB | partition/swap |
 
 - set root password
 - user creation
