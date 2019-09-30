@@ -144,6 +144,14 @@ colormap viridis; % default colors
 colormap ocean; % current fav
 ```
 
+###### Graphing Sigmoid Function
+
+```octave
+x = -10:0.1:10;
+y = 1 ./ (1 + (e .^ -x));
+plot(x,y);
+```
+
 ##### Control Statements: `for`, `while`, `if`
 
 ```octave
