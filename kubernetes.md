@@ -165,6 +165,33 @@ brew install kubectl
 brew link --overwrite kubernetes-cli
 ```
 
+Let's also install [`govc`](https://github.com/vmware/govmomi/tree/master/govc),
+a VMware took for managing vSphere environments:
+
+```
+curl -L https://github.com/vmware/govmomi/releases/download/v0.21.0/govc_darwin_amd64.gz | gunzip > /usr/local/bin/govc
+chmod +x /usr/local/bin/govc
+```
+
+Set the `govc` environment variables:
+```
+export GOVC_URL=vcenter-67.nono.io
+export GOVC_USERNAME=administrator@vsphere.local
+export GOVC_PASSWORD=HaHaImNotGonnaFillThisIn
+export GOVC_INSECURE=true # if you haven't bothered to get commercial CA-issued certificates
+```
+
+Let's create the VMs from the template (`NAS-0` is the name of our datastore,
+`Kubernetes`, our resource pool, `k8s`, our port group):
+```
+govc vm.clone -vm k8s-template.nono.io -net=k8s -net.address=02:00:00:00:f0:10 -ds=NAS-0 -pool=Kubernetes controller-0.nono.io
+govc vm.clone -vm k8s-template.nono.io -net=k8s -net.address=02:00:00:00:f0:11 -ds=NAS-0 -pool=Kubernetes controller-1.nono.io
+govc vm.clone -vm k8s-template.nono.io -net=k8s -net.address=02:00:00:00:f0:12 -ds=NAS-0 -pool=Kubernetes controller-2.nono.io
+govc vm.clone -vm k8s-template.nono.io -net=k8s -net.address=02:00:00:00:f0:20 -ds=NAS-0 -pool=Kubernetes worker-0.nono.io
+govc vm.clone -vm k8s-template.nono.io -net=k8s -net.address=02:00:00:00:f0:21 -ds=NAS-0 -pool=Kubernetes worker-1.nono.io
+govc vm.clone -vm k8s-template.nono.io -net=k8s -net.address=02:00:00:00:f0:22 -ds=NAS-0 -pool=Kubernetes worker-2.nono.io
+```
+
 Cloned VMs: reset hostname:
 ```
 for i in {controller,worker}-{0,1,2}; do
