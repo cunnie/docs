@@ -6,7 +6,12 @@ Important variations:
 
 - Use Fedora instead of Ubuntu because I like Fedora
 - Use IPv6 as well as IPv4 because I like IPv6
-- ~~Use OpenSSL instead of Cloudflare's CLI because I'd rather use the canonical CLI~~
+- Use vSphere instead of Google Cloud because I like vSphere
+
+#### 0. Create the vSphere VM Template
+
+_Protip: replace "nono.io" with your domain name where appropriate_
+
 - Navigate to **Kubernetes** resource pool
 - Actions→New Virtual Machine...
   - Create a new virtual machine
@@ -129,6 +134,35 @@ Allow root to ssh in by modifying `/etc/ssh/sshd_config`
 ```
 sudo sed -i 's/PermitRootLogin yes/PermitRootLogin without-password/' /etc/ssh/sshd_config
 sudo systemctl restart sshd
+```
+Eject the CD/DVD drive and remove all the OpenSSH host keys (to force key
+regeneration for each cloned VM) (not terribly important, but the security
+folks become unglued when they discover identical host keys on all the VMs):
+```
+sudo eject # ignore `unable to eject` message
+sudo rm /etc/ssh/*key
+sudo shutdown -h now
+```
+Right-click on VM `k8s-template.nono.io` and select Template→Convert to Template
+
+#### 2. Installing the Client Tools
+
+Follow these instructions.
+<https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/02-client-tools.md>,
+alternatively, you can follow my instructions below if you're running macOS.
+
+```
+brew install cfssl
+brew install kubectl
+```
+
+Docker Desktop installs `kubectl` in `/usr/local/bin`, conflicting with
+homebrew.  Docker's decision is, we feel, a case of overreach, and it's a stale,
+older version, so we clobber it.
+
+```
+brew install kubectl
+brew link --overwrite kubernetes-cli
 ```
 
 Cloned VMs: reset hostname:
