@@ -192,19 +192,20 @@ govc vm.clone -vm k8s-template.nono.io -net=k8s -net.address=02:00:00:00:f0:21 -
 govc vm.clone -vm k8s-template.nono.io -net=k8s -net.address=02:00:00:00:f0:22 -ds=NAS-0 -pool=Kubernetes worker-2.nono.io
 ```
 
-Cloned VMs: reset hostname:
+Cloned VMs:
+- reset hostname:
+- reset UUID to get global IPv6:
+- configure static IPv6
+- reboot for changes to take effect
 ```
 for i in {controller,worker}-{0,1,2}; do
   echo $i.nono.io | ssh $i sudo tee /etc/hostname
+  ssh $i sudo sed -i "s/UUID=.*/UUID=$(uuidgen)/" /etc/sysconfig/network-scripts/ifcfg-ens192
+  IPV6ADDR=$(dig +short aaaa $i.nono.io)
+  ssh $i sudo sed -i "s/IPV6ADDR=.*/IPV6ADDR=$IPV6ADDR/" /etc/sysconfig/network-scripts/ifcfg-ens192
+  ssh $i sudo shutdown -r now
 done
 ```
-
-Cloned VMs: reset UUID to get global IPv6:
-```
-sudo sed -i "s/UUID=.*/UUID=$(uuidgen)/" /etc/sysconfig/network-scripts/ifcfg-ens192
-```
-
----
 
 You should be able to find `openssl.cnf` in this directory.
 
