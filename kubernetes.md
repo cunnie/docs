@@ -48,6 +48,20 @@ IPv4-MAC address mappings.
 | worker-1.nono.io     | 2601:646:100:69f2::21  | 10.240.0.21  | 02:00:00:00:f0:21 |
 | worker-2.nono.io     | 2601:646:100:69f2::22  | 10.240.0.22  | 02:00:00:00:f0:22 |
 
+Here is [a
+portion](https://github.com/cunnie/vain.nono.io-usr-local-etc/blob/98da72a6f3486972e34c3b3a0655214976c6ac33/dhcpd.conf#L85-L91)
+of our ISC DHCP server configuration:
+
+```
+host k8s-template	{ hardware ethernet 02:00:00:00:f0:09; fixed-address k8s-template.nono.io	;}
+host controller-0	{ hardware ethernet 02:00:00:00:f0:10; fixed-address controller-0.nono.io	;}
+host controller-1	{ hardware ethernet 02:00:00:00:f0:11; fixed-address controller-1.nono.io	;}
+host controller-2	{ hardware ethernet 02:00:00:00:f0:12; fixed-address controller-2.nono.io	;}
+host worker-0		{ hardware ethernet 02:00:00:00:f0:20; fixed-address worker-0.nono.io	;}
+host worker-1		{ hardware ethernet 02:00:00:00:f0:21; fixed-address worker-1.nono.io	;}
+host worker-2		{ hardware ethernet 02:00:00:00:f0:22; fixed-address worker-2.nono.io	;}
+```
+
 - Do **not** use these IPv6 addresses; instead, use the IPv6 addresses you've
   been allocated or generate your own [private IPv6 addresses](https://simpledns.com/private-ipv6)
 - power on VM
@@ -206,6 +220,69 @@ for i in {controller,worker}-{0,1,2}; do
   ssh $i sudo shutdown -r now
 done
 ```
+
+We're going to pick up on Kelsey Hightower's [Provisioning a CA and Generating
+TLS
+Certificates](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/5c462220b7f2c03b4b699e89680d0cc007a76f91/docs/04-certificate-authority.md)
+
+But first we change to a directory to save our output (your directory may be
+different):
+
+```zsh
+cd ~/Google\ Drive/k8s/
+```
+
+Also, if you want to be cool, use Elliptic curve cryptography:
+
+```json
+"key": {
+  "algo": "ecdsa",
+  "size": 256
+}
+```
+
+You'll need to change the instructions for the workers:
+
+```zsh
+for instance in worker-0 worker-1 worker-2; do
+cat > ${instance}-csr.json <<EOF
+{
+  "CN": "system:node:${instance}",
+  "key": {
+    "algo": "ecdsa",
+    "size": 256
+  },
+  "names": [
+    {
+      "C": "US",
+      "L": "San Francisco",
+      "O": "system:nodes",
+      "OU": "Kubernetes The Hard Way",
+      "ST": "California"
+    }
+  ]
+}
+EOF
+
+DOMAIN=nono.io
+
+INTERNAL_IPV4=$(dig +short a $instance.$DOMAIN)
+EXTERNAL_IPV4=73.189.219.4  # my Comcast home IP
+IPV6=$(dig +short aaaa $instance.$DOMAIN)
+
+cfssl gencert \
+  -ca=ca.pem \
+  -ca-key=ca-key.pem \
+  -config=ca-config.json \
+  -hostname=$instance,$instance.$DOMAIN,$IPV6,$EXTERNAL_IPV4,$INTERNAL_IPV4 \
+  -profile=kubernetes \
+  ${instance}-csr.json | cfssljson -bare ${instance}
+done
+```
+
+
+
+
 
 You should be able to find `openssl.cnf` in this directory.
 
