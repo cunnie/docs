@@ -15,6 +15,8 @@ plugins=(
 	git
 	osx
 )
+source "/usr/local/opt/zsh-git-prompt/zshrc.sh"
+fpath=(/usr/local/share/zsh-completions $fpath)
 source /usr/local/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 eval "$(direnv hook zsh)"
 ```
@@ -27,8 +29,14 @@ curl -L https://github.com/arcticicestudio/nord-iterm2/archive/v0.2.0.zip -o nor
 unzip nord-iterm2.zip
 ```
 
-iterm2 → ⌘, (Preferences) → Profiles → Colors → Color Presets → Import... → `xml/Nord.itermcolors`
-iterm2 → ⌘, (Preferences) → Profiles → Colors → Color Presets → Nord
+iTerm2 → ⌘, (Preferences) → Profiles → Colors → Color Presets → Import... → `xml/Nord.itermcolors`
+iTerm2 → ⌘, (Preferences) → Profiles → Colors → Color Presets → Nord
+
+If the prompt (`PS1`) [doesn't look
+right](https://twitter.com/nono_io/status/1182244109232136192?s=20), enable
+Powerline glyphs:
+
+- iTerm2 → ⌘, (Preferences) → Profiles → Text → User built-in Powerline glyphs (checked)
 
 ### Fedora
 
