@@ -15,7 +15,7 @@ plugins=(
 	git
 	osx
 )
-source "/usr/local/opt/zsh-git-prompt/zshrc.sh"
+# source "/usr/local/opt/zsh-git-prompt/zshrc.sh" # don't use, causes yellow PS1 when repo is clean
 fpath=(/usr/local/share/zsh-completions $fpath)
 source /usr/local/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 eval "$(direnv hook zsh)"
