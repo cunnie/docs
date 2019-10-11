@@ -171,13 +171,15 @@ brew install kubectl
 ```
 
 Docker Desktop installs `kubectl` in `/usr/local/bin`, conflicting with
-homebrew.  Docker's decision is, we feel, a case of overreach, and it's a stale,
-older version, so we clobber it.
+homebrew.  Docker's decision is, we feel, a case of overreach. Furthermore,
+Docker installs a stale, older version of `kubectl`, so we clobber it.
 
 ```
 brew install kubectl
 brew link --overwrite kubernetes-cli
 ```
+
+Firewall: we want to allow inbound ICMP, TCP 22, TCP 6443.
 
 Let's also install [`govc`](https://github.com/vmware/govmomi/tree/master/govc),
 a VMware took for managing vSphere environments:
@@ -245,9 +247,53 @@ You'll need to change the instructions for the workers:
 
 ```zsh
 for instance in worker-0 worker-1 worker-2; do
-cat > ${instance}-csr.json <<EOF
+  cat > ${instance}-csr.json <<EOF
+  {
+    "CN": "system:node:${instance}",
+    "key": {
+      "algo": "ecdsa",
+      "size": 256
+    },
+    "names": [
+      {
+        "C": "US",
+        "L": "San Francisco",
+        "O": "system:nodes",
+        "OU": "Kubernetes The Hard Way",
+        "ST": "California"
+      }
+    ]
+  }
+  EOF
+
+  DOMAIN=nono.io
+  INTERNAL_IPV4=$(dig +short a $instance.$DOMAIN)
+  EXTERNAL_IPV4=73.189.219.4  # my Comcast home IP
+  IPV6=$(dig +short aaaa $instance.$DOMAIN)
+
+  cfssl gencert \
+    -ca=ca.pem \
+    -ca-key=ca-key.pem \
+    -config=ca-config.json \
+    -hostname=$instance,$instance.$DOMAIN,$IPV6,$EXTERNAL_IPV4,$INTERNAL_IPV4 \
+    -profile=kubernetes \
+    ${instance}-csr.json | cfssljson -bare ${instance}
+done
+```
+
+Also change the API server's instructions:
+
+```zsh
 {
-  "CN": "system:node:${instance}",
+
+KUBERNETES_PUBLIC_ADDRESS=73.189.219.4  # my Comcast home IP
+KUBERNETES_HOSTNAMES=kubernetes,kubernetes.default,kubernetes.default.svc,kubernetes.default.svc.cluster,kubernetes.svc.cluster.local
+KUBERNETES_IPV4_ADDRS=10.240.0.10,10.240.0.11,10.240.0.12
+KUBERNETES_IPV6_ADDRS=2601:646:100:69f2::10,2601:646:100:69f2::11,2601:646:100:69f2::12
+
+cat > kubernetes-csr.json <<EOF
+{
+  "CN": "kubernetes",
   "key": {
     "algo": "ecdsa",
     "size": 256
@@ -256,7 +302,7 @@ cat > ${instance}-csr.json <<EOF
     {
       "C": "US",
       "L": "San Francisco",
-      "O": "system:nodes",
+      "O": "Kubernetes",
       "OU": "Kubernetes The Hard Way",
       "ST": "California"
     }
@@ -264,21 +310,30 @@ cat > ${instance}-csr.json <<EOF
 }
 EOF
 
-DOMAIN=nono.io
-
-INTERNAL_IPV4=$(dig +short a $instance.$DOMAIN)
-EXTERNAL_IPV4=73.189.219.4  # my Comcast home IP
-IPV6=$(dig +short aaaa $instance.$DOMAIN)
-
 cfssl gencert \
   -ca=ca.pem \
   -ca-key=ca-key.pem \
   -config=ca-config.json \
-  -hostname=$instance,$instance.$DOMAIN,$IPV6,$EXTERNAL_IPV4,$INTERNAL_IPV4 \
+  -hostname=10.32.0.1,${KUBERNETES_IPV4_ADDRS},${KUBERNETES_IPV6_ADDRS},${KUBERNETES_PUBLIC_ADDRESS},127.0.0.1,${KUBERNETES_HOSTNAMES} \
   -profile=kubernetes \
-  ${instance}-csr.json | cfssljson -bare ${instance}
+  kubernetes-csr.json | cfssljson -bare kubernetes
+
+}
+```
+
+Distribute the Client and Server Certificates:
+
+```zsh
+for instance in worker-{0,1,2}; do
+  scp ca.pem ${instance}-key.pem ${instance}.pem ${instance}:
+done
+for instance in controller-{0,1,2}; do
+  scp ca.pem ca-key.pem kubernetes-key.pem kubernetes.pem \
+    service-account-key.pem service-account.pem ${instance}:
 done
 ```
+
+Next up: [Generating Kubernetes Configuration Files for Authentication](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/5c462220b7f2c03b4b699e89680d0cc007a76f91/docs/05-kubernetes-configuration-files.md#generating-kubernetes-configuration-files-for-authentication)
 
 
 
