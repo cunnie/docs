@@ -62,6 +62,16 @@ host worker-1		{ hardware ethernet 02:00:00:00:f0:21; fixed-address worker-1.non
 host worker-2		{ hardware ethernet 02:00:00:00:f0:22; fixed-address worker-2.nono.io	;}
 ```
 
+Create a DNS entry for the kubernetes cluster itself. It consists of the public
+IPv4 address of the controllers (the "NAT" address), and the three IPv6
+addresses.
+
+| FQDN        | IPv4 Address |      IPv6 Address      |
+|:------------|:------------:|:----------------------:|
+| k8s.nono.io | 73.189.219.4 | 2601:646:100:69f2::10  |
+|             |              | 2601:646:100:69f2::11  |
+|             |              | 2601:646:100:69f2::12  |
+
 - Do **not** use these IPv6 addresses; instead, use the IPv6 addresses you've
   been allocated or generate your own [private IPv6 addresses](https://simpledns.com/private-ipv6)
 - power on VM
@@ -287,6 +297,7 @@ Also change the API server's instructions:
 {
 
 KUBERNETES_PUBLIC_ADDRESS=73.189.219.4  # my Comcast home IP
+KUBERNETES_FQDN=k8s.nono.io  # my Comcast home IP + 3 IPv6 IPs
 KUBERNETES_HOSTNAMES=kubernetes,kubernetes.default,kubernetes.default.svc,kubernetes.default.svc.cluster,kubernetes.svc.cluster.local
 KUBERNETES_IPV4_ADDRS=10.240.0.10,10.240.0.11,10.240.0.12
 KUBERNETES_IPV6_ADDRS=2601:646:100:69f2::10,2601:646:100:69f2::11,2601:646:100:69f2::12
@@ -314,7 +325,7 @@ cfssl gencert \
   -ca=ca.pem \
   -ca-key=ca-key.pem \
   -config=ca-config.json \
-  -hostname=10.32.0.1,${KUBERNETES_IPV4_ADDRS},${KUBERNETES_IPV6_ADDRS},${KUBERNETES_PUBLIC_ADDRESS},127.0.0.1,${KUBERNETES_HOSTNAMES} \
+  -hostname=10.32.0.1,${KUBERNETES_IPV4_ADDRS},${KUBERNETES_IPV6_ADDRS},${KUBERNETES_PUBLIC_ADDRESS},${KUBERNETES_FQDN},127.0.0.1,${KUBERNETES_HOSTNAMES} \
   -profile=kubernetes \
   kubernetes-csr.json | cfssljson -bare kubernetes
 
@@ -335,7 +346,14 @@ done
 
 Next up: [Generating Kubernetes Configuration Files for Authentication](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/5c462220b7f2c03b4b699e89680d0cc007a76f91/docs/05-kubernetes-configuration-files.md#generating-kubernetes-configuration-files-for-authentication)
 
+We veer slightly from Kelsey's instructions: In his instructions, he uses and IP
+address for the k8s server, which is a luxury that he can indulge in because
+he's using NAT+IPv4, and there's only one IP address associated with it.
 
+We don't have such a luxury: we have one IPv4 address and 3 IPv6 addresses (one
+for each of the controllers, at least I think it's one for each of the
+controllers). Our solution? DNS entry, `k8s.nono.io`, with 1 IPv4 entry and 3
+IPv6 entries.
 
 
 
