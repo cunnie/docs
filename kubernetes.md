@@ -297,7 +297,7 @@ Also change the API server's instructions:
 {
 
 KUBERNETES_PUBLIC_ADDRESS=73.189.219.4  # my Comcast home IP
-KUBERNETES_FQDN=k8s.nono.io  # my Comcast home IP + 3 IPv6 IPs
+KUBERNETES_FQDN=kubernetes.nono.io  # my Comcast home IP + 3 IPv6 IPs
 KUBERNETES_HOSTNAMES=kubernetes,kubernetes.default,kubernetes.default.svc,kubernetes.default.svc.cluster,kubernetes.svc.cluster.local
 KUBERNETES_IPV4_ADDRS=10.240.0.10,10.240.0.11,10.240.0.12
 KUBERNETES_IPV6_ADDRS=2601:646:100:69f2::10,2601:646:100:69f2::11,2601:646:100:69f2::12
@@ -352,8 +352,10 @@ he's using NAT+IPv4, and there's only one IP address associated with it.
 
 We don't have such a luxury: we have one IPv4 address and 3 IPv6 addresses (one
 for each of the controllers, at least I think it's one for each of the
-controllers). Our solution? DNS entry, `k8s.nono.io`, with 1 IPv4 entry and 3
+controllers). Our solution? DNS entry, `kubernetes.nono.io`, with 1 IPv4 entry and 3
 IPv6 entries.
+
+
 
 
 
