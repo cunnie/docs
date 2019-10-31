@@ -267,3 +267,27 @@ data:    Id                              : /subscriptions/a1ac8d5a-7a97-4ed5-bfd
   data:    Idle timeout in minutes         : 4
   info:    network public-ip create command OK
 ```
+
+## Troubleshooting
+
+```
+Task 2718 | 21:15:39 | Error: Unknown CPI error 'Bosh::AzureCloud::AzureError' with message 'get_token - http code: 401. Azure authentication failed: Invalid tenant_id, client_id or client_secret/certificate. Error message: {"error":"invalid_client","error_description":"AADSTS7000222: The provided client secret keys are expired.\r\nTrace ID: 2aed5fd1-afb8-4ad5-b491-db79f5d30500\r\nCorrelation ID: b3b2d9ae-218f-4255-b444-7720c671f1f3\r\nTimestamp: 2019-10-30 21:15:39Z","error_codes":[7000222],"timestamp":"2019-10-30 21:15:39Z","trace_id":"2aed5fd1-afb8-4ad5-b491-db79f5d30500","correlation_id":"b3b2d9ae-218f-4255-b444-7720c671f1f3"}' in 'info' CPI method (CPI request ID: 'cpi-437503')
+```
+
+Inspiration:
+<https://www.mikesaysmeh.com/fix-the-provided-client-secret-keys-are-expired-in-azure-lets-encrypt/>
+
+- Log to Azure Portal
+- Click **More services**
+- Click **Azure Active Directory**
+- Click **App Registrations**
+- Click **A certificate or secret has expired. Create a new one**
+- Click **New client secret**
+  - Description: **BOSH CPI**
+  - Expiration: **Never**
+  - Click **Add**
+
+Cut-and-paste the secret into your bosh manifest. `/instance_groups?name=bosh/properties/azure/client_secret`
+
+You'll probably need to put it somewhere under `/cloud_provider/` if your BOSH
+is not multi-CPI and residing on Azure.
