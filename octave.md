@@ -84,8 +84,8 @@ A =
 transpose(A) == A' % x' is a synonym for transpose(x)
 ans =
 
-  1  1  1
-  1  1  1
+   1   3   5
+   2   4   6
 ones(2,3) % 2 x 3 matrix of ones
 ans =
 
