@@ -20,15 +20,10 @@ zfs list -t snapshot # Aha! This is where the space has disappeared
 zfs list -t snapshot | grep freenas-boot | awk '{print $1'} | xargs -n 1 zfs destroy
 ```
 
-
-The following accomplished nothing, saving for posterity:
-```
-zfs set mountpoint=/mnt/freenas-boot freenas-boot
-zfs set canmount=on freenas-boot
-zfs mount freenas-boot
-zfs umount freenas-boot
-zfs set canmount=off freenas-boot
-zfs set mountpoint=none freenas-boot
+```zsh
+gpart show # equivalent to `fdisk -l`
+zpool add tank log nvd0p1 # add 40G device
+zpool add tank cache nvd0p2 # add 1.6T device
 ```
 
 ```bash
@@ -60,4 +55,14 @@ zfs get -Hr used disk3/local-users
 zfs list -H -o name /bkup/local-users/ # prints "disk3/local-users"
 sudo zfs list -t snapshot -H -o name
 sudo zfs list -t snapshot -H -o name | grep local-users | grep 07-23 | xargs -n 1 sudo zfs destroy
+```
+
+The following accomplished nothing, saving for posterity:
+```
+zfs set mountpoint=/mnt/freenas-boot freenas-boot
+zfs set canmount=on freenas-boot
+zfs mount freenas-boot
+zfs umount freenas-boot
+zfs set canmount=off freenas-boot
+zfs set mountpoint=none freenas-boot
 ```
