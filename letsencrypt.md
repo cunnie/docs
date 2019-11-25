@@ -26,8 +26,7 @@ openssl ecparam -name prime256v1 -genkey -out $CN.key openssl req \
 ```bash
 # brew install certbot # macOS
 # FreeBSD
-cd /usr/ports/security/py-certbot && sudo make install clean
-sudo pkg install py27-certbot
+sudo pkg install py36-certbot
 sudo mkdir -p /etc/letsencrypt
 sudo tee /etc/letsencrypt/cli.ini <<EOF
 rsa-key-size = 4096
