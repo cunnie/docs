@@ -201,3 +201,13 @@ addpath('~/bin') % will look in bin for functions
  % It can return multilple values
 function [x,y] = longAndLat(person) ....
 ```
+
+##### I/O
+
+```octave
+cd ~/Desktop/machine-learning-ex2/ex2 % tab-completion works
+ls
+data = load('ex2data1.txt');
+% typical line: "34.62365962451697,78.0246928153624,0" (CSV, 3 values)
+X = data(:, [1, 2]); y = data(:, 3);
+```
