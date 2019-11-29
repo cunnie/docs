@@ -147,6 +147,16 @@ colorbar; % puts up a colorbar so you can see the values corresponding to the co
 colormap gray; % grayscale not colors
 colormap viridis; % default colors
 colormap ocean; % current fav
+% when X is a 2-column array with x-coord, y-coord
+%      y is a vector same length as X, consisting of {0,1}, representing negative, positive for college acceptance
+plot(X(:,1),X(:,2)) % plot it as a line chart (useless)
+plot(X(:,1),X(:,2),'k.') % plot it as a dot/point chart
+plot(X(:,1),X(:,2),'k.') % plot it as a dot/point chart
+plot(X(find(y==1),1),X(find(y==1),2),'k+') % plot positive only as a "+" point chart
+plot(X(find(y==1),1),X(find(y==1),2),'k+', 'LineWidth', 2) % plot positive only as a thick "+" point chart
+hold on;
+plot(X(find(y==0),1),X(find(y==0),2),'ko', 'MarkerFaceColor', 'y') % plot negative only as a thick yellow "o" point chart
+xlabel('Exam 1 score'); ylabel('Exam 2 score');
 ```
 
 ###### Graphing Sigmoid Function
