@@ -22,12 +22,6 @@ ans = 1
 xor(1,0);
 ```
 
-##### Matrix
-
-```octave
-[1 2 3] .^ [1 3 2] == [1 8 9] % element-by-element power operator
-```
-
 Æsthetics
 
 ```octave
@@ -81,6 +75,16 @@ A =
    1   2
    3   4
    5   6
+A(1,:) % vector of the first row of A
+ans =
+
+   1   2
+A(:, 2) % vector of the second column of A
+ans =
+
+   2
+   4
+   6
 transpose(A) == A' % x' is a synonym for transpose(x)
 ans =
 
@@ -96,6 +100,7 @@ zeros(2,3)  % matrix of zeros
 rand(1,3) % matrix of random numbers between 0.0 and 1.0
 randn(1,3)  % Gaussian distribution mean 0 std dev (variance) 1
 eye(3)	% "eye" == "I" as in "identity"; 3x3, all 0s except for diagonal which is 1s
+[1 2 3] .^ [1 3 2] == [1 8 9] % element-by-element power operator
 ```
 
 ##### Histograms
