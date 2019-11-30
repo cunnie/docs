@@ -31,6 +31,7 @@ ans =  3.1416
 disp(pi); % print out pi, semicolon notwithstanding
  3.1416
 disp(sprintf("Long 𝛑: %.9f\n",pi))
+fprintf("Long 𝛑: %.9f\n",pi) % <-- even better
 format long % moar decimals
 pi
 ans =  3.141592653589793
