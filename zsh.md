@@ -1,7 +1,7 @@
 ### zsh
 
 ```
-brew install zsh-{autosuggestions,completions,git-prompt,lovers,syntax-highlighting}
+brew install zsh-{autosuggestions,completions,git-prompt,lovers,syntax-highlighting} fasd
 ```
 Install [oh-my-zsh](https://github.com/robbyrussell/oh-my-zsh)
 ```
@@ -19,6 +19,8 @@ plugins=(
 fpath=(/usr/local/share/zsh-completions $fpath)
 source /usr/local/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 eval "$(direnv hook zsh)"
+eval "$(fasd --init posix-alias zsh-hook)"
+alias z='fasd_cd -d'     # cd, same functionality as j in autojump
 ```
 
 Use _nord-iterm2_ color scheme for a more pleasant terminal experience:
