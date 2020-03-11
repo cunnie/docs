@@ -355,6 +355,12 @@ for each of the controllers, at least I think it's one for each of the
 controllers). Our solution? DNS entry, `kubernetes.nono.io`, with 1 IPv4 entry and 3
 IPv6 entries.
 
+```
+for instance in {controller,worker}-{0,1,2}; do
+  ssh $instance 'sudo dnf update -y; sudo shutdown -r now'
+done
+```
+
 
 
 
