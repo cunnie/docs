@@ -356,14 +356,64 @@ controllers). Our solution? DNS entry, `kubernetes.nono.io`, with 1 IPv4 entry a
 IPv6 entries.
 
 ```
-for instance in {controller,worker}-{0,1,2}; do
-  ssh $instance 'sudo dnf update -y; sudo shutdown -r now'
+KUBERNETES_PUBLIC_ADDRESS=k8s.nono.io
+for instance in worker-0 worker-1 worker-2; do
+  kubectl config set-cluster kubernetes-the-hard-way \
+    --certificate-authority=ca.pem \
+    --embed-certs=true \
+    --server=https://${KUBERNETES_PUBLIC_ADDRESS}:6443 \
+    --kubeconfig=${instance}.kubeconfig
+
+  kubectl config set-credentials system:node:${instance} \
+    --client-certificate=${instance}.pem \
+    --client-key=${instance}-key.pem \
+    --embed-certs=true \
+    --kubeconfig=${instance}.kubeconfig
+
+  kubectl config set-context default \
+    --cluster=kubernetes-the-hard-way \
+    --user=system:node:${instance} \
+    --kubeconfig=${instance}.kubeconfig
+
+  kubectl config use-context default --kubeconfig=${instance}.kubeconfig
+done
+```
+```zsh
+for instance in worker-{0,1,2}; do
+  scp ${instance}.kubeconfig kube-proxy.kubeconfig ${instance}:
+done
+for instance in controller-{0,1,2}; do
+  scp admin.kubeconfig kube-controller-manager.kubeconfig kube-scheduler.kubeconfig ${instance}:
+done
+```
+
+Next up: [Generating the Data Encryption Config and Key](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/06-data-encryption-keys.md)
+
+```zsh
+for instance in controller-0 controller-1 controller-2; do
+  scp encryption-config.yaml ${instance}:
+done
+```
+
+Next up: [Bootstrapping the etcd Cluster](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/07-bootstrapping-etcd.md)
+
+```zsh
+for instance in controller-{0,1,2}; do
+  ssh ${instance} "sudo dnf install -y etcd"
+  scp ca.pem kubernetes-key.pem kubernetes.pem root@${instance}:/etc/etcd/
 done
 ```
 
 
 
 
+
+
+```
+for instance in {controller,worker}-{0,1,2}; do
+  ssh $instance 'sudo dnf update -y; sudo shutdown -r now'
+done
+```
 
 You should be able to find `openssl.cnf` in this directory.
 
