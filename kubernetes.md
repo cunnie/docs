@@ -401,6 +401,10 @@ Next up: [Bootstrapping the etcd Cluster](https://github.com/kelseyhightower/kub
 for instance in controller-{0,1,2}; do
   ssh ${instance} "sudo dnf install -y etcd"
   scp ca.pem kubernetes-key.pem kubernetes.pem root@${instance}:/etc/etcd/
+  ssh ${instance} 'sudo sed -i "
+    s/ETCD_NAME=default/ETCD_NAME=$(hostname -s)/
+    s~^#*ETCD_CERT_FILE=\"\"~ETCD_CERT_FILE=\"/etc/etcd/kubernetes.pem\"~
+    " /etc/etcd/etcd.conf'
 done
 ```
 
@@ -414,6 +418,19 @@ for instance in {controller,worker}-{0,1,2}; do
   ssh $instance 'sudo dnf update -y; sudo shutdown -r now'
 done
 ```
+
+To upgrade Fedora 30→31
+```
+for instance in {controller,worker}-{0,1,2}; do
+ssh $instance '
+sudo dnf upgrade --refresh -y
+sudo dnf install dnf-plugin-system-upgrade -y
+sudo dnf system-upgrade download --releasever=31 -y
+sudo dnf system-upgrade reboot
+'
+done
+```
+thanks https://fedoramagazine.org/upgrading-fedora-30-to-fedora-31/ #Fedora
 
 You should be able to find `openssl.cnf` in this directory.
 
