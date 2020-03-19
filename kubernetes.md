@@ -401,13 +401,34 @@ Next up: [Bootstrapping the etcd Cluster](https://github.com/kelseyhightower/kub
 for instance in controller-{0,1,2}; do
   ssh ${instance} "sudo dnf install -y etcd"
   scp ca.pem kubernetes-key.pem kubernetes.pem root@${instance}:/etc/etcd/
-  ssh ${instance} 'sudo sed -i "
-    s/ETCD_NAME=default/ETCD_NAME=$(hostname -s)/
-    s~^#*ETCD_CERT_FILE=\"\"~ETCD_CERT_FILE=\"/etc/etcd/kubernetes.pem\"~
-    " /etc/etcd/etcd.conf'
+  ssh ${instance} '
+    sudo chown etcd:etcd /etc/etcd/{ca.pem,kubernetes-key.pem,kubernetes.pem}
+    sudo sed -i "
+      s/ETCD_NAME=default/ETCD_NAME=$(hostname -s)/
+      s~^#*ETCD_CERT_FILE=\"\"~ETCD_CERT_FILE=\"/etc/etcd/kubernetes.pem\"~
+      s~^#*ETCD_KEY_FILE=\"\"~ETCD_KEY_FILE=\"/etc/etcd/kubernetes-key.pem\"~
+      s~^#*ETCD_PEER_CERT_FILE=\"\"~ETCD_PEER_CERT_FILE=\"/etc/etcd/kubernetes.pem\"~
+      s~^#*ETCD_PEER_KEY_FILE=\"\"~ETCD_PEER_KEY_FILE=\"/etc/etcd/kubernetes-key.pem\"~
+      s~^#*ETCD_TRUSTED_CA_FILE=\"\"~ETCD_TRUSTED_CA_FILE=\"/etc/etcd/ca.pem\"~
+      s~^#*ETCD_PEER_TRUSTED_CA_FILE=\"\"~ETCD_PEER_TRUSTED_CA_FILE=\"/etc/etcd/ca.pem\"~
+      s~^#*ETCD_PEER_CLIENT_CERT_AUTH=\"false\"~ETCD_PEER_CLIENT_CERT_AUTH=\"true\"~
+      s~^#*ETCD_CLIENT_CERT_AUTH=\"false\"~ETCD_CLIENT_CERT_AUTH=\"true\"~
+      s~^#*ETCD_INITIAL_ADVERTISE_PEER_URLS=\".*\"~ETCD_INITIAL_ADVERTISE_PEER_URLS=\"https://$(dig +short $(hostname)):2380\"~
+      s~^#*ETCD_LISTEN_PEER_URLS=\".*\"~ETCD_LISTEN_PEER_URLS=\"https://$(dig +short $(hostname)):2380\"~
+      s~^#*ETCD_LISTEN_CLIENT_URLS=\".*\"~ETCD_LISTEN_CLIENT_URLS=\"https://$(dig +short $(hostname)):2379,https://127.0.0.1:2379\"~
+      s~^#*ETCD_ADVERTISE_CLIENT_URLS=\".*\"~ETCD_ADVERTISE_CLIENT_URLS=\"https://$(dig +short $(hostname)):2379\"~
+      s~^#*ETCD_INITIAL_CLUSTER_TOKEN=\".*\"~ETCD_INITIAL_CLUSTER_TOKEN=\"etcd-cluster-0\"~
+      s~^#*ETCD_INITIAL_CLUSTER_STATE=\".*\"~ETCD_INITIAL_CLUSTER_STATE=\"new\"~
+      s~^#*ETCD_INITIAL_CLUSTER=\".*\"~ETCD_INITIAL_CLUSTER=\"controller-0=https://10.240.0.10:2380,controller-1=https://10.240.0.11:2380,controller-2=https://10.240.0.12:2380\"~
+      " /etc/etcd/etcd.conf
+    sudo systemctl daemon-reload
+    sudo systemctl enable etcd
+    sudo systemctl stop etcd
+    sudo systemctl start etcd'
 done
 ```
 
+Next up: [Bootstrapping the Kubernetes Control Plane](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/08-bootstrapping-kubernetes-controllers.md)
 
 
 
