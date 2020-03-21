@@ -430,9 +430,15 @@ done
 
 Next up: [Bootstrapping the Kubernetes Control Plane](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/08-bootstrapping-kubernetes-controllers.md)
 
+```
+sudo dnf install -y kubernetes
+```
 
 
 
+
+
+# Old (Deprecated) Notes
 
 ```
 for instance in {controller,worker}-{0,1,2}; do
