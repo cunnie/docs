@@ -20,45 +20,16 @@ On the console: press F2 to "customize system".
 - Configure Management Network
   - IPv6 Configuration
     - Set static IPv6 address and network Configuration
-      - Static address #1: `2601:646:100:69f0::41/64`
+      - Static address #1: `2601:646:100:69f0::29/64`
   - DNS Configuration
     - Use the following DNS server addresses and hostname
       - Hostname: esxi-1.nono.io
-- Apply changes and restart management newtork? **Y**
+- Apply changes and restart management network? **Y**
 - Test Management Network
 - Troubleshooting Options
   - Enable ESXi Shell
   - Enable SSH
 - ESC
-
-```
-ssh root@esxi-1.nono.io
-echo ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIWiAzxc4uovfaphO0QVC2w00YmzrogUpjAzvuqaQ9tD cunnie@nono.io > /etc/ssh/keys-root/authorized_keys
-```
-
-### Install Commercial Certificates
-
-_[This process may be flawed; we noticed that on reboot, when the vCenter was down, it reverted to a self-signed certificate]_
-
-Let's install the cert. Put the ESXi host in maintenance mode. [KB
-Article](https://kb.vmware.com/s/article/2113926) for reference.
-
-```
-ssh root@esxi-1.nono.io
-mkdir /etc/vmware/ssl/bak
-mv /etc/vmware/ssl/rui.crt /etc/vmware/ssl/rui.key \
-  /etc/vmware/ssl/bak/
-exit
-scp /Users/cunnie/docs-old/ssl/nono.io.pem esxi-1:/etc/vmware/ssl/rui.crt
-scp /Users/cunnie/docs-old/ssl/nono.io.key esxi-1:/etc/vmware/ssl/rui.key
-```
-
-From the KB Article:
-
-> Switch back to the DCUI of the host and select Troubleshooting Options >
-> Restart Management Agents. When prompted press F11 to restart the agents. Wait
-> until they are restarted. Press ESC several times until you logout of the
-> DCUI. Exit the host from Maintenance Mode.
 
 Add the ESXi Host to the Cluster:
 - Log into the vCenter
@@ -94,27 +65,40 @@ is on persistent storage.
 
 - Select `esxi-1.nono.io`
   - Configure → System → Services
-    - Time Configuration → Edit  
-      Use Network Time Protocol (Enable NTP client)  
-      NTP Servers: time.google.com  
-      NTP Service Status:  Start NTP Service  
+    - Time Configuration → Edit
+      Use Network Time Protocol (Enable NTP client)
+      NTP Servers: time.google.com
+      NTP Service Status:  Start NTP Service
       NTP Service Startup Policy: Start and stop with host
+
+### Add iSCSI
+
+- Hosts & Clusters → esxi-1.nono.io → Configure → Storage → Storage Adapters
+  - Click **+ Add Software Adapter**, select **Add software iSCSI adapter**, click **OK**
+  - Select the newly-created iSCSI Software Adapter; notice the panel below
+  - Click on the **Dynamic Discovery** tab
+  - Click **+ Add...**
+    - iSCSI Server: **10.0.9.80** (use IP address because sometimes there are DNS outages); click **OK**
+  - When you see the alert _Due to recent configuration changes, a rescan of "vmhba64" is recommended._, click **Rescan Adapter**
+  - Click on **Devices**, you should see _FreeNAS iSCSI Disk(naa.65....)
+
+You don't need to mount it; it's just there.
 
 ### Add Host to DVS (Distributed Virtual Switch)
 
 - Networking
   - DVS → Right Click
-    - Add and Manage Hosts...  
-      Add Hosts  
+    - Add and Manage Hosts...
+      Add Hosts
       Select Hosts
-      - ➕ New Hosts...  
+      - ➕ New Hosts...
         `esxi-1.nono.io`
-      - Manage Physical Adapters  
-        `vmnic2`  
+      - Manage Physical Adapters
+        `vmnic2`
         Assign Uplink
-      - Manage VMkernel adapters  
-        `vmk0`  
-        Assign Port Group  
+      - Manage VMkernel adapters
+        `vmk0`
+        Assign Port Group
         `nono`
 
 ### Set up iSCSI Storage
@@ -126,21 +110,21 @@ Add iSCSI from vCenter:
       - ➕ Add Software Adapter
         Add software iSCSI adapter
       - Select the newly-added iSCSI adapter (`vmhba64`)
-        - Dynamic Discovery → Add  
+        - Dynamic Discovery → Add
           iSCSI server: 10.0.9.80 (use IP address, not hostname) (force IPv4 binding?)
         - Network Port Binding
-          ➕ Add...  
+          ➕ Add...
           nono (dvs)
       - Rescan Adapter
-        - Devices  
+        - Devices
           Make sure the iSCSI disk appears, "FreeNAS iSCSI disk"
 
 ### Set up vMotion
 
 - Select `esxi-1.nono.io`
   - Configure → Networking → VMkernel Adapters
-    - Select `vmk0`  
-      Edit  
+    - Select `vmk0`
+      Edit
       vMotion
 
 ### vMotion Benchmarks
@@ -328,3 +312,14 @@ When installing vcenter:
 * IPv6
   * 2601:646:102:95::105/64
   * fe80::82ea:96ff:fee7:5524
+
+### Updates
+
+Sun Apr 19 07:52:34 PDT 2020
+
+Update BIOS & BMC on esxi-1 (X10SDV-8C-TLN4f+)
+
+|              |         old        |         new        |
+|:------------:|:------------------:|:------------------:|
+| BIOS         |  2.0a (10/12/2018) |   2.1 (11/22/2019) |
+| BMC Firmware | 03.68 (03/20/2018) | 03.86 (11/15/2019) |
