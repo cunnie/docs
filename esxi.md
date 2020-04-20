@@ -84,6 +84,16 @@ is on persistent storage.
 
 You don't need to mount it; it's just there.
 
+### Create DVS
+
+- Networking
+  - right-click on Datacenter → Distributed Switch → New Distributed Switch...
+    - Name: **dvs**
+    - Location: **dc**
+    - Select version: **7.0.0 - ESXi 7.0 and later**
+    - checked: **Default port group**
+    - Port group name: **nono**; click **Finish**
+
 ### Add Host to DVS (Distributed Virtual Switch)
 
 - Networking
@@ -94,7 +104,7 @@ You don't need to mount it; it's just there.
       - ➕ New Hosts...
         `esxi-1.nono.io`
       - Manage Physical Adapters
-        `vmnic2`
+        `vmnic3`
         Assign Uplink
       - Manage VMkernel adapters
         `vmk0`
