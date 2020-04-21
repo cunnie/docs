@@ -80,7 +80,7 @@ is on persistent storage.
   - Click **+ Add...**
     - iSCSI Server: **10.0.9.80** (use IP address because sometimes there are DNS outages); click **OK**
   - When you see the alert _Due to recent configuration changes, a rescan of "vmhba64" is recommended._, click **Rescan Adapter**
-  - Click on **Devices**, you should see _FreeNAS iSCSI Disk(naa.65....)
+  - Click on **Devices**, you should see _FreeNAS iSCSI Disk(naa.65....)_
 
 You don't need to mount it; it's just there.
 
@@ -139,7 +139,9 @@ Add iSCSI from vCenter:
 
 ### vMotion Benchmarks
 
-These benchmarks were obtained by vMotion'ing a VCSA, 10 GB RAM allotted, 2.2 GB used, between 2 ESXi hosts. We changed compute resource only. We scheduled vMotion with high priority.
+These benchmarks were obtained by vMotion'ing a VCSA, 10 GB RAM allotted, 2.2 GB
+used, between 2 ESXi hosts. We changed compute resource only. We scheduled
+vMotion with high priority.
 
 ---
 
@@ -333,3 +335,13 @@ Update BIOS & BMC on esxi-1 (X10SDV-8C-TLN4f+)
 |:------------:|:------------------:|:------------------:|
 | BIOS         |  2.0a (10/12/2018) |   2.1 (11/22/2019) |
 | BMC Firmware | 03.68 (03/20/2018) | 03.86 (11/15/2019) |
+
+Tue Apr 21 06:18:16 PDT 2020
+
+Update BIOS & BMC on esxi-2 (X11SDV-8C+-TLN2F+) (search for it as
+"[`X11SDV-8C+-TLN2F`](https://www.supermicro.com/support/resources/)")
+
+|              |         old        |          new          |
+|:------------:|:------------------:|:---------------------:|
+| BIOS         |  1.0b (10/08/2018) |      1.3 (03/05/2020) |
+| BMC Firmware | 01.14 (01/18/2018) | 01.31.02 (11/15/2019) |
