@@ -345,3 +345,31 @@ Update BIOS & BMC on esxi-2 (X11SDV-8C+-TLN2F+) (search for it as
 |:------------:|:------------------:|:---------------------:|
 | BIOS         |  1.0b (10/08/2018) |      1.3 (03/05/2020) |
 | BMC Firmware | 01.14 (01/18/2018) | 01.31.02 (11/15/2019) |
+
+
+Wed May 13 07:06:24 PDT 2020
+
+To quiet the CPU Fan:
+
+- Log into IPMI
+- Configuration → Fan Mode
+- Select **Set Fan to PUE2 (Power Utilization Effectiveness) Speed**; click
+  **Save**
+
+You can do the following, too, but it doesn't seem to help much:
+
+Configure BIOS & BMC on esxi-2 (X11SDV-8C+-TLN2F+) to make it less noisy:
+
+Advanced → CPU P State Control
+
+|                           | Original | New     |
+|---------------------------|----------|---------|
+| Uncore Freq Scaling (UFS) | Enable   | Disable |
+| SpeedStep (Pstates)       | Enable   | Disable |
+| Config TDP                | Nominal  |         |
+| EIST PSD Function         | HW_ALL   |         |
+| Energy Efficient Turbo    | Enable   |         |
+| Turbo Mode                | Enable   |         |
+
+It seems to have made it a _little_ better, but I think the real solution is a
+quiet fan.
