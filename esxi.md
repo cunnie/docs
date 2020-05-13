@@ -373,3 +373,15 @@ Advanced → CPU P State Control
 
 It seems to have made it a _little_ better, but I think the real solution is a
 quiet fan.
+
+Wed May 13 10:02:33 PDT 2020
+
+Measuring sound.
+
+Sound measurement:
+
+- the "Sound Meter"
+- placed (from my viewpoint) on the lower left side of esxi-2's case
+- reset
+- let run for 30 seconds
+- take average
