@@ -381,7 +381,21 @@ Measuring sound.
 Sound measurement:
 
 - the "Sound Meter"
-- placed (from my viewpoint) on the lower left side of esxi-2's case
+- placed (from my viewpoint) on the lower left side of the top of esxi-2's case
 - reset
 - let run for 30 seconds
 - take average
+
+|      esxi-2      | Fan Mode |  RPM | Pillow (dB) | Case (dB) |
+|:----------------:|----------|-----:|------------:|----------:|
+| Powered-off      | N/A      |    0 |          32 |        49 |
+| Maintenance Mode | PUE2     | 4200 |          32 |        54 |
+| Partially loaded | PUE2     | 5600 |          34 |        60 |
+| Fully loaded     | PUE2     | 6000 |          34 |        61 |
+| Fully loaded     | Optimal  | 6700 |          35 |        62 |
+| Fully loaded     | Full     | 8900 |          37 |        66 |
+
+My goal is **54 dB** at the case, **32 dB** at my pillow.
+
+To install a quieter fan:
+<https://www.servethehome.com/near-silent-powerhouse-making-a-quieter-microlab-platform/>
