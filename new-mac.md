@@ -57,6 +57,7 @@ brew bundle # a second time to recover from the Oracle fail
 - Install Luan's [vimfiles](https://github.com/luan/vimfiles)
 ```
 curl vimfiles.luan.sh/install | bash
+rm ~/.vimrc ~/.vim/vimrc # couldn't figure out how to get vim working with Luan's setup
 ```
 - Install Luan's [tmuxfiles](https://github.com/luan/tmuxfiles/blob/master/install)
 ```
