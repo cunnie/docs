@@ -54,3 +54,11 @@ brew bundle # a second time to recover from the Oracle fail
   - Launch Flycut on login
   - Display in Menu: 40
 - Set up zsh per [zsh.md](https://github.com/cunnie/docs/blob/master/zsh.md)
+- Install Luan's [vimfiles](https://github.com/luan/vimfiles)
+```
+curl vimfiles.luan.sh/install | bash
+```
+- Install Luan's [tmuxfiles](https://github.com/luan/tmuxfiles/blob/master/install)
+```
+curl https://raw.githubusercontent.com/luan/tmuxfiles/master/install | bash
+```

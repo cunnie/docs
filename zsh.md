@@ -9,6 +9,8 @@ sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/mas
 ```
 vim `~/.zshrc`
 ```
+export PATH="/usr/local/opt/python/libexec/bin:$PATH"
+
 ZSH_THEME="agnoster"
 
 plugins=(
@@ -21,6 +23,7 @@ source /usr/local/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 eval "$(direnv hook zsh)"
 eval "$(fasd --init posix-alias zsh-hook)"
 alias z='fasd_cd -d'     # cd, same functionality as j in autojump
+alias vim=nvim     # we are committed to nvim
 ```
 
 Use _nord-iterm2_ color scheme for a more pleasant terminal experience:
