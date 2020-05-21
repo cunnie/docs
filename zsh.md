@@ -10,6 +10,8 @@ sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/mas
 vim `~/.zshrc`
 ```
 export PATH="/usr/local/opt/python/libexec/bin:$PATH"
+export EDITOR=nvim
+export GIT_EDITOR=nvim
 
 ZSH_THEME="agnoster"
 
