@@ -386,16 +386,26 @@ Sound measurement:
 - let run for 30 seconds
 - take average
 
-|      esxi-2      | Fan Mode |  RPM | Pillow (dB) | Case (dB) |
-|:----------------:|----------|-----:|------------:|----------:|
-| Powered-off      | N/A      |    0 |          32 |        49 |
-| Maintenance Mode | PUE2     | 4200 |          32 |        54 |
-| Partially loaded | PUE2     | 5600 |          34 |        60 |
-| Fully loaded     | PUE2     | 6000 |          34 |        61 |
-| Fully loaded     | Optimal  | 6700 |          35 |        62 |
-| Fully loaded     | Full     | 8900 |          37 |        66 |
+|      esxi-2      | Fan Mode | Fan |  RPM | Pillow (dB) | Case (dB) |
+|:----------------:|----------|-----|-----:|------------:|----------:|
+| Powered-off      | N/A      | N/A |    0 |          32 |        49 |
+| Maintenance Mode | PUE2     | old | 4200 |          32 |        54 |
+| Maintenance Mode | PUE2     | new | 1500 |          34 |        51 |
+| Partially loaded | PUE2     | old | 5600 |          34 |        60 |
+| Partially loaded | PUE2     | new | 2700 |          34 |        51 |
+| Fully loaded     | PUE2     | old | 6000 |          34 |        61 |
+| Fully loaded     | PUE2     | new | 3600 |          34 |        54 |
+| Fully loaded     | Optimal  | old | 6700 |          35 |        62 |
+| Fully loaded     | Full     | old | 8900 |          37 |        66 |
 
-My goal is **54 dB** at the case, **32 dB** at my pillow.
+My goal is **54 dB** at the case, **32 dB** at my pillow, which I almost
+achieved except it's **34 dB** at my pillow (to the sound meter), but to my ears
+it's perfectly quiet.
+
+The CPU is 67° C fully loaded with the new fan, which is fine.
 
 To install a quieter fan:
 <https://www.servethehome.com/near-silent-powerhouse-making-a-quieter-microlab-platform/>
+
+- old fan: Nidec UltraFlo™ H60T12BHA7-57 (stock fan)
+- new fan: [Noctua NF-A6x25](https://noctua.at/en/nf-a6x25-pwm)
