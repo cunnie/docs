@@ -22,6 +22,7 @@ plugins=(
 # source "/usr/local/opt/zsh-git-prompt/zshrc.sh" # don't use, causes yellow PS1 when repo is clean
 fpath=(/usr/local/share/zsh-completions $fpath)
 source /usr/local/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+[ -f /usr/local/opt/chruby/share/chruby/chruby.sh ] && source /usr/local/opt/chruby/share/chruby/chruby.sh
 eval "$(direnv hook zsh)"
 eval "$(fasd --init posix-alias zsh-hook)"
 alias z='fasd_cd -d'     # cd, same functionality as j in autojump
