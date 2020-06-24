@@ -12,7 +12,7 @@ For systems with no defaults, turn on colors
 git config --global color.diff auto
 git config --global color.status auto
 git config --global color.branch auto
-git config --global core.editor vim
+git config --global core.editor nvim
 ```
 On FreeBSD, `less` should allow escape sequences
 ```
