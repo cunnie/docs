@@ -123,6 +123,12 @@ export NSUPDATE_KEY="/root/letsencrypt.key"
   --reloadcmd /root/deploy-freenas/deploy_freenas.py
 .acme.sh/acme.sh --cron --home /root/.acme.sh
 ```
+#### Cron job to automate renewal:
+
+- FreeNAS > Tasks > Cron Jobs
+- Command = iocage exec acme /root/.acme.sh/acme.sh --cron
+- Run as user = root
+- Description & Schedule are left whatever you want.
 
 ### BOSH
 
