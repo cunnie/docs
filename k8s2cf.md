@@ -11,3 +11,5 @@
 | kubectl create configmap my-config --from-literal=key1=config1 | cf set-env my-app key1 config1 |
 | kubectl logs pod                 | cf logs app --recent        |
 | kubectl logs -f pod              | cf logs app                 |
+| kubectl get all                  | _[no analog to `get all`]_ |
+| kubectl get pod --selector env=prod | cf apps --labels env=prod  |
