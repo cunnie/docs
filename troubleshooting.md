@@ -1,3 +1,52 @@
+### Failed Cloud Foundry deploy
+
+Cloud Foundry deployment's `nat` jobs is failing?
+`/var/vcap/sys/log/bosh-dns/bosh_dns_health.stdout.log` shows `failed to load keypair: certificate
+has expired: validity ended at 2020-07-14 20:33:45 UTC`
+
+`loggregator_agent.stderr.log` shows `Could not use GRPC creds for client: failed to load keypair:
+certificate has expired: validity ended at 2020-07-16 00:51:11 UTC`
+
+```
+ # find the secret
+bosh int --path /instance_groups/name=bosh/jobs/name=uaa/properties/uaa/clients/uaa_admin/secret bosh-vsphere.yml
+ # record the password
+uaa target https://bosh-vsphere.nono.io:8443
+uaa get-client-credentials-token uaa_admin -s the-secret-passwod
+```
+CredHub
+```
+bosh int --path /instance_groups/name=bosh/jobs/name=uaa/properties/uaa/clients/credhub-admin/secret bosh-vsphere.yml
+ # record the password
+credhub api -s https://bosh-vsphere.nono.io:8844 --skip-tls-validation
+credhub login --client-name=credhub-admin --client-secret=the-password-from-above
+credhub find /bosh-vsphere/cf # bosh name, deployment name
+credhub curl -p /api/v1/certificates
+for CRED_NAME in $(credhub curl -p "/api/v1/certificates" | jq -r ".certificates[].name" | grep -v ^/bosh-vsphere/cf); do
+  credhub delete --name $CRED_NAME
+done
+```
+
+```
+#!/bin/zsh
+for CRED_NAME in $(credhub curl -p "/api/v1/certificates" | jq -r ".certificates[].name"); do
+
+  echo "$(
+    openssl x509 -enddate -noout -in <(
+      credhub get -n $CRED_NAME --output-json | jq -r .value.certificate)  |
+    cut -d= -f 2
+    ) → $CRED_NAME"
+
+done
+```
+Thanks https://gist.github.com/wolfoo2931/b2a9db0cf77bef74ebf9de99920cb419
+
+
+
+Tags: #CloudFoundry #CredHub #BOSH
+
+### Failed `create-env`, `health_monitor`
+
 ```
 bosh create-env ...
 ```
