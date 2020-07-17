@@ -57,3 +57,9 @@ ls -l $HOME/.acme.sh/bosh-vsphere.nono.io/fullchain.cer
 -rw-rw-r--. 1 cunnie cunnie 3571 May  9 00:44 /home/cunnie/.acme.sh/bosh-vsphere.nono.io/fullchain.cer
 ```
 
+#### Solution
+
+Bumping BOSH to stemcell 621.76+? Using Let's Encrypt certificates? Then set the
+`hm.director_account.ca_cert` to the Let's Encrypt "DST Root CA X3" certificate
+(https://identrust.com/dst-root-ca-x3) and tweak your manifest
+https://github.com/cunnie/deployments/commit/b934c6971516186d67eebbd2bd59d36c4c96294b#diff-d19a79b9f70a02771c8d4b94bda7bc1aR64-R66
