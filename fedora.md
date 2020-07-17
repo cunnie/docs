@@ -48,3 +48,12 @@ sudo make install
 vim ~/.zshrc
   source /usr/local/share/chruby/chruby.sh
 ```
+
+install the new [UAA CLI](https://github.com/cloudfoundry-incubator/uaa-cli)
+
+```
+go get code.cloudfoundry.org/uaa-cli
+cd $GOPATH/src/code.cloudfoundry.org/uaa-cli
+make && make install
+uaa -h
+```
