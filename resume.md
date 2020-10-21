@@ -36,11 +36,18 @@ Postfix), HTTP servers (Apache, nginx)
 
 ### Experience
 
-**Software Engineer, [Pivotal](https://pivotal.io/), San Francisco, CA<br />
+**Software Engineer, [VMware](https://tanzu.vmware.com/) (formerly Pivotal), San Francisco, CA<br />
 6/11 to present**
 
-- PAS NSX-T: built automated test infrastructure to test interoperability
-  between Pivotal's cloud offering (PAS) and VMware's software-defined network
+- Autoscaler and Scheduler Team: maintained two cloud-based applications
+  (written in a smorgasbord of languages: Golang, Kotlin, Java, Groovy, Bash).
+  Much of the work was bug fixes and CVE mitigations through dependency bumps
+- V3 Acceleration Team: enhanced the Cloud Foundry API (CAPI), a Ruby-based MVC
+  application to include new endpoints, new features. At the same time, enhanced
+  the Cloud Foundry CLI, a Golang-based application, to take advantage of the
+  new endpoints, new features
+- TAS NSX-T: built automated test infrastructure to test interoperability
+  between Pivotal's cloud offering (TAS) and VMware's software-defined network
   (NSX-T), addressed issues with appropriate organizations
 - Cloud Operations: maintained Pivotal Web Services (PWS), Pivotal's
   public-facing Cloud Foundry. Deployed updates several times a week, addressed
@@ -92,12 +99,13 @@ Provided computer support for an IC Design Startup.
 
 ### Extracurricular Activities
 
-I run [sslip.io](https://sslip.io/), a DNS service which maps
-specially-crafted hostnames to IP addresses.
+I run [sslip.io](https://sslip.io/), a DNS service which maps specially-crafted
+hostnames to IP addresses. It made the top spot on Hacker News when I announced
+it.
 
-I also run six servers in the [NTP
-pool](https://www.ntppool.org/user/cunnie) which carry an aggregate of 1% of the
-US NTP pool traffic (my Singapore server carries an even higher percentage).
+I also run six servers in the [NTP pool](https://www.ntppool.org/user/cunnie)
+which carry an aggregate of 1% of the US NTP pool traffic (my Singapore servers
+carry an even higher percentage).
 
 I am the maintainer of several BOSH releases that support my abiding interest in
 DNS, NTP, and HTTP:
@@ -114,7 +122,9 @@ projects. My favorite contribution: updating Ruby's core library, openssl, to
 SANs](https://github.com/ruby/openssl/commit/9322a104d16b02c7a79f9ab589859c9d63fabf52).
 
 I [blog](https://engineering.pivotal.io/authors/cunnie/) what captures my
-interest, including how to install a TLS Certificate on vCenter server appliance
+interest, including how to organize Golang unit tests
+([1](https://engineering.pivotal.io/post/go-flow-tests-like-code/)),
+how to install a TLS Certificate on vCenter server appliance
 (VCSA) ([1](https://engineering.pivotal.io/post/vcenter_6.7_tls/)), benchmarking
 the disk speed of IaaSes
 ([1](https://engineering.pivotal.io/post/gobonniego_results/)), deploying BOSH
@@ -124,7 +134,7 @@ VMs with IPv6 addresses to vSphere
 Directors with Concourse CI and bosh-deployment
 ([1](https://engineering.pivotal.io/post/bosh-deployed-with-concourse/)), why is
 my NTP server costing me $500/year
-([1](https://content.pivotal.io/blog/why-is-my-ntp-server-costing-500-year-part-1),
+([1](https://content.pivotal.io/blog/why-is-my-ntp-server-costing-500-year-part-1) (top spot on Hacker News),
 [2](https://content.pivotal.io/blog/why-is-my-ntp-server-costing-me-500-year-part-2-characterizing-the-ntp-clients),
 [3](https://engineering.pivotal.io/post/ntp-costs-500/)), deploying a BOSH
 Director With SSL certificates issued by a commercial CA
