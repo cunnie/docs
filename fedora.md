@@ -37,18 +37,6 @@ X-Desktop-File-Install-Version=0.23
   to set up tmux dotfiles <https://github.com/luan/dotfiles/blob/master/tmux.conf>
 * may consider tpm (tmux plugin manager)
 
-* to set up chruby ~~<https://copr.fedorainfracloud.org/coprs/postmodern/chruby/>~~
-```
-sudo dnf install -y wget
-cd ~/workspace/
-wget -O chruby-0.3.9.tar.gz https://github.com/postmodern/chruby/archive/v0.3.9.tar.gz
-tar -xzvf chruby-0.3.9.tar.gz
-cd chruby-0.3.9/
-sudo make install
-vim ~/.zshrc
-  source /usr/local/share/chruby/chruby.sh
-```
-
 install the new [UAA CLI](https://github.com/cloudfoundry-incubator/uaa-cli)
 
 ```
