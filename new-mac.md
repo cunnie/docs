@@ -8,12 +8,13 @@ scutil --set HostName tetra
 ```
 - Copy important repos over
 ```
-rsync -avH --progress --stats lucy:Downloads/ Downloads/
-rsync -avH lucy:bin/ bin/
-rsync -avH lucy:aa/ aa/
-rsync -avH lucy:docs/ docs/
-rsync -avH lucy:bin-old/ bin-old/
-rsync -avH lucy:docs-old/ docs-old/
+SOURCE_HOST=lucy
+rsync -avH --progress --stats $SOURCE_HOST:Downloads/ Downloads/
+rsync -avH $SOURCE_HOST:bin/ bin/
+rsync -avH $SOURCE_HOST:aa/ aa/
+rsync -avH $SOURCE_HOST:docs/ docs/
+rsync -avH $SOURCE_HOST:bin-old/ bin-old/
+rsync -avH $SOURCE_HOST:docs-old/ docs-old/
 HOSTNAME=$(hostname); pushd ~/aa; git add .; git ci -m"from ${HOSTNAME%%.*}"; git pull -r; git push; cd ~/bin-old; git add .; git ci -m "from ${HOSTNAME%%.*}"; git pull -r; git push; cd ~/docs-old/ ; git add .; git ci -m "from ${HOSTNAME%%.*}"; git pull -r; git push; cd ~/docs; git pull; cd ~/bin; git pull; popd
 ```
 - Set up git per [git.md](https://github.com/cunnie/docs/blob/master/git.md)
@@ -56,8 +57,8 @@ brew bundle # a second time to recover from the Oracle fail
 - Set up zsh per [zsh.md](https://github.com/cunnie/docs/blob/master/zsh.md)
 - Install Luan's [vimfiles](https://github.com/luan/vimfiles)
 ```
-curl vimfiles.luan.sh/install | bash
-rm ~/.vimrc ~/.vim/vimrc # couldn't figure out how to get vim working with Luan's setup
+pip3 install neovim
+git clone https://github.com/luan/nvim ~/.config/nvim
 ```
 - Install Luan's [tmuxfiles](https://github.com/luan/tmuxfiles/blob/master/install)
 ```
