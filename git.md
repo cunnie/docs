@@ -6,6 +6,7 @@ git config --global alias.co checkout
 git config --global alias.ci commit
 git config --global alias.st status
 git config --global url."git@github.com:".insteadOf "https://github.com/"
+git config --global pull.rebase false
 ```
 For systems with no defaults, turn on colors
 ```
