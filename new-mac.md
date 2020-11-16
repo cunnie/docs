@@ -9,12 +9,12 @@ scutil --set HostName tetra
 - Copy important repos over
 ```
 SOURCE_HOST=lucy
-rsync -avH --progress --stats $SOURCE_HOST:Downloads/ Downloads/
-rsync -avH $SOURCE_HOST:bin/ bin/
-rsync -avH $SOURCE_HOST:aa/ aa/
-rsync -avH $SOURCE_HOST:docs/ docs/
-rsync -avH $SOURCE_HOST:bin-old/ bin-old/
-rsync -avH $SOURCE_HOST:docs-old/ docs-old/
+rsync -avH --progress --stats $SOURCE_HOST:Downloads/ ~/Downloads/
+rsync -avH $SOURCE_HOST:bin/ ~/bin/
+rsync -avH $SOURCE_HOST:aa/ ~/aa/
+rsync -avH $SOURCE_HOST:docs/ ~/docs/
+rsync -avH $SOURCE_HOST:bin-old/ ~/bin-old/
+rsync -avH $SOURCE_HOST:docs-old/ ~/docs-old/
 HOSTNAME=$(hostname); pushd ~/aa; git add .; git ci -m"from ${HOSTNAME%%.*}"; git pull -r; git push; cd ~/bin-old; git add .; git ci -m "from ${HOSTNAME%%.*}"; git pull -r; git push; cd ~/docs-old/ ; git add .; git ci -m "from ${HOSTNAME%%.*}"; git pull -r; git push; cd ~/docs; git pull; cd ~/bin; git pull; popd
 ```
 - Set up git per [git.md](https://github.com/cunnie/docs/blob/master/git.md)
