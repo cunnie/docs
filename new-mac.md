@@ -1,10 +1,10 @@
-## Setting aup a New Apple Mac
+## Setting Up a New Apple Mac
 
 ```
 git status # loads command line tools
-scutil --set LocalHostName tetra
-scutil --set ComputerName tetra
-scutil --set HostName tetra
+sudo scutil --set LocalHostName tetra
+sudo scutil --set ComputerName tetra
+sudo scutil --set HostName tetra
 ```
 - Copy important repos over
 ```
