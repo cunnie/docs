@@ -7,6 +7,7 @@ git config --global alias.ci commit
 git config --global alias.st status
 git config --global url."git@github.com:".insteadOf "https://github.com/"
 git config --global pull.rebase false
+git config --global init.defaultBranch main
 ```
 For systems with no defaults, turn on colors
 ```
@@ -42,7 +43,7 @@ git commit
 echo "*" > .gitignore
 git add -f .gitignore
 git add -f `ls /var/qmail/control/* | grep -v '.cdb'`
-# 
+#
 git remote add origin git@github.com:briancunnie/asterisk.git
 git push -u origin master # only need -u for initial checkin
 #
@@ -68,9 +69,9 @@ git checkout origin/1.4.0
 cd ~/ccrb; echo "old version works" | git checkout 47adcb8dff3a1816938029a30c258443e5abd17b
 #git push ssh://git.ardatech.com/~it/git/asterisk master:master
 cd /etc/asterisk
-git push ~it/git/asterisk 
+git push ~it/git/asterisk
 git add -A; sudo git commit -a
-# 
+#
 git clone git://github.com/thoughtworks/cruisecontrol.rb.git ~/ccrb
 # ccrb 1.4.0+ is broken, we need to revert to 1.4.0 pristine
 cd ~/ccrb; echo "old version works" | git checkout origin/1.4.0
