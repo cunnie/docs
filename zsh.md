@@ -45,17 +45,3 @@ right](https://twitter.com/nono_io/status/1182244109232136192?s=20), enable
 Powerline glyphs:
 
 - iTerm2 → ⌘, (Preferences) → Profiles → Text → User built-in Powerline glyphs (checked)
-
-### Fedora
-
-```
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
-sudo dnf install -y zsh zsh-syntax-highlighting zsh-lovers
-chsh
-```
-```
-vim ~/.zshrc
-```
-```
-eval "$(direnv hook zsh)"
-```
