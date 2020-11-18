@@ -28,6 +28,8 @@ HOSTNAME=$(hostname); pushd ~/aa; git add .; git ci -m"from ${HOSTNAME%%.*}"; gi
       - Tap to click
   - Accessibility → Pointer Control → Mouse & Trackpad → Trackpad Options... 
     - Enable dragging → three finger drag
+  - Keyboard
+    - check: Use F1, F2, etc. keys as standard function keys
 - Install brew
 ```
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
@@ -40,10 +42,14 @@ brew bundle # a second time to recover from the Oracle fail
   - log in
   - set them
   - open gmail
-- Set up date in Taskbar (show seconds & Date)
+- Set up date in Menu Bar (24-hour, show seconds & Date)
+  - System Preferences → Dock & Menu Bar → Clock Menu Bar
 - Set up iStat Menus
+  - No battery
+  - Disks: show throughput, too
 - Set up JetBrains Toolbox
   - login in via Toolbox
+  - generate shell scripts, set path to /usr/local/bin
   - Android Studio
   - Goland
   - PyCharm Community
