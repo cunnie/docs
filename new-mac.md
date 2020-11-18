@@ -44,8 +44,11 @@ brew bundle # a second time to recover from the Oracle fail
   - open gmail
 - Set up date in Menu Bar (24-hour, show seconds & Date)
   - System Preferences → Dock & Menu Bar → Clock Menu Bar
-- System Preferences -> Dock & Menu Bar -> check: Automatically hide and show the Dock
-- Messages -> Preferences -> iMessage -> check: Enable Messages in iCloud
+- System Preferences → Dock & Menu Bar → check: Automatically hide and show the Dock
+- System Preferences → Dock & Menu Bar → check: Automatically hide and show the Dock
+- System Preferences → Security & Privacy → FileVault → Turn On FileVault
+  - Allow my iCloud account...
+- Messages → Preferences → iMessage → check: Enable Messages in iCloud
 - Set up iStat Menus
   - No battery
   - Disks: show throughput, too
