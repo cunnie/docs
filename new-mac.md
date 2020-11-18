@@ -2,9 +2,10 @@
 
 ```
 git status # loads command line tools
-sudo scutil --set LocalHostName tetra
-sudo scutil --set ComputerName tetra
-sudo scutil --set HostName tetra
+NEW_HOST=tara
+sudo scutil --set LocalHostName $NEW_HOST
+sudo scutil --set ComputerName $NEW_HOST
+sudo scutil --set HostName $NEW_HOST
 ```
 - Copy important repos over
 ```
