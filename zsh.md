@@ -27,6 +27,10 @@ eval "$(direnv hook zsh)"
 eval "$(fasd --init posix-alias zsh-hook)"
 alias z='fasd_cd -d'     # cd, same functionality as j in autojump
 alias vim=nvim     # we are committed to nvim
+ # the following is for `gcloud` (Google Cloud's CLI)
+export CLOUDSDK_PYTHON="$(brew --prefix)/opt/python@3.8/libexec/bin/python"
+source "$(brew --prefix)/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/path.zsh.inc"
+source "$(brew --prefix)/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/completion.zsh.inc"
 ```
 
 Use _nord-iterm2_ color scheme for a more pleasant terminal experience:
