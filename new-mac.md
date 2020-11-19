@@ -66,6 +66,9 @@ brew bundle # a second time to recover from the Oracle fail
   - Black scissors
   - Launch Flycut on login
   - Display in Menu: 40
+- Zoom
+  - 49 participants
+  - HD video
 - Set up zsh per [zsh.md](https://github.com/cunnie/docs/blob/master/zsh.md)
 - Install Luan's [vimfiles](https://github.com/luan/vimfiles)
 ```
