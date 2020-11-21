@@ -32,20 +32,3 @@ export CLOUDSDK_PYTHON="$(brew --prefix)/opt/python@3.8/libexec/bin/python"
 source "$(brew --prefix)/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/path.zsh.inc"
 source "$(brew --prefix)/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/completion.zsh.inc"
 ```
-
-Use _nord-iterm2_ color scheme for a more pleasant terminal experience:
-
-```
-cd ~/Downloads
-curl -L https://github.com/arcticicestudio/nord-iterm2/archive/v0.2.0.zip -o nord-iterm2.zip
-unzip nord-iterm2.zip
-```
-
-iTerm2 → ⌘, (Preferences) → Profiles → Colors → Color Presets → Import... → `xml/Nord.itermcolors`
-iTerm2 → ⌘, (Preferences) → Profiles → Colors → Color Presets → Nord
-
-If the prompt (`PS1`) [doesn't look
-right](https://twitter.com/nono_io/status/1182244109232136192?s=20), enable
-Powerline glyphs:
-
-- iTerm2 → ⌘, (Preferences) → Profiles → Text → User built-in Powerline glyphs (checked)

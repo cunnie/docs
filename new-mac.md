@@ -52,6 +52,7 @@ brew bundle # a second time to recover from the Oracle fail
 - Set up iStat Menus
   - No battery
   - Disks: show throughput, too
+  - CPU: historical
 - Set up JetBrains Toolbox
   - login in via Toolbox
   - generate shell scripts, set path to /usr/local/bin
@@ -69,6 +70,17 @@ brew bundle # a second time to recover from the Oracle fail
 - Zoom
   - 49 participants
   - HD video
+- iTerm
+  - Use _nord-iterm2_ color scheme for a more pleasant terminal experience:
+  ```
+  cd ~/Downloads
+  curl -L https://github.com/arcticicestudio/nord-iterm2/archive/v0.2.0.zip -o nord-iterm2.zip
+  unzip nord-iterm2.zip
+  ```
+  - iTerm2 → ⌘, (Preferences) → Profiles → Colors → Color Presets → Import... → `xml/Nord.itermcolors`
+  - iTerm2 → ⌘, (Preferences) → Profiles → Colors → Color Presets → Nord
+  - iTerm2 → ⌘, (Preferences) → Profiles → Terminal → Unlimited scrollback
+  - iTerm2 → ⌘, (Preferences) → Profiles → Text → User built-in Powerline glyphs (checked)
 - Set up zsh per [zsh.md](https://github.com/cunnie/docs/blob/master/zsh.md)
 - Install Luan's [vimfiles](https://github.com/luan/vimfiles)
 ```
