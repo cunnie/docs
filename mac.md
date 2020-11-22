@@ -42,6 +42,8 @@ brew bundle # a second time to recover from the Oracle fail
   - log in
   - set them
   - open gmail
+- System Preferences → Apple ID → iCloud → iCloud Drive → Options... → check:
+  Desktop & Documents Folders
 - Set up date in Menu Bar (24-hour, show seconds & Date)
   - System Preferences → Dock & Menu Bar → Clock Menu Bar
 - System Preferences → Dock & Menu Bar → check: Automatically hide and show the Dock
