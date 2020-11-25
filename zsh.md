@@ -18,6 +18,7 @@ ZSH_THEME="agnoster"
 
 plugins=(
 	git
+	kubectl
 	osx
 )
 # source "/usr/local/opt/zsh-git-prompt/zshrc.sh" # don't use, causes yellow PS1 when repo is clean
