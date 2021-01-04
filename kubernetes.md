@@ -1,5 +1,7 @@
 ### kubernetes
 
+**Don't follow! These instructions might not work—still a work-in-progress**
+
 Follow instructions at <https://github.com/kelseyhightower/kubernetes-the-hard-way>.
 
 Important variations:
@@ -32,7 +34,7 @@ _Protip: replace "nono.io" with your domain name where appropriate_
     - New Network: **k8s**
       - MAC Address: **02:00:00:00:f0:09 Manual**
     - New CD/DVD Drive: **Datastore ISO File**
-      - browse to **Fedora-Server-dvd-x86_64-30-1.2.iso**
+      - browse to **Fedora-Server-dvd-x86_64-33-1.2.iso**
       - status: **Connect At Power On**
 
 Configure DNS with the following hostname-IPv6-IPv4 address & DHCP with the following
@@ -75,7 +77,7 @@ addresses.
 - Do **not** use these IPv6 addresses; instead, use the IPv6 addresses you've
   been allocated or generate your own [private IPv6 addresses](https://simpledns.com/private-ipv6)
 - power on VM
-- Install Fedora 30
+- Install Fedora 33
 - Language: **English English (United States)**
 - System Installation Destination
   - Select disk
@@ -430,11 +432,107 @@ done
 
 Next up: [Bootstrapping the Kubernetes Control Plane](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/08-bootstrapping-kubernetes-controllers.md)
 
+Don't follow those instructions; follow the instructions below.
+
+I want to use the version of Kubernetes that comes with Fedora (1.18.2) rather
+than the one given in the instructions (1.18.6) because I'm worried about
+Fedora's use cgroup v2 instead of v1.
+
 ```
-sudo dnf install -y kubernetes
+for VM in {worker,controller}-{0,1,2}; do
+  ssh $VM sudo dnf install -y kubernetes &
+done
 ```
 
+We configure the Kubernetes API server
 
+```
+for VM in controller-{0,1,2}; do
+  ssh $VM sudo mkdir -p /var/lib/kubernetes \; \
+    sudo mv ca.pem ca-key.pem kubernetes-key.pem kubernetes.pem \
+      service-account-key.pem service-account.pem \
+      encryption-config.yaml /var/lib/kubernetes/
+done
+```
+
+And now, the service:
+
+```
+for VM in controller-{0,1,2}; do
+  INTERNAL_IP=$(dig +short $VM)
+  cat <<EOF | ssh $VM sudo tee -a /etc/kubernetes/apiserver
+# Kubernetes the hard way configuration
+KUBE_API_ARGS=" \\
+  --advertise-address=${INTERNAL_IP} \\
+  --allow-privileged=true \\
+  --apiserver-count=3 \\
+  --audit-log-maxage=30 \\
+  --audit-log-maxbackup=3 \\
+  --audit-log-maxsize=100 \\
+  --audit-log-path=/var/log/audit.log \\
+  --authorization-mode=Node,RBAC \\
+  --bind-address=0.0.0.0 \\
+  --client-ca-file=/var/lib/kubernetes/ca.pem \\
+  --enable-admission-plugins=NamespaceLifecycle,NodeRestriction,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota \\
+  --etcd-cafile=/var/lib/kubernetes/ca.pem \\
+  --etcd-certfile=/var/lib/kubernetes/kubernetes.pem \\
+  --etcd-keyfile=/var/lib/kubernetes/kubernetes-key.pem \\
+  --etcd-servers=https://10.240.0.10:2379,https://10.240.0.11:2379,https://10.240.0.12:2379 \\
+  --event-ttl=1h \\
+  --encryption-provider-config=/var/lib/kubernetes/encryption-config.yaml \\
+  --kubelet-certificate-authority=/var/lib/kubernetes/ca.pem \\
+  --kubelet-client-certificate=/var/lib/kubernetes/kubernetes.pem \\
+  --kubelet-client-key=/var/lib/kubernetes/kubernetes-key.pem \\
+  --kubelet-https=true \\
+  --runtime-config='api/all=true' \\
+  --service-account-key-file=/var/lib/kubernetes/service-account.pem \\
+  --service-cluster-ip-range=10.32.0.0/24 \\
+  --service-node-port-range=30000-32767 \\
+  --tls-cert-file=/var/lib/kubernetes/kubernetes.pem \\
+  --tls-private-key-file=/var/lib/kubernetes/kubernetes-key.pem \\
+  --v=2"
+EOF
+done
+```
+
+Let's configure the controller manager
+
+```
+for VM in controller-{0,1,2}; do
+  INTERNAL_IP=$(dig +short $VM)
+  sudo mv kube-controller-manager.kubeconfig /var/lib/kubernetes/
+done
+```
+
+```
+for VM in controller-{0,1,2}; do
+  INTERNAL_IP=$(dig +short $VM)
+  cat <<EOF | ssh $VM sudo tee -a /etc/kubernetes/controller-manager
+# Kubernetes the hard way configuration
+KUBE_CONTROLLER_MANAGER_ARGS=" \\
+  --bind-address=0.0.0.0 \\
+  --cluster-cidr=10.200.0.0/16 \\
+  --cluster-name=kubernetes \\
+  --cluster-signing-cert-file=/var/lib/kubernetes/ca.pem \\
+  --cluster-signing-key-file=/var/lib/kubernetes/ca-key.pem \\
+  --kubeconfig=/var/lib/kubernetes/kube-controller-manager.kubeconfig \\
+  --leader-elect=true \\
+  --root-ca-file=/var/lib/kubernetes/ca.pem \\
+  --service-account-private-key-file=/var/lib/kubernetes/service-account-key.pem \\
+  --service-cluster-ip-range=10.32.0.0/24 \\
+  --use-service-account-credentials=true \\
+  --v=2
+EOF
+done
+```
+
+Configure the Kubernetes Scheduler
+
+```
+for VM in controller-{0,1,2}; do
+  sudo mv kube-scheduler.kubeconfig /var/lib/kubernetes/
+done
+```
 
 
 
