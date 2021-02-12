@@ -449,6 +449,8 @@ vCenter). In our case, the _CN(id)_ is
 
 _Note: I never finished this process; I got bored._
 
+### Why doesn't vCenter 70 Lifecycle Manager not work
+
 From <https://vcenter-70.nono.io/ui/app/admin/plugins> Stack Trace:
 ```
 Error downloading plug-in. Make sure that the URL is reachable and the registered thumbprint is correct.
@@ -492,4 +494,156 @@ java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
 java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
 com.vmware.vise.util.concurrent.WorkerThreadFactory$1.run(WorkerThreadFactory.java:64)
 java.lang.Thread.run(Thread.java:748)
+```
+
+Following
+[these](https://communities.vmware.com/t5/vCenter-Server-Discussions/Error-downloading-plug-in-Make-sure-that-the-URL-is-reachable/td-p/2310341)
+instructions, ssh onto vcenter:
+
+```
+/usr/lib/vmware-lookupsvc/tools/lstool.py list --url https://localhost/lookupservice/sdk --type com.vmware..vr.vrms
+...
+Caused by: javax.net.ssl.SSLException: Certificate for <localhost> doesn't match any of the subject alternative names: [vcenter-70.nono.io, www.vcenter-70.nono.io]
+```
+Let's try again, but not using localhost:
+```
+/usr/lib/vmware-lookupsvc/tools/lstool.py list --url https://vcenter-70.nono.io/lookupservice/sdk --type com.vmware..vr.vrms
+  (nothing but Java stuff: "Picked up JAVA_TOOL_OPTIONS: -Xms32M -Xmx128M..."
+/usr/lib/vmware-lookupsvc/tools/lstool.py list --url https://vcenter-70.nono.io/lookupservice/sdk --type vrUi
+```
+Let's try again, but using [stackoverflow](https://stackoverflow.com/questions/65614465/vcenter-7-0-error-downloading-plug-in-make-sure-that-the-url-is-reachable-and):
+```
+/usr/lib/vmware-lookupsvc/tools/lstool.py list --ep-type com.vmware.cis.vsphereclient.plugin --url http://localhost:7090/lookupservice/sdk
+```
+There are several variants of the h4 plugin; deleting the old ones (0.3.5.0,
+0.4.0.0)
+```
+/usr/lib/vmware-lookupsvc/tools/lstool.py unregister \
+    --url http://localhost:7090/lookupservice/sdk \
+    --user 'administrator@vsphere.local' \
+    --password 'yourpassword' \
+    --no-check-cert \
+    --id a70e03ca-2f78-44d8-b120-85997274aeca
+```
+It looks like there's still the broken lifecycle manager, and I believe this is
+the plugin info:
+```
+	Name: cis.updatemgr.ServiceName
+	Description: cis.updatemgr.ServiceDescription
+	Service Product: com.vmware.vum
+	Service Type: client
+	Service ID: 29f99f31-afd8-419b-8803-f899362209f6
+	Site ID: default-site
+	Node ID: 3bd2599c-38e9-42e1-adbf-32341a6b50cd
+	Owner ID: vpxd-extension-23be793a-68b2-4f05-993c-c38f9cb1f391@vsphere.local
+	Version: 7.0.1.17451065
+	Endpoints:
+		Type: com.vmware.cis.vsphereclient.plugin
+		Protocol: http
+		URL: https://vcenter-70.nono.io:9087/vci/downloads/vum-htmlclient.zip
+		SSL trust: MIIFyTCCBLGgAwIBAgIQe1hqAMVJ0b0O3wPTgvcpyTANBgkqhkiG9w0BAQsFADCBjzELMAkGA1UEBhMCR0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UEBxMHU2FsZm9yZDEYMBYGA1UEChMPU2VjdGlnbyBMaW1pdGVkMTcwNQYDVQQDEy5TZWN0aWdvIFJTQSBEb21haW4gVmFsaWRhdGlvbiBTZWN1cmUgU2VydmVyIENBMB4XDTIwMTIyNjAwMDAwMFoXDTIxMDQwNTIzNTk1OVowHTEbMBkGA1UEAxMSdmNlbnRlci03MC5ub25vLmlvMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA0gZjjhEHBGt8ollpLMiX3cnpLQLtM12BZXWxIfm6F4lYHntwj57nK8FbazVxJqkVz4kp9L15hKuLMKZOCa68WtBpPZNwHc/X1FVf457Tr97DXQb4WVRgLWAAnZnyNIr4cke5TuEBxAEMelMAEbVKnjJoT14s7b09MB0NWDiqV0TxjJM++Baw/jYyTv2Xpo7s4xSwYiAnFIfIL5tH37msBm9d7q7UpNqW6DgHQSP6dzhV+CE580+gIyrPHCn/SHdoM90bfTqw8hOlUo5KF4t6rW4VzlNb8XNH/UsM8u8O0gJ/ZJeppL31ybOeEH1XHr21n+CKpZEnOaBXuo5f9fU7GwIDAQABo4ICkDCCAowwHwYDVR0jBBgwFoAUjYxexFStiuF36Zv5mwXhuAGNYeEwHQYDVR0OBBYEFFHXfXiXlF467r+kmAELax8g5naAMA4GA1UdDwEB/wQEAwIFoDAMBgNVHRMBAf8EAjAAMB0GA1UdJQQWMBQGCCsGAQUFBwMBBggrBgEFBQcDAjBJBgNVHSAEQjBAMDQGCysGAQQBsjEBAgIHMCUwIwYIKwYBBQUHAgEWF2h0dHBzOi8vc2VjdGlnby5jb20vQ1BTMAgGBmeBDAECATCBhAYIKwYBBQUHAQEEeDB2ME8GCCsGAQUFBzAChkNodHRwOi8vY3J0LnNlY3RpZ28uY29tL1NlY3RpZ29SU0FEb21haW5WYWxpZGF0aW9uU2VjdXJlU2VydmVyQ0EuY3J0MCMGCCsGAQUFBzABhhdodHRwOi8vb2NzcC5zZWN0aWdvLmNvbTA1BgNVHREELjAsghJ2Y2VudGVyLTcwLm5vbm8uaW+CFnd3dy52Y2VudGVyLTcwLm5vbm8uaW8wggECBgorBgEEAdZ5AgQCBIHzBIHwAO4AdQB9PvL4j/+IVWgkwsDKnlKJeSvFDngJfy5ql2iZfiLw1wAAAXagmhFqAAAEAwBGMEQCIAxAyfS6PLHl0GY1u+OZlO5NqCvo6saMY01oNT4BIzThAiBYnR7VmLKevmiIXowckj2xkkpQem0WzqiJO2PewL5DogB1AJQgvB6O1Y1siHMfgosiLA3R2k1ebE+UPWHbTi9YTaLCAAABdqCaEfUAAAQDAEYwRAIgIViBEHayyEeKfJA3i4haCJH0LA91N3yWrK0dXx0a+swCIDIjkXVt5qNqbNAT0WNQiyw6blmgi6jx4cSc/Yb7BNQYMA0GCSqGSIb3DQEBCwUAA4IBAQClCCS+OplB1ojt0QmQsd2VVDbTQ5nFQgql/+UBoz3DcQlTMvdWIPtLY6I+69HCZUxsFD4NXVV6/jwC9E9WeTIW8c+koDO7758947QlOOJ2tgwiesdOC6wbcHrp+xvMDElKC4vmSeAvq77II2JaRB0C0BxXVK0P9/XYAxpemKTiujsvpRXZLAlNBo3TKc1NSQzRb3fQBfNve/oZZTnLWALk4md+HqFRHo5s4vhx89HX484fNVtUKoaABju2rkR2SGvPp+NEEiMgtrjMyRjFWZPi3LB47c7t4Hlb6pgX4QmBXSdj7JaN52YVlgJ0Pk/Pq7gMix0YIfUNlHOz6swy0SKZ
+		Endpoint Attributes:
+			company: VMware, Inc
+			adminEmail: noreply@vmware.com
+	Attributes:
+		com.vmware.cis.cm.ControlScript: service-control-default-vmon
+		com.vmware.cis.cm.HostId: 23be793a-68b2-4f05-993c-c38f9cb1f391
+```
+There's nothing listening on 9087, but there is a `vum-htmlclient.zip`:
+```
+find / -name vum-htmlclient.zip -ls
+  2753944   6664 -rw-r--r--   1  updatemgr updatemgr  6822780 Jan 20 18:09 /usr/lib/vmware-updatemgr/bin/docroot/vci/downloads/vum-htmlclient.zip
+```
+Let's see if we can download this over *any* endpoint:
+```bash
+for PORT in $(ss -lntp | grep "*:" | grep -v 127.0.0.1 | awk '{print $4}' | sed "s=*:=="); do
+  curl --user 'a@vsphere.local:xxx' -k -I http://vcenter-70.nono.io:$PORT/vci/downloads/vum-htmlclient.zip
+  curl --user 'a@vsphere.local:xxx' -k -I https://vcenter-70.nono.io:$PORT/vci/downloads/vum-htmlclient.zip
+  break
+done
+```
+Mostly 404s, a bunch of OpenSSL errors.
+
+I think I need to give up on Lifecycle Manager & use the old, manual way.
+
+Notice the control script has vmon—maybe there's a log?
+```bash
+less /var/log/vmware/vmon/vmon.log
+```
+Let's look for `updatemgr`:
+```
+Adding service updatemgr.
+<updatemgr-prestart> Constructed command: /usr/bin/python /usr/lib/vmware-updatemgr/bin/updatemgr-vmon-prestart.py
+<updatemgr> Service pre-start command completed successfully.
+<updatemgr> Constructed command: /usr/lib/vmware-updatemgr/bin/vmware-updatemgr /usr/lib/vmware-updatemgr/bin/vci-integrity.xml
+<updatemgr> Running the API Health command as user updatemgr
+<updatemgr-healthcmd> Constructed command: /usr/bin/python /usr/lib/vmware-updatemgr/bin/updatemgr-vmon-apihealth.py
+<updatemgr> Service STARTED successfully.
+<event-pub> Constructed command: /usr/bin/python /usr/lib/vmware-vmon/vmonEventPublisher.py --eventdata updatemgr,HEALTHY,UNHEALTHY,0 --eventdata vlcm,HEALTHY,UNHEALTHY,0
+<updatemgr> Service is dumping core. Coredump count 5. CurrReq: 0
+<updatemgr> Initiating core dump recovery action.
+<event-pub> Constructed command: /usr/bin/python /usr/lib/vmware-vmon/vmonEventPublisher.py --eventdata wcp,HEALTHY,UNHEALTHY,0 --eventdata updatemgr,UNHEALTHY,HEALTHY,1
+<updatemgr> Service exited. Exit code 1
+<updatemgr> Service exited unexpectedly. Crash count 5. Taking configured recovery action.
+<updatemgr> Skip service health check. State STOPPED, Curr request 0
+<updatemgr> Skip service health check. State STOPPED, Curr request 0
+<updatemgr> Skip service health check. State STOPPED, Curr request 0
+<updatemgr> Skip service health check. State STOPPED, Curr request 0
+```
+If I look at `vci-integrity.xml`, I see juicy things like the port (9087) and
+the log file (`vmware-vum-server`)
+```
+less /storage/log/vmware/vmware-updatemgr/vum-server/vmware-vum-server.log
+```
+Nothing in the log file, but I found the core dumps!
+```
+file /storage/core/core.worker.9353
+core.worker.9353: ELF 64-bit LSB core file, x86-64, version 1 (SYSV), SVR4-style, from '/usr/lib/vmware-updatemgr/bin/updatemgr /usr/lib/vmware-updatemgr/bin/vci-integ', real uid: 1017, effective uid: 1017, real gid: 990, effective gid: 990, execfn: '/usr/lib/vmware-updatemgr/bin/updatemgr', platform: 'x86_64'
+```
+Let's crack open `gdb`:
+```
+gdb /usr/lib/vmware-updatemgr/bin/updatemgr /storage/core/core.worker.9353
+(gdb) bt
+#0  0x00007fd1ced2e7ba in raise () from /usr/lib/libc.so.6
+#1  0x00007fd1ced2f851 in abort () from /usr/lib/libc.so.6
+#2  0x00007fd1d3220078 in Vmacore::System::SignalTerminateHandler (info=info@entry=0x0, ctx=ctx@entry=0x0) at bora/vim/lib/vmacore/posix/defSigHandlers.cpp:62
+#3  0x00007fd1d3220088 in Vmacore::System::TerminateHandler () at bora/vim/lib/vmacore/posix/defSigHandlers.cpp:78
+#4  0x00007fd1d1a402d6 in ?? () from /usr/lib/vmware-updatemgr/bin/../lib/libstdc++.so.6
+#5  0x00007fd1d1a40321 in std::terminate() () from /usr/lib/vmware-updatemgr/bin/../lib/libstdc++.so.6
+#6  0x00007fd1d1a40538 in __cxa_throw () from /usr/lib/vmware-updatemgr/bin/../lib/libstdc++.so.6
+#7  0x00007fd1d321caa9 in Vmacore::System::ThrowFileIOException (filePath=..., error=<optimized out>) at bora/vim/lib/vmacore/posix/fileIO.cpp:61
+#8  0x00007fd1d321cbda in Vmacore::System::FileReaderPosix::Open (this=this@entry=0x7fd1c8785f40, filePath=...) at bora/vim/lib/vmacore/posix/fileIO.cpp:230
+#9  0x00007fd1d3109de9 in Vmacore::System::SystemFactory::CreateFileReader (this=<optimized out>, filePath=..., out=...) at bora/vim/lib/vmacore/system/systemFactory.cpp:469
+#10 0x00007fd1ce3f0e2d in Sysimage::xmlParser::Parse(std::string const&) () from /usr/lib/vmware-updatemgr/bin/../lib/libvci-vcIntegrity.so
+#11 0x00007fd1ce2c7fa3 in Integrity::HostUpdate20::PatchDepotManager::GetVendorMap(std::string const&, Integrity::DepotManager::DepotManagerType, std::shared_ptr<Integrity::HostUpdate20::InternalMap<std::map<std::string, Integrity::HostUpdate20::Vendor, std::less<std::string>, std::allocator<std::pair<std::string const, Integrity::HostUpdate20::Vendor> > > > >&) () from /usr/lib/vmware-updatemgr/bin/../lib/libvci-vcIntegrity.so
+#12 0x00007fd1ce2c83d4 in Integrity::HostUpdate20::PatchDepotManager::GetMicroDepots(std::set<std::string, std::less<std::string>, std::allocator<std::string> >&) ()
+   from /usr/lib/vmware-updatemgr/bin/../lib/libvci-vcIntegrity.so
+#13 0x00007fd1c780cdf1 in Integrity::VapiPlugin::InitiateDefaultTasks() () from /usr/lib/vmware-updatemgr/bin/../lib/libvci-vapi.so
+#14 0x00007fd1d31a5e76 in Vmacore::System::ThreadPoolFair::InvokeItem(std::function<void ()>&) const (this=this@entry=0x166c610, item=...)
+    at bora/vim/lib/vmacore/asio/ThreadPoolFair.cpp:632
+#15 0x00007fd1d31ab4d4 in Vmacore::System::ThreadPoolFair::RunWorkerThread (this=0x166c610) at bora/vim/lib/vmacore/asio/ThreadPoolFair.cpp:1302
+#16 0x00007fd1d3224dac in std::function<void ()>::operator()() const (this=<optimized out>)
+    at /build/mts/release/bora-17451052/BOD/vcenter-vpxlibs/linx64/release/f8c200f/build/bora/build/package/COMPONENTS/cayman_esx_toolchain/ob-15599702/linux64/usr/x86_64-vmk-linux-gnu/include/c++/6.4.0/functional:2127
+#17 Vmacore::System::ThreadPosix::ThreadBegin (data=<optimized out>) at bora/vim/lib/vmacore/posix/thread.cpp:122
+#18 0x00007fd1d1781f87 in start_thread () from /usr/lib/libpthread.so.0
+#19 0x00007fd1cedec5bf in clone () from /usr/lib/libc.so.6
+```
+Okay, let's find out what the `filePath` on `#7` is.
+```
+(gdb) up 7
+#7  0x00007fd1d321caa9 in Vmacore::System::ThrowFileIOException (filePath=..., error=<optimized out>) at bora/vim/lib/vmacore/posix/fileIO.cpp:61
+61	bora/vim/lib/vmacore/posix/fileIO.cpp: No such file or directory.
+(gdb) p filePath
+$1 = (const std::string &) @0x7fd1c8785f60: {static npos = 18446744073709551615,
+  _M_dataplus = {<std::allocator<char>> = {<__gnu_cxx::new_allocator<char>> = {<No data fields>}, <No data fields>},
+    _M_p = 0x7fd1c8786008 "/storage/updatemgr/patch-store/hostupdate/__hostupdate20-consolidated-index__.xml"}}
+```
+Well, that's an interesting filepath: `/storage/updatemgr/patch-store/hostupdate/__hostupdate20-consolidated-index__.xml`
+
+Let's try [resetting the updatemgr db](https://kb.vmware.com/s/article/2147284):
+```
+service-control --stop vmware-updatemgr
+/usr/lib/vmware-updatemgr/bin/updatemgr-utility.py reset-db
+rm -rf /storage/updatemgr/patch-store/*
+service-control --start vmware-updatemgr
 ```
