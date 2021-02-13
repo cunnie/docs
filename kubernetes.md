@@ -102,7 +102,7 @@ sudo perl -pi -e 's/^%wheel\s+ALL=\(ALL\)\s+ALL/%wheel ALL=(ALL) NOPASSWD: ALL/'
 Update to the latest & greatest:
 ```
 sudo dnf -y update
-sudo dnf install -y tmux neovim git
+sudo dnf install -y tmux neovim git binutils
 sudo shutdown -r now
 ```
 Balance Btrfs to avoid `ENOSPC` ("no space left on device") errors later:
@@ -203,7 +203,7 @@ chmod +x /usr/local/bin/govc
 
 Set the `govc` environment variables:
 ```
-export GOVC_URL=vcenter-67.nono.io
+export GOVC_URL=vcenter-70.nono.io
 export GOVC_USERNAME=administrator@vsphere.local
 export GOVC_PASSWORD=HaHaImNotGonnaFillThisIn
 export GOVC_INSECURE=true # if you haven't bothered to get commercial CA-issued certificates
@@ -254,6 +254,58 @@ Also, if you want to be cool, use Elliptic curve cryptography:
   "size": 256
 }
 ```
+
+We don't want our certificates to expire every year; we don't want to do a
+yearly cert-rotation fire drill. We want our certs to be valid for ten years.
+(Note: I don't know why the `cfssl` authors chose hours instead of days as the
+unit of measure for expiration.)  Here's my `ca-csr.json`:
+
+```json
+{
+  "CA": {
+    "expiry": "87600h"
+  },
+  "CN": "Kubernetes",
+  "key": {
+    "algo": "ecdsa",
+    "size": 256
+  },
+  "expires": "2034-02-16T23:59:59Z",
+  "names": [
+    {
+      "C": "US",
+      "L": "San Francisco",
+      "O": "Kubernetes",
+      "OU": "nono.io",
+      "ST": "California"
+    }
+  ]
+}
+```
+
+And here's my `ca-config.json`:
+
+```json
+{
+  "signing": {
+    "default": {
+      "expiry": "87600h"
+    },
+    "profiles": {
+      "kubernetes": {
+        "usages": [
+          "signing",
+          "key encipherment",
+          "server auth",
+          "client auth"
+        ],
+        "expiry": "87600h"
+      }
+    }
+  }
+}
+```
+
 
 You'll need to change the instructions for the workers:
 
@@ -499,8 +551,7 @@ Let's configure the controller manager
 
 ```
 for VM in controller-{0,1,2}; do
-  INTERNAL_IP=$(dig +short $VM)
-  sudo mv kube-controller-manager.kubeconfig /var/lib/kubernetes/
+  ssh $VM sudo mv kube-controller-manager.kubeconfig /var/lib/kubernetes/
 done
 ```
 
@@ -530,7 +581,19 @@ Configure the Kubernetes Scheduler
 
 ```
 for VM in controller-{0,1,2}; do
-  sudo mv kube-scheduler.kubeconfig /var/lib/kubernetes/
+  ssh $VM sudo mv kube-scheduler.kubeconfig /var/lib/kubernetes/
+done
+```
+
+Start the Controller Services
+
+```
+for VM in controller-{0,1,2}; do
+  ssh $VM '
+    sudo systemctl daemon-reload
+    sudo systemctl enable kube-apiserver kube-controller-manager kube-scheduler
+    sudo systemctl start kube-apiserver kube-controller-manager kube-scheduler
+  '
 done
 ```
 
