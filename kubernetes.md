@@ -258,7 +258,32 @@ Also, if you want to be cool, use Elliptic curve cryptography:
 We don't want our certificates to expire every year; we don't want to do a
 yearly cert-rotation fire drill. We want our certs to be valid for ten years.
 (Note: I don't know why the `cfssl` authors chose hours instead of days as the
-unit of measure for expiration.)  Here's my `ca-csr.json`:
+unit of measure for expiration.)
+
+Here's my `ca-config.json`:
+
+```json
+{
+  "signing": {
+    "default": {
+      "expiry": "87600h"
+    },
+    "profiles": {
+      "kubernetes": {
+        "usages": [
+          "signing",
+          "key encipherment",
+          "server auth",
+          "client auth"
+        ],
+        "expiry": "87600h"
+      }
+    }
+  }
+}
+```
+
+Here's my `ca-csr.json`:
 
 ```json
 {
@@ -283,31 +308,39 @@ unit of measure for expiration.)  Here's my `ca-csr.json`:
 }
 ```
 
-And here's my `ca-config.json`:
+Here's my `admin-csr.json`:
 
 ```json
 {
-  "signing": {
-    "default": {
-      "expiry": "87600h"
-    },
-    "profiles": {
-      "kubernetes": {
-        "usages": [
-          "signing",
-          "key encipherment",
-          "server auth",
-          "client auth"
-        ],
-        "expiry": "87600h"
-      }
+  "CN": "admin",
+  "key": {
+    "algo": "ecdsa",
+    "size": 256
+  },
+  "names": [
+    {
+      "C": "US",
+      "L": "San Francisco",
+      "O": "system:masters",
+      "OU": "nono.io",
+      "ST": "California"
     }
-  }
+  ]
 }
 ```
 
+Let's generate the admin certificates:
 
-You'll need to change the instructions for the workers:
+```
+cfssl gencert \
+  -ca=ca.pem \
+  -ca-key=ca-key.pem \
+  -config=ca-config.json \
+  -profile=kubernetes \
+  admin-csr.json | cfssljson -bare admin
+```
+
+Now the worker certificates:
 
 ```zsh
 for instance in worker-0 worker-1 worker-2; do
@@ -323,12 +356,12 @@ for instance in worker-0 worker-1 worker-2; do
         "C": "US",
         "L": "San Francisco",
         "O": "system:nodes",
-        "OU": "Kubernetes The Hard Way",
+        "OU": "nono.io",
         "ST": "California"
       }
     ]
   }
-  EOF
+EOF
 
   DOMAIN=nono.io
   INTERNAL_IPV4=$(dig +short a $instance.$DOMAIN)
@@ -345,13 +378,106 @@ for instance in worker-0 worker-1 worker-2; do
 done
 ```
 
-Also change the API server's instructions:
+[The Controller Manager Client
+Certificate](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/04-certificate-authority.md#the-controller-manager-client-certificate):
 
 ```zsh
+cat > kube-controller-manager-csr.json <<EOF
 {
+  "CN": "system:kube-controller-manager",
+  "key": {
+    "algo": "ecdsa",
+    "size": 256
+  },
+  "names": [
+    {
+      "C": "US",
+      "L": "San Francisco",
+      "O": "system:kube-controller-manager",
+      "OU": "nono.io",
+      "ST": "California"
+    }
+  ]
+}
+EOF
 
+cfssl gencert \
+  -ca=ca.pem \
+  -ca-key=ca-key.pem \
+  -config=ca-config.json \
+  -profile=kubernetes \
+  kube-controller-manager-csr.json | cfssljson -bare kube-controller-manager
+```
+
+[The Kube Proxy Client Certificate](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/04-certificate-authority.md#the-kube-proxy-client-certificate):
+
+```zsh
+cat > kube-proxy-csr.json <<EOF
+{
+  "CN": "system:kube-proxy",
+  "key": {
+    "algo": "ecdsa",
+    "size": 256
+  },
+  "names": [
+    {
+      "C": "US",
+      "L": "San Francisco",
+      "O": "system:node-proxier",
+      "OU": "nono.io",
+      "ST": "California"
+    }
+  ]
+}
+EOF
+
+cfssl gencert \
+  -ca=ca.pem \
+  -ca-key=ca-key.pem \
+  -config=ca-config.json \
+  -profile=kubernetes \
+  kube-proxy-csr.json | cfssljson -bare kube-proxy
+```
+
+
+
+[The Scheduler Client
+Certificate](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/04-certificate-authority.md#the-scheduler-client-certificate):
+
+```zsh
+cat > kube-scheduler-csr.json <<EOF
+{
+  "CN": "system:kube-scheduler",
+  "key": {
+    "algo": "ecdsa",
+    "size": 256
+  },
+  "names": [
+    {
+      "C": "US",
+      "L": "San Francisco",
+      "O": "system:kube-scheduler",
+      "OU": "nono.io",
+      "ST": "California"
+    }
+  ]
+}
+EOF
+
+cfssl gencert \
+  -ca=ca.pem \
+  -ca-key=ca-key.pem \
+  -config=ca-config.json \
+  -profile=kubernetes \
+  kube-scheduler-csr.json | cfssljson -bare kube-scheduler
+```
+
+[The Kubernetes API Server
+Certificate](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/04-certificate-authority.md#the-kubernetes-api-server-certificate):
+
+```zsh
 KUBERNETES_PUBLIC_ADDRESS=73.189.219.4  # my Comcast home IP
-KUBERNETES_FQDN=kubernetes.nono.io  # my Comcast home IP + 3 IPv6 IPs
+KUBERNETES_FQDN=k8s.nono.io  # my Comcast home IP + 3 IPv6 IPs
 KUBERNETES_HOSTNAMES=kubernetes,kubernetes.default,kubernetes.default.svc,kubernetes.default.svc.cluster,kubernetes.svc.cluster.local
 KUBERNETES_IPV4_ADDRS=10.240.0.10,10.240.0.11,10.240.0.12
 KUBERNETES_IPV6_ADDRS=2601:646:100:69f2::10,2601:646:100:69f2::11,2601:646:100:69f2::12
@@ -368,7 +494,7 @@ cat > kubernetes-csr.json <<EOF
       "C": "US",
       "L": "San Francisco",
       "O": "Kubernetes",
-      "OU": "Kubernetes The Hard Way",
+      "OU": "nono.io",
       "ST": "California"
     }
   ]
@@ -382,11 +508,41 @@ cfssl gencert \
   -hostname=10.32.0.1,${KUBERNETES_IPV4_ADDRS},${KUBERNETES_IPV6_ADDRS},${KUBERNETES_PUBLIC_ADDRESS},${KUBERNETES_FQDN},127.0.0.1,${KUBERNETES_HOSTNAMES} \
   -profile=kubernetes \
   kubernetes-csr.json | cfssljson -bare kubernetes
-
-}
 ```
 
-Distribute the Client and Server Certificates:
+[The Service Account Key
+Pair](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/04-certificate-authority.md#the-service-account-key-pair):
+
+```zsh
+cat > service-account-csr.json <<EOF
+{
+  "CN": "service-accounts",
+  "key": {
+    "algo": "ecdsa",
+    "size": 256
+  },
+  "names": [
+    {
+      "C": "US",
+      "L": "San Francisco",
+      "O": "Kubernetes",
+      "OU": "nono.io",
+      "ST": "California"
+    }
+  ]
+}
+EOF
+
+cfssl gencert \
+  -ca=ca.pem \
+  -ca-key=ca-key.pem \
+  -config=ca-config.json \
+  -profile=kubernetes \
+  service-account-csr.json | cfssljson -bare service-account
+```
+
+[Distribute the Client and Server
+Certificates](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/04-certificate-authority.md#distribute-the-client-and-server-certificates):
 
 ```zsh
 for instance in worker-{0,1,2}; do
@@ -400,19 +556,22 @@ done
 
 Next up: [Generating Kubernetes Configuration Files for Authentication](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/5c462220b7f2c03b4b699e89680d0cc007a76f91/docs/05-kubernetes-configuration-files.md#generating-kubernetes-configuration-files-for-authentication)
 
-We veer slightly from Kelsey's instructions: In his instructions, he uses and IP
+We veer slightly from Kelsey's instructions: In his instructions, he uses an IP
 address for the k8s server, which is a luxury that he can indulge in because
 he's using NAT+IPv4, and there's only one IP address associated with it.
 
 We don't have such a luxury: we have one IPv4 address and 3 IPv6 addresses (one
 for each of the controllers, at least I think it's one for each of the
-controllers). Our solution? DNS entry, `kubernetes.nono.io`, with 1 IPv4 entry and 3
+controllers). Our solution? DNS entry, `k8s.nono.io`, with 1 IPv4 entry and 3
 IPv6 entries.
+
+[The kubelet Kubernetes Configuration File](The kubelet Kubernetes Configuration
+File):
 
 ```
 KUBERNETES_PUBLIC_ADDRESS=k8s.nono.io
 for instance in worker-0 worker-1 worker-2; do
-  kubectl config set-cluster kubernetes-the-hard-way \
+  kubectl config set-cluster nono \
     --certificate-authority=ca.pem \
     --embed-certs=true \
     --server=https://${KUBERNETES_PUBLIC_ADDRESS}:6443 \
@@ -425,7 +584,7 @@ for instance in worker-0 worker-1 worker-2; do
     --kubeconfig=${instance}.kubeconfig
 
   kubectl config set-context default \
-    --cluster=kubernetes-the-hard-way \
+    --cluster=nono \
     --user=system:node:${instance} \
     --kubeconfig=${instance}.kubeconfig
 
