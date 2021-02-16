@@ -834,7 +834,7 @@ for VM in controller-{0,1,2}; do
 KUBE_CONTROLLER_MANAGER_ARGS=" \\
   --bind-address=0.0.0.0 \\
   --cluster-cidr=10.200.0.0/16 \\
-  --cluster-name=kubernetes \\
+  --cluster-name=nono \\
   --cluster-signing-cert-file=/var/lib/kubernetes/ca.pem \\
   --cluster-signing-key-file=/var/lib/kubernetes/ca-key.pem \\
   --kubeconfig=/var/lib/kubernetes/kube-controller-manager.kubeconfig \\
@@ -867,6 +867,25 @@ for VM in controller-{0,1,2}; do
   '
 done
 ```
+
+We skip the section _Enable HTTP Health Checks_; it's for setups with a load
+balancer, and we're not using a load balancer.
+
+[RBAC for Kubelet
+Authorization](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/08-bootstrapping-kubernetes-controllers.md#rbac-for-kubelet-authorization):
+
+No changes; follow Kelsey's instructions.
+
+[The Kubernetes Frontend Load
+Balancer](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/08-bootstrapping-kubernetes-controllers.md#the-kubernetes-frontend-load-balancer):
+
+Skip; we're not creating a load balancer. But run the check:
+
+```
+curl -k https://k8s.nono.io:6443/version
+```
+
+### [Bootstrapping the Kubernetes Worker Nodes](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/09-bootstrapping-kubernetes-workers.md)
 
 
 
