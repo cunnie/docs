@@ -173,8 +173,7 @@ sudo shutdown -h now
 ```
 Right-click on VM `k8s-template.nono.io` and select Template→Convert to Template
 
-### [Installing the Client
-Tools](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/02-client-tools.md)
+### [Installing the Client Tools](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/02-client-tools.md)
 
 Follow these instructions.
 <https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/02-client-tools.md>,
@@ -238,8 +237,7 @@ for i in {controller,worker}-{0,1,2}; do
 done
 ```
 
-### [Provisioning a CA and Generating TLS
-Certificates](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/04-certificate-authority.md)
+### [Provisioning a CA and Generating TLS Certificates](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/04-certificate-authority.md)
 
 But first we change to a directory to save our output (your directory may be
 different):
