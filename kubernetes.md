@@ -888,6 +888,51 @@ curl -k https://k8s.nono.io:6443/version
 ### [Bootstrapping the Kubernetes Worker Nodes](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/09-bootstrapping-kubernetes-workers.md)
 
 
+The following have already been installed, but if you're not sure, run it
+anyway; it won't hurt anything:
+
+```
+for VM in worker-{0,1,2}; do
+  ssh $VM sudo dnf install -y socat conntrack ipset containernetworking-plugins cri-tools runc
+done
+```
+
+[Disable
+Swap](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/09-bootstrapping-kubernetes-workers.md#disable-swap):
+
+```
+for VM in worker-{0,1,2}; do
+  ssh $VM "
+    sudo swapon --show;
+    sudo swapoff -a;
+    sudo sed --in-place '/none *swap /d' /etc/fstab;
+    sudo systemctl daemon-reload "
+done
+```
+
+Skip the [Download and Install Worker
+Binaries](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/09-bootstrapping-kubernetes-workers.md#download-and-install-worker-binaries)
+section; they're already installed.
+
+[Configure CNI
+Networking](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/09-bootstrapping-kubernetes-workers.md#configure-cni-networking):
+
+```zsh
+for I = 0 1 2; do
+  POD_CIDR=10.200.$I.0/24
+
+```
+
+
+
+
+
+
+
+
+
+
+
 
 # Old (Deprecated) Notes
 
