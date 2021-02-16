@@ -781,7 +781,7 @@ And now, the service:
 
 ```
 for VM in controller-{0,1,2}; do
-  ssh $VM sudo sed --in-place '' "'s/^KUBE_ADMISSION_CONTROL=/# &/'" /etc/kubernetes/apiserver
+  ssh $VM sudo sed --in-place '' "'s/^KUBE_ADMISSION_CONTROL=/# &/; s/^KUBE_API_ADDRESS=/# &/; s/^KUBE_ETCD_SERVERS=/# &/; s/^KUBE_SERVICE_ADDRESSES=/# &/'" /etc/kubernetes/apiserver
   INTERNAL_IP=$(dig +short $VM)
   cat <<EOF | ssh $VM sudo tee -a /etc/kubernetes/apiserver
 # Kubernetes the hard way configuration
