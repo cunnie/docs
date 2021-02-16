@@ -9,6 +9,8 @@ Important variations:
 - Use Fedora instead of Ubuntu because I like Fedora
 - Use IPv6 as well as IPv4 because I like IPv6
 - Use vSphere instead of Google Cloud because I like vSphere
+- Use Elliptic Curve instead of RSA
+- Use cluster name of `nono` instead of `kubernetes-the-hard-way`
 
 #### 0. Create the vSphere VM Template
 
@@ -171,7 +173,8 @@ sudo shutdown -h now
 ```
 Right-click on VM `k8s-template.nono.io` and select Template→Convert to Template
 
-#### 2. Installing the Client Tools
+### [Installing the Client
+Tools](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/02-client-tools.md)
 
 Follow these instructions.
 <https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/02-client-tools.md>,
@@ -235,9 +238,8 @@ for i in {controller,worker}-{0,1,2}; do
 done
 ```
 
-We're going to pick up on Kelsey Hightower's [Provisioning a CA and Generating
-TLS
-Certificates](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/5c462220b7f2c03b4b699e89680d0cc007a76f91/docs/04-certificate-authority.md)
+### [Provisioning a CA and Generating TLS
+Certificates](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/04-certificate-authority.md)
 
 But first we change to a directory to save our output (your directory may be
 different):
@@ -554,7 +556,7 @@ for instance in controller-{0,1,2}; do
 done
 ```
 
-Next up: [Generating Kubernetes Configuration Files for Authentication](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/5c462220b7f2c03b4b699e89680d0cc007a76f91/docs/05-kubernetes-configuration-files.md#generating-kubernetes-configuration-files-for-authentication)
+### [Generating Kubernetes Configuration Files for Authentication](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/05-kubernetes-configuration-files.md#generating-kubernetes-configuration-files-for-authentication)
 
 We veer slightly from Kelsey's instructions: In his instructions, he uses an IP
 address for the k8s server, which is a luxury that he can indulge in because
@@ -565,8 +567,7 @@ for each of the controllers, at least I think it's one for each of the
 controllers). Our solution? DNS entry, `k8s.nono.io`, with 1 IPv4 entry and 3
 IPv6 entries.
 
-[The kubelet Kubernetes Configuration File](The kubelet Kubernetes Configuration
-File):
+[The kubelet Kubernetes Configuration File](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/05-kubernetes-configuration-files.md#the-kubelet-kubernetes-configuration-file):
 
 ```
 KUBERNETES_PUBLIC_ADDRESS=k8s.nono.io
@@ -591,6 +592,103 @@ for instance in worker-0 worker-1 worker-2; do
   kubectl config use-context default --kubeconfig=${instance}.kubeconfig
 done
 ```
+
+[The kube-proxy Kubernetes Configuration
+File](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/05-kubernetes-configuration-files.md#the-kube-proxy-kubernetes-configuration-file):
+
+```zsh
+kubectl config set-cluster nono \
+  --certificate-authority=ca.pem \
+  --embed-certs=true \
+  --server=https://${KUBERNETES_PUBLIC_ADDRESS}:6443 \
+  --kubeconfig=kube-proxy.kubeconfig
+
+kubectl config set-credentials system:kube-proxy \
+  --client-certificate=kube-proxy.pem \
+  --client-key=kube-proxy-key.pem \
+  --embed-certs=true \
+  --kubeconfig=kube-proxy.kubeconfig
+
+kubectl config set-context default \
+  --cluster=nono \
+  --user=system:kube-proxy \
+  --kubeconfig=kube-proxy.kubeconfig
+
+kubectl config use-context default --kubeconfig=kube-proxy.kubeconfig
+```
+
+[The kube-controller-manager Kubernetes Configuration
+File](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/05-kubernetes-configuration-files.md#the-kube-controller-manager-kubernetes-configuration-file):
+
+```zsh
+kubectl config set-cluster nono \
+  --certificate-authority=ca.pem \
+  --embed-certs=true \
+  --server=https://127.0.0.1:6443 \
+  --kubeconfig=kube-controller-manager.kubeconfig
+
+kubectl config set-credentials system:kube-controller-manager \
+  --client-certificate=kube-controller-manager.pem \
+  --client-key=kube-controller-manager-key.pem \
+  --embed-certs=true \
+  --kubeconfig=kube-controller-manager.kubeconfig
+
+kubectl config set-context default \
+  --cluster=nono \
+  --user=system:kube-controller-manager \
+  --kubeconfig=kube-controller-manager.kubeconfig
+
+kubectl config use-context default --kubeconfig=kube-controller-manager.kubeconfig
+```
+
+[The kube-scheduler Kubernetes Configuration
+File](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/05-kubernetes-configuration-files.md#the-kube-scheduler-kubernetes-configuration-file):
+
+```zsh
+kubectl config set-cluster nono \
+  --certificate-authority=ca.pem \
+  --embed-certs=true \
+  --server=https://127.0.0.1:6443 \
+  --kubeconfig=kube-scheduler.kubeconfig
+
+kubectl config set-credentials system:kube-scheduler \
+  --client-certificate=kube-scheduler.pem \
+  --client-key=kube-scheduler-key.pem \
+  --embed-certs=true \
+  --kubeconfig=kube-scheduler.kubeconfig
+
+kubectl config set-context default \
+  --cluster=nono \
+  --user=system:kube-scheduler \
+  --kubeconfig=kube-scheduler.kubeconfig
+
+kubectl config use-context default --kubeconfig=kube-scheduler.kubeconfig
+```
+
+[The admin Kubernetes Configuration
+File](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/05-kubernetes-configuration-files.md#the-admin-kubernetes-configuration-file):
+
+```zsh
+kubectl config set-cluster nono \
+  --certificate-authority=ca.pem \
+  --embed-certs=true \
+  --server=https://127.0.0.1:6443 \
+  --kubeconfig=admin.kubeconfig
+
+kubectl config set-credentials admin \
+  --client-certificate=admin.pem \
+  --client-key=admin-key.pem \
+  --embed-certs=true \
+  --kubeconfig=admin.kubeconfig
+
+kubectl config set-context default \
+  --cluster=nono \
+  --user=admin \
+  --kubeconfig=admin.kubeconfig
+
+kubectl config use-context default --kubeconfig=admin.kubeconfig
+```
+
 ```zsh
 for instance in worker-{0,1,2}; do
   scp ${instance}.kubeconfig kube-proxy.kubeconfig ${instance}:
@@ -600,15 +698,29 @@ for instance in controller-{0,1,2}; do
 done
 ```
 
-Next up: [Generating the Data Encryption Config and Key](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/06-data-encryption-keys.md)
+### [Generating the Data Encryption Config and Key](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/06-data-encryption-keys.md)
 
 ```zsh
+ENCRYPTION_KEY=$(head -c 32 /dev/urandom | base64)
+cat > encryption-config.yaml <<EOF
+kind: EncryptionConfig
+apiVersion: v1
+resources:
+  - resources:
+      - secrets
+    providers:
+      - aescbc:
+          keys:
+            - name: key1
+              secret: ${ENCRYPTION_KEY}
+      - identity: {}
+EOF
 for instance in controller-0 controller-1 controller-2; do
   scp encryption-config.yaml ${instance}:
 done
 ```
 
-Next up: [Bootstrapping the etcd Cluster](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/07-bootstrapping-etcd.md)
+### [Bootstrapping the etcd Cluster](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/07-bootstrapping-etcd.md)
 
 ```zsh
 for instance in controller-{0,1,2}; do
@@ -641,7 +753,7 @@ for instance in controller-{0,1,2}; do
 done
 ```
 
-Next up: [Bootstrapping the Kubernetes Control Plane](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/08-bootstrapping-kubernetes-controllers.md)
+### [Bootstrapping the Kubernetes Control Plane](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/08-bootstrapping-kubernetes-controllers.md)
 
 Don't follow those instructions; follow the instructions below.
 
