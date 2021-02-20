@@ -893,7 +893,7 @@ anyway; it won't hurt anything:
 
 ```
 for VM in worker-{0,1,2}; do
-  ssh $VM sudo dnf install -y socat conntrack ipset containernetworking-plugins cri-tools runc
+  ssh $VM sudo dnf install -y socat conntrack ipset containerd containernetworking-plugins cri-tools runc
 done
 ```
 
@@ -914,15 +914,225 @@ Skip the [Download and Install Worker
 Binaries](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/09-bootstrapping-kubernetes-workers.md#download-and-install-worker-binaries)
 section; they're already installed.
 
+```zsh
+for VM in worker-{0,1,2}; do
+  ssh $VM sudo mkdir -p \
+    /etc/cni/net.d \
+    /var/lib/kubernetes \
+    /var/lib/kube-proxy \
+
+done
+```
+
 [Configure CNI
 Networking](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/09-bootstrapping-kubernetes-workers.md#configure-cni-networking):
 
 ```zsh
-for I = 0 1 2; do
+for I in 0 1 2; do
   POD_CIDR=10.200.$I.0/24
-
+  ssh worker-$I sudo tee /etc/cni/net.d/10-bridge.conf <<EOF
+{
+    "cniVersion": "0.3.1",
+    "name": "bridge",
+    "type": "bridge",
+    "bridge": "cnio0",
+    "isGateway": true,
+    "ipMasq": true,
+    "ipam": {
+        "type": "host-local",
+        "ranges": [
+          [{"subnet": "${POD_CIDR}"}]
+        ],
+        "routes": [{"dst": "0.0.0.0/0"}]
+    }
+}
+EOF
+  ssh worker-$I sudo tee /etc/cni/net.d/99-loopback.conf <<EOF
+{
+    "cniVersion": "0.3.1",
+    "name": "lo",
+    "type": "loopback"
+}
+EOF
+done
 ```
 
+[Configure
+containerd](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/09-bootstrapping-kubernetes-workers.md#configure-containerd)
+
+I changed the containerd runtime from v1 to v2 because I think that's what
+fedora uses. This might be a misunderstanding. And I changed the `runc` path.
+
+```zsh
+for VM in worker-{0,1,2}; do
+  ssh $VM sudo tee -a /etc/containerd/config.toml <<EOF
+[plugins]
+  [plugins.cri.containerd]
+    snapshotter = "overlayfs"
+    [plugins.cri.containerd.default_runtime]
+      runtime_type = "io.containerd.runtime.v2.linux"
+      runtime_engine = "/usr/bin/runc"
+      runtime_root = ""
+EOF
+done
+```
+
+The `containerd` RPM does not include `systemd` startup, so we create them as in
+the instructions, changing the executable path to `/usr/bin/containerd`:
+
+```zsh
+for VM in worker-{0,1,2}; do
+  ssh $VM sudo tee /etc/systemd/system/containerd.service <<EOF
+[Unit]
+Description=containerd container runtime
+Documentation=https://containerd.io
+After=network.target
+
+[Service]
+ExecStartPre=/sbin/modprobe overlay
+ExecStart=/usr/bin/containerd
+Restart=always
+RestartSec=5
+Delegate=yes
+KillMode=process
+OOMScoreAdjust=-999
+LimitNOFILE=1048576
+LimitNPROC=infinity
+LimitCORE=infinity
+
+[Install]
+WantedBy=multi-user.target
+EOF
+done
+```
+
+[Configure the
+Kubelet](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/09-bootstrapping-kubernetes-workers.md#configure-the-kubelet)
+
+```zsh
+for VM in worker-{0,1,2}; do
+  ssh $VM \
+    sudo mv ${VM}-key.pem ${VM}.pem /var/lib/kubelet/ \; \
+    sudo mv ${VM}.kubeconfig /var/lib/kubelet/kubeconfig \; \
+    sudo mv ca.pem /var/lib/kubernetes/
+done
+```
+
+```zsh
+for VM in worker-{0,1,2}; do
+  ssh $VM sudo tee /var/lib/kubelet/kubelet-config.yaml <<EOF
+kind: KubeletConfiguration
+apiVersion: kubelet.config.k8s.io/v1beta1
+authentication:
+  anonymous:
+    enabled: false
+  webhook:
+    enabled: true
+  x509:
+    clientCAFile: "/var/lib/kubernetes/ca.pem"
+authorization:
+  mode: Webhook
+clusterDomain: "cluster.local"
+clusterDNS:
+  - "10.32.0.10"
+podCIDR: "${POD_CIDR}"
+resolvConf: "/run/systemd/resolve/resolv.conf"
+runtimeRequestTimeout: "15m"
+tlsCertFile: "/var/lib/kubelet/${HOSTNAME}.pem"
+tlsPrivateKeyFile: "/var/lib/kubelet/${HOSTNAME}-key.pem"
+EOF
+done
+```
+
+Remember to change the kubelet path to `/usr/bin/`:
+
+```zsh
+for VM in worker-{0,1,2}; do
+  ssh $VM sudo tee /etc/systemd/system/kubelet.service <<EOF
+[Unit]
+Description=Kubernetes Kubelet
+Documentation=https://github.com/kubernetes/kubernetes
+After=containerd.service
+Requires=containerd.service
+
+[Service]
+ExecStart=/usr/bin/kubelet \\
+  --config=/var/lib/kubelet/kubelet-config.yaml \\
+  --container-runtime=remote \\
+  --container-runtime-endpoint=unix:///var/run/containerd/containerd.sock \\
+  --image-pull-progress-deadline=2m \\
+  --kubeconfig=/var/lib/kubelet/kubeconfig \\
+  --network-plugin=cni \\
+  --register-node=true \\
+  --v=2
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+done
+```
+
+[Configure the Kubernetes
+Proxy](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/09-bootstrapping-kubernetes-workers.md#configure-the-kubernetes-proxy)
+
+We change the path to `/usr/bin/kube-proxy`:
+
+```zsh
+for VM in worker-{0,1,2}; do
+  ssh $VM sudo mv kube-proxy.kubeconfig /var/lib/kube-proxy/kubeconfig
+  ssh $VM sudo tee /var/lib/kube-proxy/kube-proxy-config.yaml <<EOF
+kind: KubeProxyConfiguration
+apiVersion: kubeproxy.config.k8s.io/v1alpha1
+clientConnection:
+  kubeconfig: "/var/lib/kube-proxy/kubeconfig"
+mode: "iptables"
+clusterCIDR: "10.200.0.0/16"
+EOF
+  ssh $VM sudo tee /etc/systemd/system/kube-proxy.service <<EOF
+[Unit]
+Description=Kubernetes Kube Proxy
+Documentation=https://github.com/kubernetes/kubernetes
+
+[Service]
+ExecStart=/usr/bin/kube-proxy \\
+  --config=/var/lib/kube-proxy/kube-proxy-config.yaml
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+done
+```
+
+[Start the Worker
+Services](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/09-bootstrapping-kubernetes-workers.md#start-the-worker-services)
+
+```zsh
+for VM in worker-{0,1,2}; do
+  ssh $VM \
+    sudo systemctl daemon-reload \; \
+    sudo systemctl enable containerd kubelet kube-proxy \; \
+    sudo systemctl start containerd kubelet kube-proxy
+done
+```
+
+[Verification](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/09-bootstrapping-kubernetes-workers.md#verification)
+
+```zsh
+ssh controller-0 kubectl get nodes --kubeconfig admin.kubeconfig
+```
+
+Should show:
+
+```
+NAME       STATUS   ROLES    AGE   VERSION
+worker-0   Ready    <none>   24s   v1.18.6
+worker-1   Ready    <none>   24s   v1.18.6
+worker-2   Ready    <none>   24s   v1.18.6
+```
 
 
 
