@@ -1144,10 +1144,60 @@ worker-1   Ready    <none>   24s   v1.18.6
 worker-2   Ready    <none>   24s   v1.18.6
 ```
 
+### [Configuring kubectl for Remote
+Access](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/10-configuring-kubectl.md)
 
+Note that we use our cluster name, "nono", and that we use our server
+address/FQDN `k8s.nono.io`:
 
+```zsh
+cd cd ~/Google\ Drive/k8s/
 
+kubectl config set-cluster nono \
+  --certificate-authority=ca.pem \
+  --embed-certs=true \
+  --server=https://k8s.nono.io:6443
 
+kubectl config set-credentials admin \
+  --client-certificate=admin.pem \
+  --client-key=admin-key.pem
+
+kubectl config set-context nono \
+  --cluster=nono \
+  --user=admin
+
+kubectl config use-context nono
+```
+
+[Verification](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/10-configuring-kubectl.md#verification)
+
+```zsh
+kubectl get componentstatuses
+```
+
+Yields:
+
+```
+NAME                 STATUS    MESSAGE             ERROR
+scheduler            Healthy   ok
+controller-manager   Healthy   ok
+etcd-2               Healthy   {"health":"true"}
+etcd-0               Healthy   {"health":"true"}
+etcd-1               Healthy   {"health":"true"}
+```
+
+```zsh
+kubectl get nodes
+```
+
+Yields:
+
+```
+NAME       STATUS   ROLES    AGE   VERSION
+worker-0   Ready    <none>   12h   v1.18.2
+worker-1   Ready    <none>   12h   v1.18.2
+worker-2   Ready    <none>   12h   v1.18.2
+```
 
 
 
