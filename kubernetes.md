@@ -1199,6 +1199,31 @@ worker-1   Ready    <none>   12h   v1.18.2
 worker-2   Ready    <none>   12h   v1.18.2
 ```
 
+### [Provisioning Pod Network Routes](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/11-pod-network-routes.md)
+
+```zsh
+ssh vain
+sudo -E nvim /etc/rc.conf
+```
+
+Add the [following lines](https://docs.freebsd.org/en/books/handbook/network-routing.html):
+
+```
+static_routes="k8s_worker_0 k8s_worker_1 k8s_worker_2"
+route_k8s_worker_0="-net 10.200.0.0/24 10.240.0.20"
+route_k8s_worker_1="-net 10.200.1.0/24 10.240.0.21"
+route_k8s_worker_2="-net 10.200.2.0/24 10.240.0.22"
+```
+
+Then restart routing:
+
+```
+sudo /etc/rc.d/routing restart
+```
+
+
+
+
 
 
 
