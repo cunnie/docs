@@ -229,7 +229,8 @@ Cloned VMs:
 - reboot for changes to take effect
 ```
 for i in {controller,worker}-{0,1,2}; do
-  echo $i.nono.io | ssh $i sudo tee /etc/hostname
+  # don't use FQDN's for hostname, avoids "Unable to register node "worker-1.nono.io" with API server: nodes "worker-1.nono.io" is forbidden: node "worker-1" is not allowed to modify node "worker-1.nono.io"
+  echo $i | ssh $i sudo tee /etc/hostname
   ssh $i sudo sed -i "s/UUID=.*/UUID=$(uuidgen)/" /etc/sysconfig/network-scripts/ifcfg-ens192
   IPV6ADDR=$(dig +short aaaa $i.nono.io)
   ssh $i sudo sed -i "s/IPV6ADDR=.*/IPV6ADDR=$IPV6ADDR/" /etc/sysconfig/network-scripts/ifcfg-ens192
@@ -897,6 +898,16 @@ for VM in worker-{0,1,2}; do
 done
 ```
 
+Use the old cgroups to avoid the dreaded kubelet error, "`Failed to start
+ContainerManager failed to get rootfs info: unable to find data in memory
+cache`" (thanks <https://www.haukerolf.net/blog/k8s-the-hard-way/>):
+
+```zsh
+for VM in worker-{0,1,2}; do
+  ssh $VM sudo grubby --update-kernel=ALL --args="systemd.unified_cgroup_hierarchy=0"
+done
+```
+
 [Disable
 Swap](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/09-bootstrapping-kubernetes-workers.md#disable-swap):
 
@@ -960,17 +971,16 @@ done
 [Configure
 containerd](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/09-bootstrapping-kubernetes-workers.md#configure-containerd)
 
-I changed the containerd runtime from v1 to v2 because I think that's what
-fedora uses. This might be a misunderstanding. And I changed the `runc` path.
+I changed the `runc` path.
 
 ```zsh
 for VM in worker-{0,1,2}; do
-  ssh $VM sudo tee -a /etc/containerd/config.toml <<EOF
+  ssh $VM sudo tee /etc/containerd/config.toml <<EOF
 [plugins]
   [plugins.cri.containerd]
     snapshotter = "overlayfs"
     [plugins.cri.containerd.default_runtime]
-      runtime_type = "io.containerd.runtime.v2.linux"
+      runtime_type = "io.containerd.runtime.v1.linux"
       runtime_engine = "/usr/bin/runc"
       runtime_root = ""
 EOF
@@ -1038,8 +1048,8 @@ clusterDNS:
 podCIDR: "${POD_CIDR}"
 resolvConf: "/run/systemd/resolve/resolv.conf"
 runtimeRequestTimeout: "15m"
-tlsCertFile: "/var/lib/kubelet/${HOSTNAME}.pem"
-tlsPrivateKeyFile: "/var/lib/kubelet/${HOSTNAME}-key.pem"
+tlsCertFile: "/var/lib/kubelet/${VM}.pem"
+tlsPrivateKeyFile: "/var/lib/kubelet/${VM}-key.pem"
 EOF
 done
 ```
