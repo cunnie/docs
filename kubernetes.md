@@ -971,7 +971,8 @@ done
 [Configure
 containerd](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/09-bootstrapping-kubernetes-workers.md#configure-containerd)
 
-I changed the `runc` path.
+I changed the `runc` path. Also, I added the `.cni` plugins because the
+`bin_dir` is `/usr/libexec/cni`
 
 ```zsh
 for VM in worker-{0,1,2}; do
@@ -983,6 +984,8 @@ for VM in worker-{0,1,2}; do
       runtime_type = "io.containerd.runtime.v1.linux"
       runtime_engine = "/usr/bin/runc"
       runtime_root = ""
+  [plugins.cri.cni]
+    bin_dir = "/usr/libexec/cni"
 EOF
 done
 ```
@@ -1151,7 +1154,7 @@ Note that we use our cluster name, "nono", and that we use our server
 address/FQDN `k8s.nono.io`:
 
 ```zsh
-cd cd ~/Google\ Drive/k8s/
+cd ~/Google\ Drive/k8s/
 
 kubectl config set-cluster nono \
   --certificate-authority=ca.pem \
