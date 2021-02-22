@@ -1218,11 +1218,33 @@ route_k8s_worker_1="-net 10.200.1.0/24 10.240.0.21"
 route_k8s_worker_2="-net 10.200.2.0/24 10.240.0.22"
 ```
 
-Then restart routing:
+Reboot the firewall (`sudo /etc/rc.d/routing restart` broke things, so I
+had to reboot):
 
 ```
-sudo /etc/rc.d/routing restart
+sudo shutdown -r now
 ```
+
+### [Deploying the DNS Cluster
+Add-on](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/12-dns-addon.md)
+
+```zsh
+kubectl apply -f https://storage.googleapis.com/kubernetes-the-hard-way/coredns-1.7.0.yaml
+```
+
+Output:
+
+```
+serviceaccount/coredns created
+clusterrole.rbac.authorization.k8s.io/system:coredns created
+clusterrolebinding.rbac.authorization.k8s.io/system:coredns created
+configmap/coredns created
+deployment.apps/coredns created
+service/kube-dns created
+```
+
+
+
 
 
 
