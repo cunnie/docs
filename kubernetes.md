@@ -105,6 +105,7 @@ Update to the latest & greatest:
 ```
 sudo dnf -y update
 sudo dnf install -y tmux neovim git binutils
+sudo rpm -e moby-engine # don't need docker; don't need cluttered iptables
 sudo shutdown -r now
 ```
 Balance Btrfs to avoid `ENOSPC` ("no space left on device") errors later:
