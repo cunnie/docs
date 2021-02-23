@@ -1147,8 +1147,7 @@ worker-1   Ready    <none>   24s   v1.18.6
 worker-2   Ready    <none>   24s   v1.18.6
 ```
 
-### [Configuring kubectl for Remote
-Access](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/10-configuring-kubectl.md)
+### [Configuring kubectl for Remote Access](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/10-configuring-kubectl.md)
 
 Note that we use our cluster name, "nono", and that we use our server
 address/FQDN `k8s.nono.io`:
@@ -1225,8 +1224,7 @@ had to reboot):
 sudo shutdown -r now
 ```
 
-### [Deploying the DNS Cluster
-Add-on](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/12-dns-addon.md)
+### [Deploying the DNS Cluster Add-on](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/12-dns-addon.md)
 
 ```zsh
 kubectl apply -f https://storage.googleapis.com/kubernetes-the-hard-way/coredns-1.7.0.yaml
