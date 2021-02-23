@@ -1242,6 +1242,42 @@ deployment.apps/coredns created
 service/kube-dns created
 ```
 
+### [Smoke Test](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/13-smoke-test.md)
+
+[Data Encryption](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/13-smoke-test.md#data-encryption)
+
+```
+kubectl create secret generic kubernetes-the-hard-way \
+  --from-literal="mykey=mydata"
+ssh controller-0.nono.io "sudo ETCDCTL_API=3 etcdctl get \
+  --endpoints=https://127.0.0.1:2379 \
+  --cacert=/etc/etcd/ca.pem \
+  --cert=/etc/etcd/kubernetes.pem \
+  --key=/etc/etcd/kubernetes-key.pem\
+  /registry/secrets/default/kubernetes-the-hard-way | hexdump -C"
+```
+
+[Deployments](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/13-smoke-test.md#deployments)
+
+```
+kubectl create deployment nginx --image=nginx
+kubectl get pods -l app=nginx
+```
+
+[Port Forwarding](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/13-smoke-test.md#port-forwarding)
+
+```
+POD_NAME=$(kubectl get pods -l app=nginx -o jsonpath="{.items[0].metadata.name}")
+kubectl port-forward $POD_NAME 8080:80
+curl --head http://127.0.0.1:8080
+```
+
+_the above `curl` did not work, possibly because I have no load balancer_
+
+
+
+
+
 
 
 
