@@ -1268,11 +1268,35 @@ kubectl get pods -l app=nginx
 
 ```
 POD_NAME=$(kubectl get pods -l app=nginx -o jsonpath="{.items[0].metadata.name}")
-kubectl port-forward $POD_NAME 8080:80
+kubectl port-forward $POD_NAME 8080:80 &
 curl --head http://127.0.0.1:8080
+ # should see the "HTTP/1.1 200 OK"
+kill %1
 ```
 
-_the above `curl` did not work, possibly because I have no load balancer_
+[Logs](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/13-smoke-test.md#logs)
+
+```
+kubectl logs nginx-....
+ # should see "127.0.0.1 - - [24/Feb/2021:20:29:18 +0000] "HEAD / HTTP/1.1" 200..."
+```
+
+[Exec](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/13-smoke-test.md#exec)
+
+```
+kubectl exec -ti nginx-... -- nginx -v
+  # should see "nginx version: nginx/1.19.7"
+```
+
+[Services](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/13-smoke-test.md#services)
+
+```
+kubectl expose deployment nginx --port 80 --type NodePort
+NODE_PORT=$(kubectl get svc nginx \
+  --output=jsonpath='{range .spec.ports[0]}{.nodePort}')
+```
+
+_[This doesn't work yet]_
 
 
 
