@@ -1,8 +1,7 @@
 ### kubernetes
 
-**Don't follow! These instructions might not work—still a work-in-progress**
-
-Follow instructions at <https://github.com/kelseyhightower/kubernetes-the-hard-way>.
+These instructions are meant to be paired with those at
+<https://github.com/kelseyhightower/kubernetes-the-hard-way>.
 
 Important variations:
 
