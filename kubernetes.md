@@ -43,13 +43,13 @@ IPv4-MAC address mappings.
 
 |       Hostname       |      IPv6 Address      | IPv4 Address |    MAC Address    |
 |:--------------------:|:----------------------:|:------------:|:-----------------:|
-| k8s-template.nono.io | 2601:646:100:69f2::9   | 10.240.0.9   | 02:00:00:00:f0:09 |
-| controller-0.nono.io | 2601:646:100:69f2::10  | 10.240.0.10  | 02:00:00:00:f0:10 |
-| controller-1.nono.io | 2601:646:100:69f2::11  | 10.240.0.11  | 02:00:00:00:f0:11 |
-| controller-2.nono.io | 2601:646:100:69f2::12  | 10.240.0.12  | 02:00:00:00:f0:12 |
-| worker-0.nono.io     | 2601:646:100:69f2::20  | 10.240.0.20  | 02:00:00:00:f0:20 |
-| worker-1.nono.io     | 2601:646:100:69f2::21  | 10.240.0.21  | 02:00:00:00:f0:21 |
-| worker-2.nono.io     | 2601:646:100:69f2::22  | 10.240.0.22  | 02:00:00:00:f0:22 |
+| k8s-template.nono.io | 2601:646:0100:69f2::9   | 10.240.0.9   | 02:00:00:00:f0:09 |
+| controller-0.nono.io | 2601:646:0100:69f2::10  | 10.240.0.10  | 02:00:00:00:f0:10 |
+| controller-1.nono.io | 2601:646:0100:69f2::11  | 10.240.0.11  | 02:00:00:00:f0:11 |
+| controller-2.nono.io | 2601:646:0100:69f2::12  | 10.240.0.12  | 02:00:00:00:f0:12 |
+| worker-0.nono.io     | 2601:646:0100:69f2::20  | 10.240.0.20  | 02:00:00:00:f0:20 |
+| worker-1.nono.io     | 2601:646:0100:69f2::21  | 10.240.0.21  | 02:00:00:00:f0:21 |
+| worker-2.nono.io     | 2601:646:0100:69f2::22  | 10.240.0.22  | 02:00:00:00:f0:22 |
 
 Here is [a
 portion](https://github.com/cunnie/vain.nono.io-usr-local-etc/blob/98da72a6f3486972e34c3b3a0655214976c6ac33/dhcpd.conf#L85-L91)
@@ -71,9 +71,9 @@ addresses.
 
 | FQDN        | IPv4 Address |      IPv6 Address      |
 |:------------|:------------:|:----------------------:|
-| k8s.nono.io | 73.189.219.4 | 2601:646:100:69f2::10  |
-|             |              | 2601:646:100:69f2::11  |
-|             |              | 2601:646:100:69f2::12  |
+| k8s.nono.io | 73.189.219.4 | 2601:646:0100:69f2::10  |
+|             |              | 2601:646:0100:69f2::11  |
+|             |              | 2601:646:0100:69f2::12  |
 
 - Do **not** use these IPv6 addresses; instead, use the IPv6 addresses you've
   been allocated or generate your own [private IPv6 addresses](https://simpledns.com/private-ipv6)
