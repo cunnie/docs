@@ -46,6 +46,8 @@ ListenPort = 51820
 
 [Peer]
 PublicKey = MUWJuYQ0rzEFNGA7HrWhmh+lTC6T0TEU2WyoK2GyDWE=
+# home.nono.io's IPv6 address; note the brackets surrounding IPv6
+Endpoint = [2001:558:6045:109:892f:2df3:15e3:3184]:51820
 AllowedIPs = 10.0.255.1/32
 ```
 
@@ -83,6 +85,12 @@ net.ipv6.conf.all.forwarding=1
 EOF
 sudo systemctl start wg-quick@wg0
 sudo systemctl status wg-quick@wg0
+```
+
+Quick test on Fedora:
+
+```
+ping -c 3 10.0.255.1
 ```
 
 ### References
