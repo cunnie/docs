@@ -93,10 +93,10 @@ sudo systemctl status wg-quick@wg0
 Quick test on Fedora:
 
 ```
-ping -c 3 10.0.255.1
+ping -c 3 10.0.255.1  # far side of the Wireguard tunnel
 ```
 
-Set the routes (does NOT work):
+Set the routes:
 
 ```zsh
 cat <<EOF | sudo tee -a /etc/sysconfig/network-scripts/route-wg0
@@ -107,6 +107,36 @@ route add 10.200.0.0/24 via 10.0.255.1
 route add 10.200.1.0/24 via 10.0.255.1
 route add 10.200.2.0/24 via 10.0.255.1
 EOF
+```
+
+Fix the DNS resolution; a bug whereby AWS sets the DNS server to `10.240.0.2`,
+the address of which overlaps with the Wireguard subnets & causes all lookups to
+fail once the Wireguard connection is established (fixes, from `journalctl`,
+`systemd-resolved[568]: Using degraded feature set TCP instead of UDP for DNS
+server 10.240.0.2.`):
+
+```zsh
+sudo -E nvim /etc/systemd/resolved.conf
+```
+
+Add the following:
+
+```ini
+[Resolve]
+# Cloudflare, then Quad9
+DNS=2606:4700:4700::1111 1.1.1.1 2620:fe::9 9.9.9.9
+# "Without the Domains=~. option in resolved.conf(5), systemd-resolved might use the per-link DNS servers, if any of them set Domains=~. in the per-link configuration."
+# use `sudo resolvectl status` to see if AWS sets "Domains=~."; yes, AWS does set it.
+Domains=~.
+```
+
+Final test:
+
+```zsh
+sudo shutdown -r now
+sleep 20; ssh worker-3.nono.io
+ping -c 3 10.240.0.10 # k8s controller-0
+ping -c 3 controller-1.nono.io # test DNS resolution
 ```
 
 ### References
