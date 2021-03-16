@@ -83,6 +83,7 @@ cat <<EOF | sudo tee -a /etc/sysctl.conf
 net.ipv4.ip_forward=1
 net.ipv6.conf.all.forwarding=1
 EOF
+sudo systemctl enable wg-quick@wg0
 sudo systemctl start wg-quick@wg0
 sudo systemctl status wg-quick@wg0
 ```
@@ -91,6 +92,19 @@ Quick test on Fedora:
 
 ```
 ping -c 3 10.0.255.1
+```
+
+Set the routes (does NOT work):
+
+```zsh
+cat <<EOF | sudo tee -a /etc/sysconfig/network-scripts/route-wg0
+# control plane & nodes
+route add 10.240.0.0/24 via 10.0.255.1
+# node subnets
+route add 10.200.0.0/24 via 10.0.255.1
+route add 10.200.1.0/24 via 10.0.255.1
+route add 10.200.2.0/24 via 10.0.255.1
+EOF
 ```
 
 ### References
