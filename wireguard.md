@@ -5,7 +5,9 @@ Our networks:
 
 - 10.240.0.0/24 k8s home worker nodes, management plane (nodes)
   - 2601:646:0100:69f2::21/64 (IPv6)
+- 10.200.{0,1,2}.0/24 k8s node subnets
 - 10.240.1.23/24 k8s AWS worker node
+- 10.200.3.0/24 k8s AWS worker node subnet
   - 2600:1f18:1dab:de00::17/128 (IPv6)
 - 10.0.255.0/30 Wireguard tunnel
   - 10.0.255.1  Comcast (home)
@@ -33,7 +35,7 @@ ListenPort = 51820
 [Peer]
 # AWS.public
 PublicKey = nAVIDMjPRMAmRPr0Fql5b4Auu0lP/0EbgMH3jNx7yVc=
-AllowedIPs = 10.0.255.2/32
+AllowedIPs = 10.0.255.2/32, 10.200.3.0/24
 ```
 
 Create the `wg0-AWS.conf` file:
@@ -48,7 +50,7 @@ ListenPort = 51820
 PublicKey = MUWJuYQ0rzEFNGA7HrWhmh+lTC6T0TEU2WyoK2GyDWE=
 # home.nono.io's IPv6 address; note the brackets surrounding IPv6
 Endpoint = [2001:558:6045:109:892f:2df3:15e3:3184]:51820
-AllowedIPs = 10.0.255.1/32
+AllowedIPs = 10.0.255.1/32, 10.200.0.0/23, 10.200.2.0/24, 10.240.0.0/24
 ```
 
 Copy the files to the respective servers:
