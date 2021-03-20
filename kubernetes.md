@@ -101,9 +101,14 @@ Configure password-less `sudo`
 sudo perl -pi -e 's/^%wheel\s+ALL=\(ALL\)\s+ALL/%wheel ALL=(ALL) NOPASSWD: ALL/' /etc/sudoers
 ```
 Update to the latest & greatest:
+
+I want to use the version of Kubernetes that comes with Fedora (1.18.2) rather
+than the one given in the instructions (1.18.6) because I'm worried about
+Fedora's use cgroup v2 instead of v1.
+
 ```
 sudo dnf -y update
-sudo dnf install -y tmux neovim git binutils
+sudo dnf install -y tmux neovim git binutils kubernetes kubernetes-kubeadm
 sudo rpm -e moby-engine # don't need docker; don't need cluttered iptables
 sudo shutdown -r now
 ```
@@ -755,16 +760,6 @@ done
 ### [Bootstrapping the Kubernetes Control Plane](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/08-bootstrapping-kubernetes-controllers.md)
 
 Don't follow those instructions; follow the instructions below.
-
-I want to use the version of Kubernetes that comes with Fedora (1.18.2) rather
-than the one given in the instructions (1.18.6) because I'm worried about
-Fedora's use cgroup v2 instead of v1.
-
-```
-for VM in {worker,controller}-{0,1,2}; do
-  ssh $VM sudo dnf install -y kubernetes &
-done
-```
 
 We configure the Kubernetes API server
 
