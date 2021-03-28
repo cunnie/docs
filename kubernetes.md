@@ -1303,6 +1303,82 @@ This is how we added the node `worker-3.nono.io` (AWS) to our cluster:
   once the instance is up to install necessary packages.
 - Reboot (to switch to cgroups v1)
 
+On your workstation:
+
+```zsh
+cd ~/Google\ Drive/k8s
+INSTANCE=worker-3
+cat > ${INSTANCE}-csr.json <<EOF
+{
+  "CN": "system:node:${INSTANCE}",
+  "key": {
+    "algo": "ecdsa",
+    "size": 256
+  },
+  "names": [
+    {
+      "C": "US",
+      "L": "San Francisco",
+      "O": "system:nodes",
+      "OU": "nono.io",
+      "ST": "California"
+    }
+  ]
+}
+EOF
+
+DOMAIN=nono.io
+INTERNAL_IPV4=10.240.1.23
+EXTERNAL_IPV4S=23.22.28.126,52.0.56.137 # temporary elastic IP, final IP
+IPV6=$(dig +short aaaa $INSTANCE.$DOMAIN)
+KUBERNETES_PUBLIC_ADDRESS=k8s.nono.io
+
+cfssl gencert \
+  -ca=ca.pem \
+  -ca-key=ca-key.pem \
+  -config=ca-config.json \
+  -hostname=$INSTANCE,$INSTANCE.$DOMAIN,$IPV6,$EXTERNAL_IPV4S,$INTERNAL_IPV4 \
+  -profile=kubernetes \
+  ${INSTANCE}-csr.json | cfssljson -bare ${INSTANCE}
+
+kubectl config set-cluster nono \
+  --certificate-authority=ca.pem \
+  --embed-certs=true \
+  --server=https://${KUBERNETES_PUBLIC_ADDRESS}:6443 \
+  --kubeconfig=${INSTANCE}.kubeconfig
+
+kubectl config set-credentials system:node:${INSTANCE} \
+  --client-certificate=${INSTANCE}.pem \
+  --client-key=${INSTANCE}-key.pem \
+  --embed-certs=true \
+  --kubeconfig=${INSTANCE}.kubeconfig
+
+kubectl config set-context default \
+  --cluster=nono \
+  --user=system:node:${INSTANCE} \
+  --kubeconfig=${INSTANCE}.kubeconfig
+
+kubectl config use-context default --kubeconfig=${INSTANCE}.kubeconfig
+
+
+scp \
+  ${INSTANCE}-key.pem \
+  ${INSTANCE}.pem \
+  ca.pem \
+  ${INSTANCE}.kubeconfig \
+  kube-proxy.kubeconfig \
+  ${INSTANCE}.${DOMAIN}:
+```
+
+Now let's finish up from the new worker:
+```zsh
+ssh -A $INSTANCE.$DOMAIN
+INSTANCE=worker-3
+sudo mv ${INSTANCE}-key.pem ${INSTANCE}.pem /var/lib/kubelet/
+sudo mv ${INSTANCE}.kubeconfig /var/lib/kubelet/kubeconfig
+sudo mv ca.pem /var/lib/kubernetes/
+```
+
 ### Epilogue
 
 Keeping instances up-to-date:
