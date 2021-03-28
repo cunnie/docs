@@ -1291,6 +1291,18 @@ NODE_PORT=$(kubectl get svc nginx \
 curl -I worker-0.nono.io:$NODE_PORT
 ```
 
+### Adding a Node
+
+This is how we added the node `worker-3.nono.io` (AWS) to our cluster:
+
+- Use terraform to create the networking infra, assign the elastic IP, the
+  Private IPs, the IPv6 IPs, the route tables, the instance (`t4g.micro`), etc.
+  Here's our
+  [script](https://github.com/cunnie/deployments/blob/master/terraform/aws/k8s.tf).
+- Run this [configuration script](https://github.com/cunnie/bin/blob/master/install_k8s_worker.sh)
+  once the instance is up to install necessary packages.
+- Reboot (to switch to cgroups v1)
+
 ### Epilogue
 
 Keeping instances up-to-date:
