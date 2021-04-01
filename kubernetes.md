@@ -110,6 +110,7 @@ Fedora's use cgroup v2 instead of v1.
 sudo dnf -y update
 sudo dnf install -y tmux neovim git binutils kubernetes kubernetes-kubeadm
 sudo rpm -e moby-engine # don't need docker; don't need cluttered iptables
+sudo rm /etc/systemd/system/kubelet.service.d/kubeadm.conf # `open /etc/kubernetes/pki/ca.crt: no such file or directory`
 sudo shutdown -r now
 ```
 Balance Btrfs to avoid `ENOSPC` ("no space left on device") errors later:
@@ -1377,6 +1378,16 @@ INSTANCE=worker-3
 sudo mv ${INSTANCE}-key.pem ${INSTANCE}.pem /var/lib/kubelet/
 sudo mv ${INSTANCE}.kubeconfig /var/lib/kubelet/kubeconfig
 sudo mv ca.pem /var/lib/kubernetes/
+
+sudo systemctl daemon-reload
+sudo systemctl enable containerd kubelet kube-proxy
+sudo systemctl start containerd kubelet kube-proxy
+```
+
+Now let's verify on our local workstation:
+
+```zsh
+ssh controller-0 kubectl get nodes --kubeconfig admin.kubeconfig
 ```
 
 ### Epilogue
