@@ -1377,6 +1377,7 @@ ssh -A $INSTANCE.$DOMAIN
 INSTANCE=worker-3
 sudo mv ${INSTANCE}-key.pem ${INSTANCE}.pem /var/lib/kubelet/
 sudo mv ${INSTANCE}.kubeconfig /var/lib/kubelet/kubeconfig
+sudo mv kube-proxy.kubeconfig /var/lib/kube-proxy/kubeconfig
 sudo mv ca.pem /var/lib/kubernetes/
 
 sudo systemctl daemon-reload
@@ -1387,7 +1388,7 @@ sudo systemctl start containerd kubelet kube-proxy
 Now let's verify on our local workstation:
 
 ```zsh
-ssh controller-0 kubectl get nodes --kubeconfig admin.kubeconfig
+kubectl get nodes
 ```
 
 ### Epilogue
