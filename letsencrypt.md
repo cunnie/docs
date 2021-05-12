@@ -89,9 +89,9 @@ EOF
 sudo chmod +x /usr/local/etc/periodic/daily/450.letsencrypt-certbot
 ```
 
-### FreeNAS
+### TrueNAS
 
-Setting up FreeNAS with Let's Encrypt certificates using Neilpang's
+Setting up TrueNAS with Let's Encrypt certificates using Neilpang's
 [acme.sh](https://github.com/Neilpang/acme.sh) and danb35's
 [deploy-freenas](https://github.com/danb35/deploy-freenas) using a BIND DNS
 server.
@@ -119,13 +119,14 @@ export NSUPDATE_SERVER="ns-he.nono.io"
 export NSUPDATE_KEY="/root/letsencrypt.key"
 .acme.sh/acme.sh --issue \
   -d nas.nono.io \
+  -d s3.nono.io \
   --dns dns_nsupdate \
   --reloadcmd /root/deploy-freenas/deploy_freenas.py
 .acme.sh/acme.sh --cron --home /root/.acme.sh
 ```
 #### Cron job to automate renewal:
 
-- FreeNAS > Tasks > Cron Jobs
+- TrueNAS > Tasks > Cron Jobs
 - Command = iocage exec acme /root/.acme.sh/acme.sh --cron
 - Run as user = root
 - Description & Schedule are left whatever you want.
