@@ -108,7 +108,7 @@ Fedora's use cgroup v2 instead of v1.
 
 ```
 sudo dnf -y update
-sudo dnf install -y tmux neovim git binutils kubernetes kubernetes-kubeadm
+sudo dnf install -y tmux neovim git binutils the_silver_searcher kubernetes kubernetes-kubeadm
 sudo rpm -e moby-engine # don't need docker; don't need cluttered iptables
 sudo rm /etc/systemd/system/kubelet.service.d/kubeadm.conf # `open /etc/kubernetes/pki/ca.crt: no such file or directory`
 sudo shutdown -r now
@@ -238,7 +238,7 @@ for i in {controller,worker}-{0,1,2}; do
   # don't use FQDN's for hostname, avoids "Unable to register node "worker-1.nono.io" with API server: nodes "worker-1.nono.io" is forbidden: node "worker-1" is not allowed to modify node "worker-1.nono.io"
   echo $i | ssh $i sudo tee /etc/hostname
   ssh $i sudo sed -i "s/UUID=.*/UUID=$(uuidgen)/" /etc/sysconfig/network-scripts/ifcfg-ens192
-  IPV6ADDR=$(dig +short aaaa $i.nono.io)
+  IPV6ADDR=$(dig aaaa $i.nono.io +short)
   ssh $i sudo sed -i "s/IPV6ADDR=.*/IPV6ADDR=$IPV6ADDR/" /etc/sysconfig/network-scripts/ifcfg-ens192
   ssh $i sudo shutdown -r now
 done
@@ -371,9 +371,9 @@ for instance in worker-0 worker-1 worker-2; do
 EOF
 
   DOMAIN=nono.io
-  INTERNAL_IPV4=$(dig +short a $instance.$DOMAIN)
+  INTERNAL_IPV4=$(dig a $instance.$DOMAIN +short)
   EXTERNAL_IPV4=73.189.219.4  # my Comcast home IP
-  IPV6=$(dig +short aaaa $instance.$DOMAIN)
+  IPV6=$(dig aaaa $instance.$DOMAIN +short)
 
   cfssl gencert \
     -ca=ca.pem \
@@ -779,7 +779,7 @@ And now, the service:
 ```
 for VM in controller-{0,1,2}; do
   ssh $VM sudo sed --in-place '' "'s/^KUBE_ADMISSION_CONTROL=/# &/; s/^KUBE_API_ADDRESS=/# &/; s/^KUBE_ETCD_SERVERS=/# &/; s/^KUBE_SERVICE_ADDRESSES=/# &/'" /etc/kubernetes/apiserver
-  INTERNAL_IP=$(dig +short $VM)
+  INTERNAL_IP=$(dig $VM.nono.io +short)
   cat <<EOF | ssh $VM sudo tee -a /etc/kubernetes/apiserver
 # Kubernetes the hard way configuration
 KUBE_API_ARGS=" \\
@@ -806,6 +806,8 @@ KUBE_API_ARGS=" \\
   --kubelet-https=true \\
   --runtime-config='api/all=true' \\
   --service-account-key-file=/var/lib/kubernetes/service-account.pem \\
+  --service-account-signing-key-file=/var/lib/kubernetes/service-account-key.pem \\
+  --service-account-issuer=api \\
   --service-cluster-ip-range=10.32.0.0/24 \\
   --service-node-port-range=30000-32767 \\
   --tls-cert-file=/var/lib/kubernetes/kubernetes.pem \\
@@ -825,7 +827,7 @@ done
 
 ```
 for VM in controller-{0,1,2}; do
-  INTERNAL_IP=$(dig +short $VM)
+  INTERNAL_IP=$(dig +short $VM.nono.io)
   cat <<EOF | ssh $VM sudo tee -a /etc/kubernetes/controller-manager
 # Kubernetes the hard way configuration
 KUBE_CONTROLLER_MANAGER_ARGS=" \\
@@ -1292,7 +1294,7 @@ NODE_PORT=$(kubectl get svc nginx \
 curl -I worker-0.nono.io:$NODE_PORT
 ```
 
-### Adding a Node
+### Adding (then Deleting) a Node
 
 This is how we added the node `worker-3.nono.io` (AWS) to our cluster:
 
@@ -1306,7 +1308,7 @@ This is how we added the node `worker-3.nono.io` (AWS) to our cluster:
 
 On your workstation:
 
-```zsh
+```bash
 cd ~/Google\ Drive/k8s
 INSTANCE=worker-3
 cat > ${INSTANCE}-csr.json <<EOF
@@ -1331,7 +1333,7 @@ EOF
 DOMAIN=nono.io
 INTERNAL_IPV4=10.240.1.23
 EXTERNAL_IPV4S=23.22.28.126,52.0.56.137 # temporary elastic IP, final IP
-IPV6=$(dig +short aaaa $INSTANCE.$DOMAIN)
+IPV6=$(dig aaaa $INSTANCE.$DOMAIN +short)
 KUBERNETES_PUBLIC_ADDRESS=k8s.nono.io
 
 cfssl gencert \
@@ -1372,7 +1374,7 @@ scp \
 ```
 
 Now let's finish up from the new worker:
-```zsh
+```bash
 ssh -A $INSTANCE.$DOMAIN
 INSTANCE=worker-3
 sudo mv ${INSTANCE}-key.pem ${INSTANCE}.pem /var/lib/kubelet/
@@ -1387,28 +1389,68 @@ sudo systemctl start containerd kubelet kube-proxy
 
 Now let's verify on our local workstation:
 
-```zsh
-kubectl get nodes
+```bash
+kubectl get nodes # should see `worker-3`
+```
+
+Now let's delete the node we just added because we're not going to use it after
+all:
+
+```bash
+NODE=worker-3
+kubectl drain $NODE
+kubectl delete node $NODE
+kubectl get nodes # to check
+```
+
+Customizations
+
+```bash
+ # don't need to supply `arch`; it's a builtin label: `arch=arm64`
+kubectl label node worker-3 iaas=aws
 ```
 
 ### Epilogue
 
 Keeping instances up-to-date:
 
-```
+```bash
 for instance in {controller,worker}-{0,1,2}; do
   ssh $instance 'sudo dnf update -y; sudo shutdown -r now'
 done
 ```
 
 Upgrading to next Fedora, 34, on 4/20/2021:
-```
+
+```bash
 for instance in {controller,worker}-{0,1,2}; do
-ssh $instance '
-sudo dnf upgrade --refresh -y
-sudo dnf install dnf-plugin-system-upgrade -y
-sudo dnf system-upgrade download --releasever=34 -y
-sudo dnf system-upgrade reboot
+  ssh $instance '
+    sudo dnf upgrade --refresh -y
+    sudo dnf install dnf-plugin-system-upgrade -y
+    sudo dnf system-upgrade download --releasever=34 -y
+    sudo dnf system-upgrade reboot
 '
+done
+```
+
+Fix the workers' kubelets that are failing with, `open
+/etc/kubernetes/pki/ca.crt: no such file or directory`
+
+```bash
+for instance in worker-{0,1,2,3}; do
+  ssh $instance '
+    sudo rm /etc/systemd/system/kubelet.service.d/kubeadm.conf
+    sudo shutdown -r now'
+done
+```
+
+Fix the workers' kubelets that are failing with, `failed to run Kubelet: running
+with swap on is not supported`, and `cat /proc/swaps` shows `/dev/zram0`:
+
+```bash
+for instance in worker-{0,1,2,3}; do
+  ssh $instance '
+    sudo dnf remove zram-generator-defaults
+    sudo shutdown -r now'
 done
 ```
