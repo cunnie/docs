@@ -1454,3 +1454,30 @@ for instance in worker-{0,1,2,3}; do
     sudo shutdown -r now'
 done
 ```
+
+Fix the controllers' `kube-scheduler` and `kube-controller-manager` errors `the
+server rejected our request for an unknown reason`:
+
+```bash
+for instance in controller-{0,1,2}; do
+  # zsh is weird; the first escaped single-quote needs one backslash, the
+  # second, two backslashes. And the triple backslashes? Utter craziness.
+  ssh $instance 'sudo sed --in-place \'s~KUBE_MASTER=.--master=http://127.0.0.1:6443.~KUBE_MASTER=\\\"--master=https://127.0.0.1:6443\\\"~\\'  /etc/kubernetes/config
+    grep KUBE_MASTER /etc/kubernetes/config
+    sudo shutdown -r now
+    '
+done
+```
+
+And now let's fix the workers:
+
+```bash
+for instance in worker-{0,1,2}; do
+  # zsh is weird; the first escaped single-quote needs one backslash, the
+  # second, two backslashes. And the triple backslashes? Utter craziness.
+  ssh $instance 'sudo sed --in-place \'s~KUBE_MASTER=.--master=http://127.0.0.1:8080.~KUBE_MASTER=\\\"--master=https://k8s.nono.io:6443\\\"~\\'  /etc/kubernetes/config
+    grep KUBE_MASTER /etc/kubernetes/config
+    sudo shutdown -r now
+    '
+done
+```
