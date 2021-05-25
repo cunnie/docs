@@ -847,11 +847,26 @@ EOF
 done
 ```
 
-Configure the Kubernetes Scheduler
+[Configure the Kubernetes
+Scheduler](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/08-bootstrapping-kubernetes-controllers.md#configure-the-kubernetes-scheduler)
 
+```bash
+cat <<EOF > kube-scheduler.yaml
+apiVersion: kubescheduler.config.k8s.io/v1beta1
+kind: KubeSchedulerConfiguration
+clientConnection:
+  kubeconfig: "/var/lib/kubernetes/kube-scheduler.kubeconfig"
+leaderElection:
+  leaderElect: true
+EOF
 ```
-for VM in controller-{0,1,2}; do
+
+```bash
+for VM in controller-{0,1,2}.nono.io; do
+  scp kube-scheduler.yaml $VM:
+  ssh $VM sudo mv kube-scheduler.yaml /etc/kubernetes/
   ssh $VM sudo mv kube-scheduler.kubeconfig /var/lib/kubernetes/
+  ssh $VM sudo sed --in-place 's~KUBE_SCHEDULER_ARGS=.*~KUBE_SCHEDULER_ARGS=\"--config=/etc/kubernetes/kube-scheduler.yaml\"~'  /etc/kubernetes/scheduler
 done
 ```
 
