@@ -1289,15 +1289,15 @@ kill %1
 [Logs](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/13-smoke-test.md#logs)
 
 ```
-kubectl logs nginx-....
+kubectl logs $POD_NAME
  # should see "127.0.0.1 - - [24/Feb/2021:20:29:18 +0000] "HEAD / HTTP/1.1" 200..."
 ```
 
 [Exec](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/13-smoke-test.md#exec)
 
 ```
-kubectl exec -ti nginx-... -- nginx -v
-  # should see "nginx version: nginx/1.19.7"
+kubectl exec -ti $POD_NAME -- nginx -v
+  # should see "nginx version: nginx/1.21.0"
 ```
 
 [Services](https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/13-smoke-test.md#services)
@@ -1306,7 +1306,7 @@ kubectl exec -ti nginx-... -- nginx -v
 kubectl expose deployment nginx --port 80 --type NodePort
 NODE_PORT=$(kubectl get svc nginx \
   --output=jsonpath='{range .spec.ports[0]}{.nodePort}')
-curl -I worker-0.nono.io:$NODE_PORT
+curl -I worker-0.nono.io:$NODE_PORT # make sure you're not on the VPN
 ```
 
 ### Adding (then Deleting) a Node
