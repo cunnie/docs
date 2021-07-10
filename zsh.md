@@ -8,11 +8,13 @@ Install [oh-my-zsh](https://github.com/robbyrussell/oh-my-zsh)
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
 ```
 vim `~/.zshrc`
-```
+```bash
 export PATH="/usr/local/opt/python/libexec/bin:$PATH"
 export PATH="$HOME/go/bin:$PATH"
 export EDITOR=nvim
 export GIT_EDITOR=nvim
+# Don't log me out of LastPass for 10 hours
+export LPASS_AGENT_TIMEOUT=36000
 
 ZSH_THEME="agnoster"
 
@@ -27,6 +29,7 @@ source /usr/local/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 [ -f /usr/local/opt/chruby/share/chruby/chruby.sh ] && source /usr/local/opt/chruby/share/chruby/chruby.sh
 eval "$(direnv hook zsh)"
 eval "$(fasd --init posix-alias zsh-hook)"
+alias k=kubectl
 alias z='fasd_cd -d'     # cd, same functionality as j in autojump
 alias vim=nvim     # we are committed to nvim
  # the following is for `gcloud` (Google Cloud's CLI)
