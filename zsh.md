@@ -36,6 +36,11 @@ alias vim=nvim     # we are committed to nvim
 export CLOUDSDK_PYTHON="$(brew --prefix)/opt/python@3.8/libexec/bin/python"
 source "$(brew --prefix)/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/path.zsh.inc"
 source "$(brew --prefix)/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/completion.zsh.inc"
-# Don't log me out of LastPass for 10 hours
-export LPASS_AGENT_TIMEOUT=36000
+PATH="$HOME/bin:$PATH"
+# OpsMgr
+export PATH="/usr/local/opt/postgresql@11/bin:$PATH"
+export LDFLAGS="-L/usr/local/opt/postgresql@11/lib"
+export CPPFLAGS="-I/usr/local/opt/postgresql@11/include"
+# Don't log me out of LastPass for 1 week
+export LPASS_AGENT_TIMEOUT=604800
 ```
