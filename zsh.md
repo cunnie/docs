@@ -9,14 +9,13 @@ sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/mas
 ```
 vim `~/.zshrc`
 ```bash
+ZSH_THEME="agnoster" # this needs to be at the top of .zshrc
+
+# the following can be at the bottom
 export PATH="/usr/local/opt/python/libexec/bin:$PATH"
 export PATH="$HOME/go/bin:$PATH"
 export EDITOR=nvim
 export GIT_EDITOR=nvim
-# Don't log me out of LastPass for 10 hours
-export LPASS_AGENT_TIMEOUT=36000
-
-ZSH_THEME="agnoster"
 
 plugins=(
 	git
