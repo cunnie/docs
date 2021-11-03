@@ -130,4 +130,4 @@ git config --global commit.gpgsign true
 - if on laptop:
   - download Wireguard from the App Store
   - click "Import tunnel(s) from file"
-  - import from `/Volumes/GoogleDrive/My Drive/wg/wg0-tetra.conf
+  - import from `~/My Drive/wg/wg0-tetra.conf`
