@@ -118,3 +118,16 @@ ruby-install 3.0
 ruby-install 2.7
 ruby-install 2.6
 ```
+- Start Google Drive
+  - Preferences → Google Drive → Mirror Files
+- Install GPG keys:
+```
+mv ~/.gnupg* /tmp/
+ln -s ~/My\ Drive/keys/gnupg $HOME/.gnupg
+git config --global user.signingkey 93B3BB2C9F7F5BA4
+git config --global commit.gpgsign true
+```
+- if on laptop:
+  - download Wireguard from the App Store
+  - click "Import tunnel(s) from file"
+  - import from `/Volumes/GoogleDrive/My Drive/wg/wg0-tetra.conf
