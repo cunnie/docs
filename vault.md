@@ -1,4 +1,4 @@
-The following was mostly taken Vault's [Getting
+The following was mostly taken from Vault's [Getting
 Started](https://learn.hashicorp.com/collections/vault/getting-started) series
 of tutorials.
 
@@ -78,8 +78,12 @@ vault write auth/github/config organization=blabbertabber
  # In a new window
 export VAULT_ADDR=http://127.0.0.1:8200
 vault login -method=github # enter a personal access token with `read:org` priv
+ # Pro-tip: if you update a policy applied to a login, you need to logout & re-login
+vault read auth/token/lookup-self
+vault read sys/capabilities-self
+vault read sys/internal/ui/resultant-acl
  # You can grant specific polices to GitHub teams
-vault write auth/github/map/teams/engineering value=default,applications
+vault write auth/github/map/teams/committers value=default,applications,dev-policy
 vault auth list
 vault auth help github
 vault auth disable github # invalidates all GitHub-auth'ed sessions
@@ -88,4 +92,32 @@ vault auth disable github # invalidates all GitHub-auth'ed sessions
 #### _Policies:_
 
 ```bash
+vault policy list
+vault policy read default
+vault policy read root
+```
+
+`dev-policy.json`:
+
+```hcl
+# Dev servers have version 2 of KV secrets engine mounted by default, so will
+# need these paths to grant permissions:
+path "secret/data/*" {
+  capabilities = ["create", "update"]
+}
+path "secret/data/foo" {
+  capabilities = ["read"]
+}
+```
+
+```bash
+vault policy write dev-policy dev-policy.json
+vault policy list
+vault policy read dev-policy
+ # From the user logged in via GitHub
+vault read secret/data/foo # "No value found ..." not 403
+vault kv put secret/foo robot=beepboop # 403
+ # I can write, but not read
+vault kv put secret/creds password="my-long-password" # success!
+vault kv get secret/creds # 403
 ```
