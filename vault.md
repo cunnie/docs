@@ -97,7 +97,7 @@ vault policy read default
 vault policy read root
 ```
 
-`dev-policy.json`:
+`dev-policy.hcl`:
 
 ```hcl
 # Dev servers have version 2 of KV secrets engine mounted by default, so will
@@ -111,7 +111,7 @@ path "secret/data/foo" {
 ```
 
 ```bash
-vault policy write dev-policy dev-policy.json
+vault policy write dev-policy dev-policy.hcl
 vault policy list
 vault policy read dev-policy
  # From the user logged in via GitHub
@@ -120,4 +120,66 @@ vault kv put secret/foo robot=beepboop # 403
  # I can write, but not read
 vault kv put secret/creds password="my-long-password" # success!
 vault kv get secret/creds # 403
+```
+
+#### _Deploy Vault:_
+
+```bash
+unset VAULT_TOKEN
+```
+
+`vault_config.hcl`:
+
+```hcl
+storage "raft" {
+  path    = "./vault/data"
+  node_id = "node1"
+}
+
+listener "tcp" {
+  address     = "127.0.0.1:8200"
+  tls_disable = "true"
+}
+
+api_addr = "http://127.0.0.1:8200"
+cluster_addr = "https://127.0.0.1:8201"
+ui = true
+```
+
+```bash
+mkdir -p vault/data
+vault server -config=vault_config.hcl
+```
+
+In another terminal:
+
+```bash
+export VAULT_ADDR="http://127.0.0.1:8200"
+vault operator init
+```
+
+Save this output:
+
+```
+Unseal Key 1: VvZvsx3jH4gaB+bewMz22juFYul0bTpOaNhaVgIhj+Z4
+Unseal Key 2: JFgvT34/qHRsalCDBpc9NpZZVAxevn14utNEkzT5kPlh
+Unseal Key 3: CWdUmAGQQGhuFVoI4maPJph3uujInd3WjPjObCxAci6b
+Unseal Key 4: dlKsuoNQBh3+KHliYUmTBgsQ4BatSLz8RuxN8UsC9Mye
+Unseal Key 5: 1QAtmaNNHylpLI5K+DOq782eAUX6BY/3jZGo555jXpNB
+
+Initial Root Token: s.DOHXsLthqNoVjOgp9yh141wM
+```
+
+```bash
+vault operator unseal # 1/3
+vault operator unseal # 2/3
+vault operator unseal # 3/3
+vault login s.DOHXsLthqNoVjOgp9yh141wM
+```
+
+Clean-up:
+
+```bash
+killall vault
+rm -r vault/data
 ```
