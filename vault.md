@@ -183,3 +183,36 @@ Clean-up:
 killall vault
 rm -r vault/data
 ```
+
+#### _Using the HTTP APIs with Authentication:_
+
+Initialize the vault with one key (we're not a nuclear launch site; we don't
+need five separate keys with a three-key quorum):
+
+```bash
+curl \
+  --request POST \
+  --data '{"secret_shares": 1, "secret_threshold": 1}' \
+  https://vault.nono.io/v1/sys/init | jq
+```
+
+Save `keys` and `root_token`. Let's unseal the vault:
+
+```bash
+export VAULT_TOKEN=s.QmByxxxxxxxxxxxxxxxxxxxx
+export VAULT_ADDR=https://vault.nono.io
+curl \
+    --request POST \
+    --data '{"key": "5a302397xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}' \
+    $VAULT_ADDR/v1/sys/unseal | jq
+ # check initialization status
+curl $VAULT_ADDR/v1/sys/init
+```
+
+To find the command the `curl` equivalent of a `vault` command, pass the option
+`-output-curl-string`. Remember, options must come _before_ arguments. In other
+words, don't place `-output-curl-string` at the end:
+
+```bash
+vault secrets enable -output-curl-string -path=concourse kv
+```
