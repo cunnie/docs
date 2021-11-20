@@ -122,6 +122,59 @@ vault kv put secret/creds password="my-long-password" # success!
 vault kv get secret/creds # 403
 ```
 
+#### _Approles:_ (My notes, not Hashicorp's)
+
+Create `concourse-policy.hcl` so that our Concourse server has access to that
+path:
+
+```hcl
+path "concourse/*" {
+  policy = "read"
+}
+```
+
+Let's upload that policy to Vault:
+
+```bash
+vault policy write concourse concourse-policy.hcl
+```
+
+Let's enable the `approle` backend on Vault:
+
+```bash
+vault auth enable approle
+```
+
+Let's create the Concourse `approle`:
+
+```bash
+vault write auth/approle/role/concourse policies=concourse period=1h
+```
+
+We need the `approle`'s `role_id` and `secret_id` to set in our Concourse
+server:
+
+```bash
+vault read auth/approle/role/concourse/role-id
+  # role_id    045e3a37-6cc4-4f6b-xxxx-xxxxxxxxxxxx
+vault write -f auth/approle/role/concourse/secret-id
+  # secret_id  85ed8dec-757d-f6c2-xxxx-xxxxxxxxxxxx
+```
+
+Let's list the role IDs we've created and then delete them:
+
+```bash
+vault list auth/approle/role/concourse/secret-id
+ # 045e3a37-6cc4-4f6b-xxxx-xxxxxxxxxxxx
+for ACCESSOR_ID in $(vault list -format=json auth/approle/role/concourse/secret-id | jq -r ".[]"); do
+  vault write auth/approle/role/concourse/secret-id-accessor/destroy secret_id_accessor=$ACCESSOR_ID
+done
+```
+
+See
+[here](https://www.vaultproject.io/api-docs/auth/approle#destroy-approle-secret-id)
+for the underlying API calls.
+
 #### _Deploy Vault:_
 
 ```bash
