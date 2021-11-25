@@ -31,6 +31,8 @@ eval "$(fasd --init posix-alias zsh-hook)"
 alias k=kubectl
 alias z='fasd_cd -d'     # cd, same functionality as j in autojump
 alias vim=nvim     # we are committed to nvim
+alias dkill='docker rm -f $(docker ps -a -q); docker volume prune -f'
+alias dclean='docker rmi -f $(docker images -q) '
  # the following is for `gcloud` (Google Cloud's CLI)
 export CLOUDSDK_PYTHON="$(brew --prefix)/opt/python@3.8/libexec/bin/python"
 source "$(brew --prefix)/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/path.zsh.inc"
