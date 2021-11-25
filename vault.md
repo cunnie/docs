@@ -171,6 +171,14 @@ for ACCESSOR_ID in $(vault list -format=json auth/approle/role/concourse/secret-
 done
 ```
 
+Logging in with a role:
+
+```bash
+vault write auth/approle/login \
+  role_id=045e3a37-6cc4-4f6b-4312-36eed80f7adc \
+  secret_id=59b8015d-8d4a-fcce-f689-xxxxxxxxxxxx
+```
+
 See
 [here](https://www.vaultproject.io/api-docs/auth/approle#destroy-approle-secret-id)
 for the underlying API calls.
