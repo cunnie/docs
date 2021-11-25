@@ -269,3 +269,17 @@ words, don't place `-output-curl-string` at the end:
 ```bash
 vault secrets enable -output-curl-string -path=concourse kv
 ```
+
+#### Troubleshooting
+
+Enable auditing, then get on the Vault VM/container and read the output:
+
+```
+vault audit enable file file_path=/vault/vault-audit.log
+vault audit list -detailed # is it really auditing?
+  # attempt the Vault task that's failing; e.g. trigger the Concourse job
+kubectl -n vault exec -it vault-0 -- sh
+cat /vault/vault-audit.log
+  # when finished troubleshooting
+vault audit disable file
+```
