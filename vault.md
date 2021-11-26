@@ -174,9 +174,11 @@ done
 Logging in with a role:
 
 ```bash
-vault write auth/approle/login \
+export VAULT_TOKEN=$(vault write auth/approle/login \
   role_id=045e3a37-6cc4-4f6b-4312-36eed80f7adc \
-  secret_id=59b8015d-8d4a-fcce-f689-xxxxxxxxxxxx
+  secret_id=59b8015d-8d4a-fcce-f689-0cfa6a29f48c -format=json | \
+  jq -r .auth.client_token)
+vault kv get /concourse/main/ozymandias-secret
 ```
 
 See
