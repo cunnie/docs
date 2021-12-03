@@ -75,10 +75,10 @@ sudo ipmitool sensor thresh "FANA" lower 100 200 300
 
 I took the fan out. Here are the temp settings. I'll see how high they get:
 
-| Component     | Status | With Fan     | w/o |
-|---------------|--------|--------------|-----|
-| CPU Temp	| Normal | 39 degrees C | 59  |
-| System Temp	| Normal | 33 degrees C | 45  |
-| Peripheral	| Normal | 42 degrees C | 53  |
-| MB_10G Temp	| Normal | 60 degrees C | 75  |
-| DIMMB1 Temp	| Normal | 35 degrees C | 47  |
+| Component     | Status | With Fan     | w/o | 1 x Noctua |
+|---------------|--------|-------------:|----:|-----------:|
+| CPU Temp	| Normal | 39 degrees C | 59  |         51 |
+| System Temp	| Normal | 33 degrees C | 45  |         37 |
+| Peripheral	| Normal | 42 degrees C | 53  |         51 |
+| MB_10G Temp	| Normal | 60 degrees C | 75  |         71 |
+| DIMMB1 Temp	| Normal | 35 degrees C | 47  |         42 |
