@@ -73,12 +73,16 @@ sudo ipmitool sensor thresh "FANA" lower 100 200 300
   # FANA             | 4800.000   | RPM        | ok    | 300.000   | 500.000   | 700.000   | 25300.000 | 25400.000 | 25500.000
 ```
 
-I took the fan out. Here are the temp settings. I'll see how high they get:
+The fix for the fan was replacing the noisy stock fan with 3 x Noctua [NF-A4x20
+PWM](https://noctua.at/en/products/fan/nf-a4x20-pwm) 40x20mm fans. The table
+below shows the temperature of the onboard devices with different fan
+configurations. Note that the 3 x Noctua fans are the clear winner (and they're
+so quiet I'm not sure that I can hear them!):
 
-| Component     | Status | With Fan     | w/o | 1 x Noctua |
-|---------------|--------|-------------:|----:|-----------:|
-| CPU Temp	| Normal | 39 degrees C | 59  |         51 |
-| System Temp	| Normal | 33 degrees C | 45  |         37 |
-| Peripheral	| Normal | 42 degrees C | 53  |         51 |
-| MB_10G Temp	| Normal | 60 degrees C | 75  |         71 |
-| DIMMB1 Temp	| Normal | 35 degrees C | 47  |         42 |
+| Component     | Status |    Stock Fan | w/o | 1 x Noctua | 3 x Noctua |
+|---------------|--------|-------------:|----:|-----------:|-----------:|
+| CPU Temp	| Normal |          39° | 59° |        51° |        26° |
+| System Temp	| Normal |          33° | 45° |        37° |        24° |
+| Peripheral	| Normal |          42° | 53° |        51° |        29° |
+| MB_10G Temp	| Normal |          60° | 75° |        71° |        44° |
+| DIMMB1 Temp	| Normal |          35° | 47° |        42° |        26° |
