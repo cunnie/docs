@@ -1,6 +1,32 @@
 ### Setting up `atom.nono.io`
 
+- hostname: **atom.nono.io**
+- ix0 (this is the lower ethernet port)
+  - IP Address: **10.0.9.10**
+  - Subnet Mask: **255.255.255.0**
+  - Default Router: **10.0.9.1**
+  - IPv6: **Yes**
+  - SLAAC: **Yes**
+  - Search: **nono.io**
+  - DNS #1: **2001:4860:4860::8888**
+- Resolver Configuration:
+  - Search: **nono.io**
+- Change swap size to **32g**
+- use **ada0**
+- boot services:
+  - ntpdate
+  - ntpd
+- users
+  - add user **cunnie**
+  - invite into **wheel** group
+
 ```
+ssh atom.nono.io
+mkdir ~/.ssh; chmod 700 ~/.ssh
+echo ssh-ed25519 \
+  AAAAC3NzaC1lZDI1NTE5AAAAIIWiAzxc4uovfaphO0QVC2w00YmzrogUpjAzvuqaQ9tD \
+  cunnie@nono.io \
+  > ~/.ssh/authorized_keys
 su - root
 pkg search sudo
 pkg install sudo
@@ -13,7 +39,7 @@ sudo id # to check that it works
 Let's set up zsh
 
 ```
-sudo pkg install \
+sudo pkg install -y \
   curl \
   dmidecode \
   git \
@@ -23,15 +49,12 @@ sudo pkg install \
   zsh \
   zsh-autosuggestions \
   zsh-completions \
-  zsh-syntax-highlighting \
 
 chpass -s /usr/local/bin/zsh
-mkdir ~/.ssh; chmod 700 ~/.ssh
-echo ssh-ed25519 \
-  AAAAC3NzaC1lZDI1NTE5AAAAIIWiAzxc4uovfaphO0QVC2w00YmzrogUpjAzvuqaQ9tD \
-  cunnie@nono.io \
-  > ~/.ssh/authorized_keys
+exit
+ssh atom.nono.io
 sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+exit
 exit
 ssh atom
 ```
@@ -43,7 +66,6 @@ nvim ~/.zshrc
   ZSH_THEME="agnoster"
   export EDITOR="nvim"
   source /usr/local/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-  source /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
   PATH="$HOME/bin:$PATH"
 ```
 
