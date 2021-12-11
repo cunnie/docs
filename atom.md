@@ -1,5 +1,17 @@
 ### Setting up `atom.nono.io`
 
+I disable EIST (Enhanced Intel SpeedStep® Technology) because I felt it was
+throttling my download speeds from outside the server (I would get ~1400 Mbps
+on the server itself, but on other machines I'd be lucky to get 800Mbps).
+
+It seems to have helped: Previously I was getting ~800 Mbps from my Fedora
+machine; now I'm getting ~1200 Mbps.
+
+BIOS:
+- Advanced → CPU Configuration:
+  - EIST (GV3) ("Enhanced Intel Speedstep Technology"): **Disable**
+  - TM1: **Disable**
+
 ```shell
 sudo dd if=/Users/cunnie/Downloads/FreeBSD-13.0-RELEASE-amd64-bootonly.iso of=/dev/disk2 bs=1024k
 ```
