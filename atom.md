@@ -5,7 +5,8 @@ throttling my download speeds from outside the server (I would get ~1400 Mbps
 on the server itself, but on other machines I'd be lucky to get 800Mbps).
 
 It seems to have helped: Previously I was getting ~800 Mbps from my Fedora
-machine; now I'm getting ~1200 Mbps.
+machine; now I'm getting ~1400 Mbps. Note: use the authorized speedtest client
+for consistent results.
 
 BIOS:
 - Advanced → CPU Configuration:
@@ -107,11 +108,11 @@ so quiet I'm not sure that I can hear them!):
 
 | Component     | Status |    Stock Fan | w/o | 1 x Noctua | 3 x Noctua |
 |---------------|--------|-------------:|----:|-----------:|-----------:|
-| CPU Temp	| Normal |          39° | 59° |        51° |        26° |
-| System Temp	| Normal |          33° | 45° |        37° |        24° |
-| Peripheral	| Normal |          42° | 53° |        51° |        29° |
-| MB_10G Temp	| Normal |          60° | 75° |        71° |        44° |
-| DIMMB1 Temp	| Normal |          35° | 47° |        42° |        26° |
+| CPU Temp	| Normal |          39° | 59° |        51° |        39° |
+| System Temp	| Normal |          33° | 45° |        37° |        28° |
+| Peripheral	| Normal |          42° | 53° |        51° |        41° |
+| MB_10G Temp	| Normal |          60° | 75° |        71° |        62° |
+| DIMMB1 Temp	| Normal |          35° | 47° |        42° |        37° |
 
 ### Cut Over to Firewall
 
@@ -129,4 +130,13 @@ Let's configure packages
 ```shell
 git clone https://github.com/luan/nvim ~/.config/nvim
 nvim # install plugins
+```
+
+Let's copy wireguard configuration over
+
+```shell
+sudo mkdir -p /etc/wireguard
+sudo chmod 700 /etc/wireguard
+sudo -E scp cunnie@tara.nono.io:"My\ Drive/wg/wg0-home.conf"  /etc/wireguard/wg0.conf
+sudo /usr/local/etc/rc.d/wireguard restart
 ```
