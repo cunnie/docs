@@ -131,3 +131,5 @@ git config --global commit.gpgsign true
   - download Wireguard from the App Store
   - click "Import tunnel(s) from file"
   - import from `~/My Drive/wg/wg0-tetra.conf`
+
+Install [smith](https://github.com/pivotal/smith/releases)
