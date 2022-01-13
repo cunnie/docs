@@ -72,6 +72,7 @@ sudo pkg install -y \
   py38-pip \
   ripgrep \
   rsync \
+  ruby \
   tmux \
   wireguard \
   zsh \
