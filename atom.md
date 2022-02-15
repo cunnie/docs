@@ -67,6 +67,7 @@ sudo pkg install -y \
   git \
   htop \
   ipmitool \
+  lsof \
   neovim \
   npm \
   py38-pip \
