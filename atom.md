@@ -63,7 +63,7 @@ sudo pkg install -y \
   dhcp6 \
   dhcpd \
   dmidecode \
-  fd \
+  fd-find \
   git \
   htop \
   ipmitool \
