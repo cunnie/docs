@@ -74,6 +74,7 @@ sudo pkg install -y \
   ripgrep \
   rsync \
   ruby \
+  the_silver_searcher \
   tmux \
   wireguard \
   zsh \
