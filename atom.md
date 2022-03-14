@@ -71,6 +71,7 @@ sudo pkg install -y \
   neovim \
   npm \
   py38-pip \
+  python3 \
   ripgrep \
   rsync \
   ruby \
@@ -131,6 +132,7 @@ sudo -E git restore .gitignore
 Let's configure packages
 
 ```shell
+pip install neovim
 git clone https://github.com/luan/nvim ~/.config/nvim
 nvim # install plugins
 ```
