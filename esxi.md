@@ -647,3 +647,30 @@ service-control --stop vmware-updatemgr
 rm -rf /storage/updatemgr/patch-store/*
 service-control --start vmware-updatemgr
 ```
+
+### Adding a 250 GiB Datastore
+
+- Browse to NAS and login: <https://nas.nono.io>
+- Storage → Pools → right click on ⠇ on pool "tank"
+- Select "Add Zvol"
+  - Zvol name: **NAS-1**
+  - Comments: **For vSphere HA heartbeat**
+  - Size for this zvol: **250 GiB**
+  - Check "Sparse" (thin provisioning)
+  - Click Submit
+- Services → iSCSI / Actions / ✎
+  - Extents → ADD
+    - Name: **NAS-1**
+    - Device: **tank/NAS-1 (250G)**
+    - Click SUBMIT
+  - Associated Targets → ADD
+    - Target: **vsphere**
+    - Extent: **NAS-1**
+    - Click SUBMIT
+- Browse to vCenter and login: <vcenter-70.nono.io>
+  - esxi-1.nono.io → Configure → Storage Adapters → Rescan Storage
+  - esxi-1.nono.io → Datastores → Actions → Storage → New Datastore
+    - Type: **VMFS**
+    - Name: **NAS-1**
+    - **VMFS 6**
+    - NEXT, NEXT, FINISH
