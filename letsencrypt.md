@@ -91,6 +91,20 @@ sudo chmod +x /usr/local/etc/periodic/daily/450.letsencrypt-certbot
 
 ### TrueNAS
 
+To refresh an expired cert:
+
+```zsh
+ssh root@nas.nono.io
+bash
+export NSUPDATE_SERVER="ns-he.nono.io"
+export NSUPDATE_KEY="/root/letsencrypt.key"
+.acme.sh/acme.sh --renew \
+  -d nas.nono.io \
+  -d s3.nono.io \
+  --dns dns_nsupdate \
+  --reloadcmd /root/deploy-freenas/deploy_freenas.py
+```
+
 Setting up TrueNAS with Let's Encrypt certificates using Neilpang's
 [acme.sh](https://github.com/Neilpang/acme.sh) and danb35's
 [deploy-freenas](https://github.com/danb35/deploy-freenas) using a BIND DNS
