@@ -11,21 +11,17 @@ vim `~/.zshrc`
 ```bash
 ZSH_THEME="agnoster" # this needs to be at the top of .zshrc
 
-# the following can be at the bottom
-export PATH="/usr/local/opt/python/libexec/bin:$PATH"
-export PATH="$HOME/go/bin:$PATH"
-export EDITOR=nvim
-export GIT_EDITOR=nvim
-
 plugins=(
 	git
 	kubectl
-	osx
+	macos
 )
-# source "/usr/local/opt/zsh-git-prompt/zshrc.sh" # don't use, causes yellow PS1 when repo is clean
-fpath=(/usr/local/share/zsh-completions $fpath)
-source /usr/local/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-[ -f /usr/local/opt/chruby/share/chruby/chruby.sh ] && source /usr/local/opt/chruby/share/chruby/chruby.sh
+BREW_PREFIX=$(brew --prefix)
+# source "$BREW_PREFIX/opt/zsh-git-prompt/zshrc.sh" # don't use, causes yellow PS1 when repo is clean
+fpath=($BREW_PREFIX/opt/zsh-completions $fpath)
+source $BREW_PREFIX/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+[ -f $BREW_PREFIX/opt/chruby/share/chruby/chruby.sh ] && source $BREW_PREFIX/opt/chruby/share/chruby/chruby.sh
+[ -f $BREW_PREFIX/opt/chruby/share/chruby/auto.sh ]   && source $BREW_PREFIX/opt/chruby/share/chruby/auto.sh
 eval "$(direnv hook zsh)"
 eval "$(fasd --init posix-alias zsh-hook)"
 alias k=kubectl
@@ -39,9 +35,13 @@ source "$(brew --prefix)/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/path.
 source "$(brew --prefix)/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/completion.zsh.inc"
 PATH="$HOME/bin:$PATH"
 # OpsMgr
-export PATH="/usr/local/opt/postgresql@11/bin:$PATH"
-export LDFLAGS="-L/usr/local/opt/postgresql@11/lib"
-export CPPFLAGS="-I/usr/local/opt/postgresql@11/include"
+export PATH="$BREW_PREFIX/opt/postgresql@11/bin:$PATH"
+export LDFLAGS="-L$BREW_PREFIX/opt/postgresql@11/lib"
+export CPPFLAGS="-I$BREW_PREFIX/opt/postgresql@11/include"
 # Don't log me out of LastPass for 1 week
 export LPASS_AGENT_TIMEOUT=604800
+export PATH="$BREW_PREFIX/opt/python/libexec/bin:$PATH"
+export PATH="$HOME/go/bin:$PATH"
+export EDITOR=nvim
+export GIT_EDITOR=nvim
 ```
