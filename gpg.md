@@ -7,7 +7,7 @@ Enter the following at each of the prompts:
 ```
   9 # ECC and ECC
   1 # 25519
-  6y # 6 years
+  40y # 40 years
 ```
 
 Integrate gpg with GitHub: <https://help.github.com/articles/signing-commits-with-gpg/>
