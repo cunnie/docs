@@ -39,6 +39,7 @@ rsync -avH --progress --stats $SOURCE_HOST\:workspace/ ~/workspace/
     - ✅: Show Bluetooth in menu bar
     - go through each of the connected bluetooth devices:
       - Options → Connect to This Mac: When Last Connected to This Mac
+  - Network → uncheck Limit IP Address Tracking
 - Install brew
 ```
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -115,16 +116,16 @@ ln -s ~/bin/env/git-authors ~/.git-authors
 ```
 - Install rubies:
 ```bash
+ruby-install 3.1
 ruby-install 3.0
 ruby-install 2.7
 ruby-install 2.6
 ```
 - Start Google Drive
-  - Preferences → Google Drive → Mirror Files
 - Install GPG keys:
 ```
 mv ~/.gnupg* /tmp/
-ln -s ~/My\ Drive/keys/gnupg $HOME/.gnupg
+ln -s ~/Google\ Drive/My\ Drive/keys/gnupg $HOME/.gnupg
 git config --global user.signingkey 93B3BB2C9F7F5BA4
 git config --global commit.gpgsign true
 ```
