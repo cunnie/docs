@@ -61,6 +61,8 @@ brew bundle # a second time to recover from the Oracle fail
   - Allow my iCloud account...
 - Messages → Preferences → iMessage → ✅: Enable Messages in iCloud
   - → Start new conversations from +1 (650) 968-6262
+- (if on Desktop) System Preferences → Security & Privacy → General
+  - uncheck "Require password ... after sleep or screen saver"
 - Photos → ⌘, (Preferences) → ✅: Include location information when sharing...
 - Photos → ⌘, (Preferences) → iCloud → ✅: Download Originals to this Mac
 - Set up iStat Menus
