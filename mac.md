@@ -2,10 +2,11 @@
 
 ```bash
 git status # loads command line tools
-NEW_HOST=tara
+NEW_HOST=morgoth
 sudo scutil --set LocalHostName $NEW_HOST
 sudo scutil --set ComputerName $NEW_HOST
 sudo scutil --set HostName $NEW_HOST
+diskutil rename / $NEW_HOST
 ```
 - Copy important repos over
 
@@ -71,8 +72,8 @@ brew bundle # a second time to recover from the Oracle fail
   - generate shell scripts, set path to /usr/local/bin
   - Goland
   - RubyMine
-- Spectacle (approve accessibility)
-  - Preferences: Launch Spectacle at login
+- Rectangle (approve accessibility)
+  - Preferences: Launch Rectangle at login
 - FlyCut (approve accessibility)
   - ✅: Launch Flycut on login
   - iCloud Sync: ✅: Settings
