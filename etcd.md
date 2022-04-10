@@ -1,22 +1,37 @@
+For etcd version v3.3:
+
 ```
-etcdctl get sslipio-spec # 0.481s
-etcdctl put sslipio-spec my-value # 0.486
-etcdctl del sslipio-spec # 0.486
+time etcdctl get sslipio-spec
+time etcdctl set sslipio-spec my-value # 0.256s
+time etcdctl get sslipio-spec          # 0.016s
+time etcdctl rm  sslipio-spec          # 0.249
 ```
 
 Using k-v.io to manipulate the underlying etcd cluster:
 
+Notes on timing: times are given when queries are run on the server against the
+server (e.g. ns-azure querying ns-azure). ns-azure gets the correct return
+value on delete (no value); ns-aws doesn't (old value). ns-aws isLeader=true.
+
 ```
-NS_SERVER=ns-azure.sslip.io
+NS_SERVER=ns-aws.sslip.io
 EPOCH=$(date +%s)
 print "get: (no response)"
-dig @$NS_SERVER            sslipio-spec.k-v.io txt +short
+time dig @$NS_SERVER            sslipio-spec.k-v.io txt +short # ns-azure 0.475s, ns-aws 0.243s
 print "put: $EPOCH"
-dig @$NS_SERVER put.$EPOCH.sslipio-spec.k-v.io txt +short
+time dig @$NS_SERVER put.$EPOCH.sslipio-spec.k-v.io txt +short # ns-azure 0.482s, ns-aws 0.247s
 print "get: $EPOCH"
-dig @$NS_SERVER            sslipio-spec.k-v.io txt +short
+time dig @$NS_SERVER            sslipio-spec.k-v.io txt +short # ns-azure 0.481s, ns-aws 0.244s
 print "delete: (no response)"
-dig @$NS_SERVER     delete.sslipio-spec.k-v.io txt +short
+time dig @$NS_SERVER     delete.sslipio-spec.k-v.io txt +short # ns-azure 5.479s, ns-aws 0.479s
 print "get: (no response)"
-dig @$NS_SERVER            sslipio-spec.k-v.io txt +short
+time dig @$NS_SERVER            sslipio-spec.k-v.io txt +short # ns-azure 0.477s, ns-aws 0.243s
+```
+
+For etcd version v3.5
+
+```
+etcdctl get sslipio-spec          # 0.481s
+etcdctl put sslipio-spec my-value # 0.486
+etcdctl del sslipio-spec          # 0.486
 ```
