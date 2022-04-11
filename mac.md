@@ -143,3 +143,10 @@ Install HP 1536 printer:
 
 - Install the HP Printer Drivers v5.1 for macOS <https://support.apple.com/kb/DL1888>
 - Add printer in System Preferences. Scanner now present. Skip HP Smart. Thanks <https://discussions.apple.com/thread/252047347?answerId=254128327022#254128327022>
+
+Install convenient Golang utilities, `ginkgo` and `goimports`:
+
+```bash
+go install golang.org/x/tools/cmd/goimports@latest
+go install github.com/onsi/ginkgo/v2/ginkgo@latest
+```
