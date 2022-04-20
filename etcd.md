@@ -35,3 +35,10 @@ etcdctl get sslipio-spec          # 0.481s
 etcdctl put sslipio-spec my-value # 0.486
 etcdctl del sslipio-spec          # 0.486
 ```
+
+```
+ # for v3.5, scheme defaults to http not https
+etcdctl --endpoints=k-v-io-etcd-cluster.default.svc.cluster.local:2379 get sslipio-spec
+ # for v3.3
+etcdctl --endpoints=http://127.0.0.1:2379 get sslipio-spec
+```
