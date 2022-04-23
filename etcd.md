@@ -35,3 +35,11 @@ etcdctl get sslipio-spec          # 0.481s
 etcdctl put sslipio-spec my-value # 0.486
 etcdctl del sslipio-spec          # 0.486
 ```
+
+To troubleshoot
+```
+kubectl run delete-me --image=cunnie/fedora-golang-bosh -- sleep 86400
+kubectl exec delete-me --stdin --tty -- /usr/bin/zsh
+ # v3.3 syntax
+etcdctl --endpoints=k-v-io-etcd-cluster.default.svc.cluster.local:2379 get sslipio-spec
+```
