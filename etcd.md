@@ -42,3 +42,11 @@ etcdctl --endpoints=k-v-io-etcd-cluster.default.svc.cluster.local:2379 get sslip
  # for v3.3
 etcdctl --endpoints=http://127.0.0.1:2379 get sslipio-spec
 ```
+
+To troubleshoot on k8s
+```
+kubectl run delete-me --image=cunnie/fedora-golang-bosh -- sleep 86400
+kubectl exec delete-me --stdin --tty -- /usr/bin/zsh
+ # v3.3 syntax
+etcdctl --endpoints=k-v-io-etcd-cluster.default.svc.cluster.local:2379 get sslipio-spec
+```
