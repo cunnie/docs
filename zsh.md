@@ -21,7 +21,8 @@ BREW_PREFIX=$(brew --prefix)
 fpath=($BREW_PREFIX/opt/zsh-completions $fpath)
 source $BREW_PREFIX/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 [ -f $BREW_PREFIX/opt/chruby/share/chruby/chruby.sh ] && source $BREW_PREFIX/opt/chruby/share/chruby/chruby.sh
-[ -f $BREW_PREFIX/opt/chruby/share/chruby/auto.sh ]   && source $BREW_PREFIX/opt/chruby/share/chruby/auto.sh
+[ -f $BREW_PREFIX/opt/chruby/share/chruby/auto.sh ]   && source $BREW_PREFIX/opt/chruby/share/chruby/auto.sh # for .ruby-version (many)
+eval "$(nodenv init -)" # for .node-version (Ops Manager)
 eval "$(direnv hook zsh)"
 eval "$(fasd --init posix-alias zsh-hook)"
 alias k=kubectl
