@@ -20,6 +20,17 @@ On FreeBSD, `less` should allow escape sequences
 ```
 git config --global core.pager 'less --raw-control-chars'
 ```
+Truncating a repo (e.g. a pool resource):
+```
+ git checkout -b backup
+ # assume HEAD^ == 86df406b1bff398e1f6c4bea4a788e2fde86c2a5
+git checkout --orphan temp HEAD^
+git commit -m "Truncated history"
+git rebase --onto temp 86df406b1bff398e1f6c4bea4a788e2fde86c2a5 master -i
+git switch master
+git branch -D temp
+```
+
 Dmitriy hacks:
 ```
 git log origin/256.x...origin/257.x --oneline --stat|grep stemcell_builder
