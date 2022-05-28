@@ -2,15 +2,13 @@
 
 <https://github.com/cloudfoundry/cf-acceptance-tests>
 
+Set up:
+
 ```bash
 export CONFIG=cats-config.json
 cf api api.cf.nono.io
 cf login -u admin
 cf t -o system -s system
- # the following is a manual recreation of the `credhub/service_bindings.go` test
-cf push broker-app -b xxx -m 256M -p assets/credhub-service-broker -f assets/credhub-service-broker/manifest.yml
-cf push broker-app -b xxx -m 256M -p assets/credhub-service-broker -f assets/credhub-service-broker/manifest.yml
-cf running-environment-variable-group # check for CREDHUB_API=https://credhub.service.cf.internal:8844
 ```
 
 If you're running the Docker tests (`"include_docker": true`):
@@ -54,4 +52,16 @@ credhub get -n /bosh-vsphere/cf/credhub_admin_client_secret
   type: password
   value: xxxx
   version_created_at: "2021-11-18T23:25:53Z"
+```
+
+That secret ("xxxx") goes into the `cats-config.json` file under the property
+`"credhub_secret"`.
+
+But we're still not done: we need to create a security group that allows the
+apps to communicate with CredHub.
+
+```
+cf create-security-group credhub <(echo '[{"protocol":"tcp","destination":"10.0.0.0/8","ports":"8443,8844","description":"credhub"}]')
+cf bind-running-security-group credhub
+cf bind-staging-security-group credhub
 ```
