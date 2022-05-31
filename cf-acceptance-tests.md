@@ -65,3 +65,6 @@ cf create-security-group credhub <(echo '[{"protocol":"tcp","destination":"10.0.
 cf bind-running-security-group credhub
 cf bind-staging-security-group credhub
 ```
+
+Is this the reason that we have to wait for CAPI's ASG data to propagate?
+<https://github.com/cloudfoundry/cf-networking-release/blob/509ada1dc1725b998fd78af09a38dba13eebf513/jobs/policy-server-asg-syncer/spec#L31-L33>
