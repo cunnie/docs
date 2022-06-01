@@ -68,3 +68,52 @@ cf bind-staging-security-group credhub
 
 Is this the reason that we have to wait for CAPI's ASG data to propagate?
 <https://github.com/cloudfoundry/cf-networking-release/blob/509ada1dc1725b998fd78af09a38dba13eebf513/jobs/policy-server-asg-syncer/spec#L31-L33>
+
+Down to 3 failures:
+
+```
+[Fail] [tasks] v3 tasks when associating a task with an app and binding a space-specific ASG [It] applies the associated app's ASGs to the task
+/Users/cunnie/workspace/cf-acceptance-tests/tasks/task.go:355
+
+[Fail] [routing] Session Affinity when two apps have different context paths [BeforeEach] Sticky session should work
+/Users/cunnie/workspace/cf-acceptance-tests/routing/session_affinity.go:153
+
+[Fail] [routing] Session Affinity when one app has a root path and another with a context path [BeforeEach] Sticky session should work
+/Users/cunnie/workspace/cf-acceptance-tests/routing/session_affinity.go:234
+
+Ran 170 of 228 Specs in 2058.645 seconds
+FAIL! -- 167 Passed | 3 Failed | 3 Pending | 55 Skipped
+```
+
+The "Session Affinity" errors appear to be caused by apps taking too long to
+start, maybe caused by my slow hardware. The fix? ~~Double `cf_push_timeout`
+from 240 seconds to 480 seconds~~. Halving the nodes from 12 to 6, i.e.
+`bin/test -nodes=6`. On the downside, the acceptance tests take 48 minutes to
+complete.
+
+Note the following log messages where it takes _almost two minutes_ for the
+container to become healthy:
+
+```
+ 2022-05-28T19:28:06.87-0700 [CELL/0] OUT Starting health monitoring of container
+ 2022-05-28T19:29:55.49-0700 [CELL/0] OUT Container became healthy
+```
+
+Down to one failure:
+
+```
+[Fail] [tasks] v3 tasks when associating a task with an app and binding a space-specific ASG [It] applies the associated app's ASGs to the task
+/Users/cunnie/workspace/cf-acceptance-tests/tasks/task.go:355
+```
+
+```bash
+cf push cats-app -b go_buildpack -m 256M -p assets/proxy -f assets/proxy/manifest.yml
+ # 10.0.244.255 is a hard-coded random IP address
+cf run-task cats-app --command "curl --fail --connect-timeout 10 10.0.244.255:80" --name woof
+cf logs cats-app --recent # look for "Failed to connect" "Connection refused"
+cf create-security-group cats-sg <(echo '[{"protocol":"tcp","destination":"10.0.244.255","ports":"80","description":"cats-sg"}]')
+cf bind-security-group cats-sg system --space system
+cf restart cats-app
+cf run-task cats-app --command "curl --fail --connect-timeout 10 10.0.244.255:80" --name woof
+cf logs cats-app --recent # look for "Failed to connect"
+```
