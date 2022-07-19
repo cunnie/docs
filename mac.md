@@ -150,3 +150,10 @@ Install convenient Golang utilities, `ginkgo` and `goimports`:
 go install golang.org/x/tools/cmd/goimports@latest
 go install github.com/onsi/ginkgo/v2/ginkgo@latest
 ```
+
+Old (v3) `yq`:
+
+```bash
+wget https://github.com/mikefarah/yq/releases/download/3.4.1/yq_darwin_amd64 -O /usr/local/bin/yq &&\
+    chmod +x /usr/local/bin/yq
+```

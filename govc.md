@@ -30,3 +30,13 @@ govc dvs.portgroup.info /private/network/wild-192.168.0
   govc: /private/network/wild-192.168.0 (OpaqueNetwork) is not a DVS
 govc vm.network.add -vm /private/vm/delete-me/19333421-b078-48fb-929b-388666076b05/vm-c9fdf99e-7488-47a9-b18a-c7cc241d4d38 -net wild-192.168.0
 ```
+Snapshots:
+```bash
+govc snapshot.create -m=true -vm="/dc/vm/Discovered virtual machine/w19-stemcell" foo
+govc snapshot.revert -vm="/dc/vm/Discovered virtual machine/w19-stemcell" foo
+govc snapshot.remove -r=true -vm="/dc/vm/Discovered virtual machine/w19-stemcell" foo
+```
+Detailed host info:
+```bash
+govc host.info -host=/dc/host/cl/esxi-1 -json
+```
