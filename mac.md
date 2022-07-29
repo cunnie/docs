@@ -131,9 +131,15 @@ mv ~/.gnupg* /tmp/
 ln -s ~/Google\ Drive/My\ Drive/keys/gnupg $HOME/.gnupg
 git config --global user.signingkey 93B3BB2C9F7F5BA4
 git config --global commit.gpgsign true
+ # the following fixes "error: gpg failed to sign the data fatal: failed to write commit object"
+ # caused by ~/.gnupg being a link to a networked drive
+for SOCKET_TYPE in "" .ssh .browser .extra; do
+  printf '%%Assuan%%\nsocket=${HOME}/bin/S.gpg-agent'$SOCKET_TYPE"\n" > ~/.gnupg/S.gpg-agent$SOCKET_TYPE
+done
 ```
 - if on laptop:
   - download Wireguard from the App Store
+  - Set up wireguard for new laptop: [instructions](wireguard.md)
   - click "Import tunnel(s) from file"
   - import from `~/My Drive/wg/wg0-tetra.conf`
 
