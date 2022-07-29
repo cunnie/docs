@@ -44,6 +44,7 @@ rsync -avH --progress --stats $SOURCE_HOST\:workspace/ ~/workspace/
 ```
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 cd ~/bin
+sudo softwareupdate --install-rosetta # some formulae require rosetta
 brew bundle # allow Oracle/Virtualbox extension when asked
 brew bundle # a second time to recover from the Oracle fail
 ```
@@ -141,13 +142,13 @@ done
   - download Wireguard from the App Store
   - Set up wireguard for new laptop: [instructions](wireguard.md)
   - click "Import tunnel(s) from file"
-  - import from `~/My Drive/wg/wg0-tetra.conf`
+  - import from `~/Google Drive/My Drive/wg/wg0-tetra.conf`
 
 Install [smith](https://github.com/pivotal/smith/releases)
 
 Install HP 1536 printer:
 
-- Install the HP Printer Drivers v5.1 for macOS <https://support.apple.com/kb/DL1888>
+- Install the HP Printer Drivers v5.1.1 for macOS <https://support.apple.com/kb/DL1888>
 - Add printer in System Preferences. Scanner now present. Skip HP Smart. Thanks <https://discussions.apple.com/thread/252047347?answerId=254128327022#254128327022>
 
 Install convenient Golang utilities, `ginkgo` and `goimports`:
@@ -160,6 +161,6 @@ go install github.com/onsi/ginkgo/v2/ginkgo@latest
 Old (v3) `yq`:
 
 ```bash
-wget https://github.com/mikefarah/yq/releases/download/3.4.1/yq_darwin_amd64 -O /usr/local/bin/yq &&\
-    chmod +x /usr/local/bin/yq
+wget https://github.com/mikefarah/yq/releases/download/3.4.1/yq_darwin_amd64 -O $(brew --prefix)/bin/yq &&\
+    chmod +x $(brew --prefix)/bin/yq
 ```
