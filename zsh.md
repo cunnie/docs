@@ -47,4 +47,5 @@ export PATH="$HOME/go/bin:$PATH"
 export PATH="$BREW_PREFIX/opt/postgresql@13/bin:$PATH"
 export EDITOR=nvim
 export GIT_EDITOR=nvim
+export USE_GKE_GCLOUD_AUTH_PLUGIN=True # fixes WARNING: the gcp auth plugin is deprecated in v1.22+, unavailable in v1.26+; use gcloud instead.
 ```
