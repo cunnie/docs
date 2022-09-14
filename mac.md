@@ -164,3 +164,9 @@ Old (v3) `yq`:
 wget https://github.com/mikefarah/yq/releases/download/3.4.1/yq_darwin_amd64 -O $(brew --prefix)/bin/yq &&\
     chmod +x $(brew --prefix)/bin/yq
 ```
+
+Free up CLI navigation (use ^↑ to access other spaaces):
+
+- System Preferences → Keyboard → Shortcuts → Mission Control
+  - Uncheck "Move left a space"
+  - Uncheck "Move right a space"
