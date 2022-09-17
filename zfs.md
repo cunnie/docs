@@ -69,3 +69,15 @@ zfs umount freenas-boot
 zfs set canmount=off freenas-boot
 zfs set mountpoint=none freenas-boot
 ```
+
+### Creating TrueNAS Install USB
+
+```bash
+diskutil list # it's dev/disk4
+diskutil unmount /dev/disk4s1
+sudo dd if=$HOME/Downloads/TrueNAS-13.0-U2.iso of=/dev/disk4 bs=1024k
+```
+
+When it's time to boot, whether to use the "UEFI" variant seems haphazard: my
+Sandisk Cruzer wiill only boot the UEFI variant, but my Samsung will only boot
+the non-UEFI variant. Both USBs were flashed the same way.
