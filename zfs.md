@@ -72,6 +72,8 @@ zfs set mountpoint=none freenas-boot
 
 ### Creating TrueNAS Install USB
 
+On macOS:
+
 ```bash
 diskutil list # it's dev/disk4
 diskutil unmount /dev/disk4s1
@@ -81,3 +83,27 @@ sudo dd if=$HOME/Downloads/TrueNAS-13.0-U2.iso of=/dev/disk4 bs=1024k
 When it's time to boot, whether to use the "UEFI" variant seems haphazard: my
 Sandisk Cruzer wiill only boot the UEFI variant, but my Samsung will only boot
 the non-UEFI variant. Both USBs were flashed the same way.
+
+### Adding Cache, SLOG
+
+```bash
+nvmecontrol devlist
+nvmecontrol identify nvme0
+ # the following returns "nvmecontrol: format request returned error"
+nvmecontrol format nvme0 --erase # User data erase
+smartctl -a /dev/nvme0
+diskinfo -wS /dev/nvd0 # runs speedtest
+```
+
+Let's create our disk:
+
+```bash
+ # don't use nvme: "gpart: arg0 'nvme0': Invalid argument"
+gpart create -s gpt nvd0
+ # to clear everything & start over: gpart destroy -F nvd0
+gpart add -t freebsd-zfs -l zfs-cache -b 1m    -s 1536g nvd0
+zpool add tank cache nvd0p1 # add 1T device
+gpart add -t freebsd-zfs -l zfs-slog  -b 1537g -s 32g   nvd0
+zpool add tank log nvd0p2 # add 32G device
+zpool status
+```
