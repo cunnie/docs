@@ -24,6 +24,9 @@ zfs list -t snapshot | grep freenas-boot | awk '{print $1'} | xargs -n 1 zfs des
 gpart show # equivalent to `fdisk -l`
 zpool add tank log nvd0p1 # add 40G device
 zpool add tank cache nvd0p2 # add 1.6T device
+ # to remove
+zpool remove tank nvd0p1
+zpool remove tank nvd0p2
 ```
 
 ```bash
