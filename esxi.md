@@ -674,3 +674,22 @@ service-control --start vmware-updatemgr
     - Name: **NAS-1**
     - **VMFS 6**
     - NEXT, NEXT, FINISH
+
+### Updating the BIOS, again
+
+|              |         old        |         new        |
+|:------------:|:------------------:|:------------------:|
+| BIOS         |  2.1 (11/22/2019)  | 2.3 (06/04/20201   |
+
+Configure BIOS
+
+- Save & Exit → Restore Optimized Defaults
+- Save Changes & Reset
+
+Press F11 on boot to choose bootable device. If you're using the soft keyboard,
+make sure to move it down because the screen jumps bigger.
+
+Choose "Samsung Flash Drive FIT 1100" not "UEFI: Samsung ..."
+
+Later, during the install process, choose a UEFI install. And then, to boot to
+the installed drive, choose the UEFI variant, "UEFI: ...".
