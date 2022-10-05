@@ -171,7 +171,7 @@ Free up CLI navigation (use ^↑ to access other spaaces):
   - Uncheck "Move left a space"
   - Uncheck "Move right a space"
 
-- create a `workspace` volume with APFS case-sensitive (for Linux kernel) (commands not tested):
+Create a `workspace` volume with APFS case-sensitive (for Linux kernel) (commands not tested):
 
 ```bash
 mv ~/workspace{,-orig}
@@ -181,3 +181,7 @@ rsync -aH --stats ~/workspace-orig/ ~/workspace/
 ls -l ~/workspace/
 rm -rf ~/workspace-orig/
 ```
+
+Fix `mailto:` links:
+
+- Firefox → ⌘, → Find in Settings: "Applications" → subsearch: "mailto" → Select "Use Gmail"
