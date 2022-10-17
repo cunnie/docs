@@ -171,11 +171,14 @@ Free up CLI navigation (use ^↑ to access other spaaces):
   - Uncheck "Move left a space"
   - Uncheck "Move right a space"
 
-Create a `workspace` volume with APFS case-sensitive (for Linux kernel) (commands not tested):
+Create a `workspace` volume with APFS case-sensitive (for Linux kernel):
 
 ```bash
 mv ~/workspace{,-orig}
-sudo newfs_apfs -e -v "workspace" disk0s2
+ # diskutil list
+sudo newfs_apfs -A -e -v "workspace" disk3
+diskutil mount workspace
+sudo chown cunnie:staff /Volumes/workspace
 ln -s /Volumes/workspace ~/workspace
 rsync -aH --stats ~/workspace-orig/ ~/workspace/
 ls -l ~/workspace/
