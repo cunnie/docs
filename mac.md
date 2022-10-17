@@ -170,3 +170,14 @@ Free up CLI navigation (use ^↑ to access other spaaces):
 - System Preferences → Keyboard → Shortcuts → Mission Control
   - Uncheck "Move left a space"
   - Uncheck "Move right a space"
+
+- create a `workspace` volume with APFS case-sensitive (for Linux kernel) (commands not tested):
+
+```bash
+mv ~/workspace{,-orig}
+sudo newfs_apfs -e -v "workspace" disk0s2
+ln -s /Volumes/workspace ~/workspace
+rsync -aH --stats ~/workspace-orig/ ~/workspace/
+ls -l ~/workspace/
+rm -rf ~/workspace-orig/
+```
