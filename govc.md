@@ -40,3 +40,10 @@ Detailed host info:
 ```bash
 govc host.info -host=/dc/host/cl/esxi-1 -json
 ```
+Registering a VM because we're migrating VMs from vcenter-70.nono.io to vcenter-80.nono.io:
+```
+VM=fed.nono.io
+govc vm.register -ds=NAS-0 -pool=cunnie $VM/$VM.vmx
+govc vm.network.change -vm $VM -net nono ethernet-0
+govc vm.upgrade -vm $VM
+```
