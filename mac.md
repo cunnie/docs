@@ -19,7 +19,7 @@ rsync -avH $SOURCE_HOST\:aa/ ~/aa/
 rsync -avH $SOURCE_HOST\:docs/ ~/docs/
 rsync -avH $SOURCE_HOST\:bin-old/ ~/bin-old/
 rsync -avH $SOURCE_HOST\:docs-old/ ~/docs-old/
-HOSTNAME=$(hostname); cd ~/aa; git add .; git ci -m"from ${HOSTNAME%%.*}"; git pull -r; git push; cd ~/bin-old; git add .; git ci -m "from ${HOSTNAME%%.*}"; git pull -r; git push; cd ~/docs-old/ ; git add .; git ci -m "from ${HOSTNAME%%.*}"; git pull -r; git push; cd ~/docs; git pull; cd ~/bin; git pull; popd; popd; popd; popd; popd
+HOSTNAME=$(hostname); cd ~/aa; git add .; git commit -m"from ${HOSTNAME%%.*}"; git pull -r; git push; cd ~/bin-old; git add .; git commit -m "from ${HOSTNAME%%.*}"; git pull -r; git push; cd ~/docs-old/ ; git add .; git commit -m "from ${HOSTNAME%%.*}"; git pull -r; git push; cd ~/docs; git pull; cd ~/bin; git pull; popd; popd; popd; popd; popd
 rsync -avH --progress --stats $SOURCE_HOST\:workspace/ ~/workspace/
 ```
 - Set up git per [git.md](https://github.com/cunnie/docs/blob/master/git.md)
