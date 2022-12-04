@@ -31,6 +31,7 @@ alias vim=nvim     # we are committed to nvim
 alias dkill='docker rm -f $(docker ps -a -q); docker volume prune -f'
 alias dclean='docker rmi -f $(docker images -q) '
 alias be='bundle exec'
+alias dailycheese="gcloud compute --project ops-manager-ci ssh --zone us-central1-b daily-cheese-ops-manager"
  # the following is for `gcloud` (Google Cloud's CLI)
 export CLOUDSDK_PYTHON="$(brew --prefix)/opt/python@3.8/libexec/bin/python"
 source "$(brew --prefix)/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/path.zsh.inc"
