@@ -58,7 +58,7 @@ Let's set up zsh
 ```shell
 sudo pkg install -y \
   bat \
-  bind916 \
+  bind918 \
   curl \
   dhcp6 \
   dhcpd \
@@ -70,7 +70,7 @@ sudo pkg install -y \
   lsof \
   neovim \
   npm \
-  py38-pip \
+  py39-pip \
   python3 \
   ripgrep \
   rsync \

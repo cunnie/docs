@@ -20,11 +20,38 @@ Basic information on my Hetzner FreeBSD virtual machine:
 
 These are the instructions for the initial setup:
 
-```
+```bash
 ssh root@shay.nono.com
 mkdir ~/.ssh
 chmod 700 ~/.ssh
-pkg_add -r git sudo bash vim rsync
+pkg install -y \
+  bash \
+  bind918 \
+  curl \
+  dhcp6 \
+  dhcpd \
+  dmidecode \
+  fd-find \
+  git \
+  htop \
+  ipmitool \
+  lsof \
+  neovim \
+  npm \
+  py39-pip \
+  python3 \
+  ripgrep \
+  rsync \
+  ruby \
+  sudo \
+  the_silver_searcher \
+  tmux \
+  vim \
+  wireguard \
+  zsh \
+  zsh-autosuggestions \
+  zsh-completions \
+
 bash
 cd /etc
 git init
@@ -80,7 +107,7 @@ Now let's create the initial user.  The user will have sudo privileges, will not
 
 Now let's log in as the new user and set the IPv6 address based on the information in the *IPs* tab of the Hetzner web interface.  Note that we set the **::2** address of our /64 to be our server's IP address, and the **::1** address to be our default route.
 
-```
+```bash
 ssh cunnie@shay.nono.com
 git config --global user.name "Brian Cunnie"
 git config --global user.email brian.cunnie@gmail.com
@@ -105,16 +132,37 @@ sudo shutdown -r now
 
 * copy ssh keys in place:
 
-```
+```bash
  # from non-Hetzner machine
 for ID in cunnie root; do
   scp ~/.ssh/id_nono.pub $ID@shay.nono.com:.ssh/authorized_keys
   ssh $ID@shay.nono.com "id; echo does not require password"
 done
 ```
+
+* set up zsh
+
+```bash
+ssh cunnie@shay.nono.com
+chpass -s /usr/local/bin/zsh
+exit
+ssh cunnie@shay.nono.com
+sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+```
+
+* set up our `~/.zshrc`
+
+```bash
+nvim ~/.zshrc
+  ZSH_THEME="agnoster"
+  export EDITOR="nvim"
+  source /usr/local/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+  PATH="$HOME/bin:$PATH"
+```
+
 * lock down so it requires ssh-key to log in:
 
-```
+```bash
 ssh cunnie@shay.nono.com
  # prevent root from logging in
  # require keys to log in
@@ -136,13 +184,13 @@ sudo -E git commit -m"sshd is locked down"
 ```
 * Publish my /etc/ repo to a public repo on github. If you decide to publish to a github repo, use a private repo (unless you are confident that nothing you publish will compromise the security of your server):
 
-```
+```bash
 sudo git remote add origin git@github.com:cunnie/shay.nono.com-etc.git
 sudo -E git push -u origin master
 ```
 * If you see a message saying `Permission denied (publickey)` when you try to push to github, you need to enable ssh agent forwarding.  This is what my ~/.ssh/config file looks like on my home machine:
 
-```
+```bash
 Host shay shay.nono.com
         User cunnie
         IdentityFile ~/.ssh/id_nono
@@ -156,7 +204,7 @@ We will now configure the DNS server as a secondary NS (nameserver) for the doma
 
 #### Edit named.conf on shay.nono.com
 
-```
+```bash
 cd /etc/namedb
  # alternative to using a heredoc when root privilege to write is needed
 printf "slave/\nrndc.key\n" | sudo tee .gitignore
@@ -177,7 +225,7 @@ We're going to make several changes to *named.conf*:
 
 Let's edit the file:
 
-```
+```bash
 sudo vim named.conf
 ```
 Let's enable the external interfaces to accept queries.  Note that there is an inconsistency between IPv4 and IPv6: to enable IPv4 on the external interface we *comment-out* the corresponding line, but to enable IPv6 we *uncomment* the corresponding line and write "any;" between the curly braces.
@@ -226,13 +274,13 @@ zone "nono.com" in {
 
 Back on the Hetzner machine: configure the nameserver daemon to start on boot, and the bring it up manually:
 
-```
+```bash
 printf "# enable BIND\nnamed_enable=\"YES\"\n" | sudo tee -a /etc/rc.conf
 sudo /etc/rc.d/named start
 ```
 Test to make sure it's resolving properly from shay.nono.com:
 
-```
+```bash
 nslookup shay.nono.com 127.0.0.1
 nslookup shay.nono.com ::1
 nslookup google.com 127.0.0.1
@@ -240,7 +288,7 @@ nslookup google.com ::1
 ```
 Now we test from a third-party machine (to make sure that recursion has been disabled). Note that we explicitly specify shay.nono.com's IPv4 and IPv6 addresses in order to test on both protocols:
 
-```
+```bash
 nslookup shay.nono.com 78.47.249.19
 nslookup shay.nono.com 2a01:4f8:d12:148e::2
 nslookup google.com 78.47.249.19  # should fail, "REFUSED/NXDOMAIN"
@@ -366,7 +414,7 @@ We edit the ntpd configuration file, */etc/ntp.conf*.  We make the following cha
 * comment-out the [appropriately restrictive] default permissions
 * add permissions that allow other machines to use our server as a time source
 
-```
+```bash
 sudo vim /etc/ntp.conf
 ```
 Add the following lines (after commenting-out any line that begins with "server"):
@@ -411,7 +459,7 @@ ntpd_enable="YES"
 ```
 We can start ntpd by rebooting the server, but it is quicker to run its rc script:
 
-```
+```bash
 sudo /etc/rc.d/ntpd start
 ```
 
@@ -442,7 +490,7 @@ server stratum2-3.NTP.TechFak.Uni-Bielefeld.DE iburst
 ```
 We restart our ntpd server:
 
-```
+```bash
 sudo /etc/rc.d/ntpd restart
 ```
 And we check our upstream servers again:
