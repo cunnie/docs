@@ -119,21 +119,24 @@ and <https://annvix.com/blog/using-letsencrypt-on-freenas>.
 
 ```
 ssh root@nas.nono.io
-scp cunnie@ns-he.nono.io:/usr/local/etc/namedb/letsencrypt.key .
+scp cunnie@ns-he.nono.io:/usr/local/etc/named_chroot/usr/local/etc/namedb/letsencrypt.key .
 chmod 400 letsencrypt.key
 curl https://get.acme.sh | sh
 exit
 ssh root@nas.nono.io
 git clone https://github.com/danb35/deploy-freenas
+chmod +x deploy-freenas/deploy_freenas.py
 printf "[deploy]\npassword = YourPassword\n" > deploy-freenas/deploy_config
 chmod 400 deploy-freenas/deploy_config
 bash
   # Don't try elliptic curve! Error formatting alert: 'HTTP server does not support certificates with keys shorter than 1024 bits. HTTPS cannot be enabled until a 1024 bit keylength or greater certificate is added # elliptic curve cryptography for the win! But need
 export NSUPDATE_SERVER="ns-he.nono.io"
 export NSUPDATE_KEY="/root/letsencrypt.key"
+.acme.sh/acme.sh --register-account -m brian.cunnie@gmail.com
 .acme.sh/acme.sh --issue \
   -d nas.nono.io \
   -d s3.nono.io \
+  --server https://acme-v02.api.letsencrypt.org/directory \
   --dns dns_nsupdate \
   --reloadcmd /root/deploy-freenas/deploy_freenas.py
 .acme.sh/acme.sh --cron --home /root/.acme.sh
