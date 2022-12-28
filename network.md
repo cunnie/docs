@@ -15,3 +15,10 @@
 | wg0       |  N/A |   10.9.255.1/28 |                                       N/A | Wireguard     |                   |
 | N/A       |  N/A |     10.8.0.0/16 |                                       N/A | NSX's IP Pool |                   |
 | N/A       |    * |             N/A |                                       N/A | NSX Trunk     | All-VLANs         |
+
+Notes:
+
+- The DVS should have a 1600 MTU
+- On `All-VLANs`:
+  - Promiscuous Mode: `accept`
+  - Forged Transmits: `accept`
