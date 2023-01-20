@@ -26,10 +26,10 @@ openssl ecparam -name prime256v1 -genkey -out $CN.key openssl req \
 ```bash
 # brew install certbot # macOS
 # FreeBSD
-sudo pkg install py36-certbot
+sudo pkg install py37-certbot
 sudo mkdir -p /etc/letsencrypt
 sudo tee /etc/letsencrypt/cli.ini <<EOF
-rsa-key-size = 4096
+key-type = ecdsa
 email = brian.cunnie@gmail.com
 EOF
 sudo certbot certonly \
@@ -53,6 +53,8 @@ sudo certbot certonly \
     -d cunnie.com \
   -w /www/brian.cunnie.com \
     -d brian.cunnie.com \
+  -w /www/brian-old.cunnie.com \
+    -d brian-old.cunnie.com \
   -w /www/blabbertabber.com \
     -d blabbertabber.com
 
