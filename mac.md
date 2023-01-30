@@ -188,3 +188,7 @@ rm -rf ~/workspace-orig/
 Fix `mailto:` links:
 
 - Firefox → ⌘, → Find in Settings: "Applications" → subsearch: "mailto" → Select "Use Gmail"
+
+Remove Notes's annoying hot corner:
+
+- System Settings → Desktop & Dock → Hot Corner Shortcuts → Set the lower-right-hand one to "-"
