@@ -102,10 +102,6 @@ brew bundle # a second time to recover from the Oracle fail
   - iTerm2 → ⌘, (Preferences) → Profiles → Terminal → Unlimited scrollback
   - iTerm2 → ⌘, (Preferences) → Profiles → Text → User built-in Powerline glyphs (checked)
 - Set up zsh per [zsh.md](https://github.com/cunnie/docs/blob/master/zsh.md)
-```bash
-pip3 install neovim
-git clone https://github.com/luan/nvim ~/.config/nvim
-```
 - Install Luan's [tmuxfiles](https://github.com/luan/tmuxfiles/blob/master/install)
 ```bash
 curl https://raw.githubusercontent.com/luan/tmuxfiles/master/install | bash

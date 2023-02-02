@@ -132,9 +132,7 @@ sudo -E git restore .gitignore
 Let's configure packages
 
 ```shell
-pip install neovim
-git clone https://github.com/luan/nvim ~/.config/nvim
-nvim # install plugins
+sudo pkg install neovim
 ```
 
 Let's copy wireguard configuration over

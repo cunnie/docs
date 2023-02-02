@@ -33,8 +33,7 @@ X-Desktop-File-Install-Version=0.23
 * top-icons (for legacy apps)
 * themes: arc-fatabulous-darker (or whatever works for me)
 
-* to set up vim <https://github.com/luan/vimfiles>
-  to set up tmux dotfiles <https://github.com/luan/dotfiles/blob/master/tmux.conf>
+* to set up tmux dotfiles <https://github.com/luan/dotfiles/blob/master/tmux.conf>
 * may consider tpm (tmux plugin manager)
 
 install the new [UAA CLI](https://github.com/cloudfoundry-incubator/uaa-cli)
