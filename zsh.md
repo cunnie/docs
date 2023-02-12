@@ -25,18 +25,19 @@ source $BREW_PREFIX/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 eval "$(nodenv init -)" # for .node-version (Ops Manager)
 eval "$(direnv hook zsh)"
 eval "$(fasd --init posix-alias zsh-hook)"
-alias k=kubectl
-alias z='fasd_cd -d'     # cd, same functionality as j in autojump
-alias vim=nvim     # we are committed to nvim
-alias dkill='docker rm -f $(docker ps -a -q); docker volume prune -f'
-alias dclean='docker rmi -f $(docker images -q) '
 alias be='bundle exec'
 alias dailycheese="gcloud compute --project ops-manager-ci ssh --zone us-central1-b daily-cheese-ops-manager"
+alias dclean='docker rmi -f $(docker images -q) '
+alias dkill='docker rm -f $(docker ps -a -q); docker volume prune -f'
+alias k=kubectl
+alias nvim="$HOME/.local/bin/lvim"
+alias vim=nvim     # we are committed to nvim
+alias z='fasd_cd -d'     # cd, same functionality as j in autojump
  # the following is for `gcloud` (Google Cloud's CLI)
-export CLOUDSDK_PYTHON="$(brew --prefix)/opt/python@3.8/libexec/bin/python"
-source "$(brew --prefix)/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/path.zsh.inc"
-source "$(brew --prefix)/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/completion.zsh.inc"
-PATH="$HOME/bin:$PATH"
+export CLOUDSDK_PYTHON="${BREW_PREFIX}/opt/python@3.8/libexec/bin/python"
+source "${BREW_PREFIX}/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/path.zsh.inc"
+source "${BREW_PREFIX}/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/completion.zsh.inc"
+PATH="$HOME/bin:$PATH:$BREW_PREFIX/bin"
 # OpsMgr
 export PATH="$BREW_PREFIX/opt/postgresql@11/bin:$PATH"
 export LDFLAGS="-L$BREW_PREFIX/opt/postgresql@11/lib"

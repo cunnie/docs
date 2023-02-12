@@ -116,6 +116,7 @@ ln -s ~/bin/env/git-authors ~/.git-authors
 ```
 - Install rubies:
 ```bash
+ruby-install 3.2
 ruby-install 3.1
 ruby-install 3.0
 ruby-install 2.7
@@ -138,7 +139,7 @@ done
   - download Wireguard from the App Store
   - Set up wireguard for new laptop: [instructions](wireguard.md)
   - click "Import tunnel(s) from file"
-  - import from `~/Google Drive/My Drive/wg/wg0-tetra.conf`
+  - import from `~/Google Drive/My Drive/wg/wg0-mordred.conf`
 
 Install [smith](https://github.com/pivotal/smith/releases)
 
@@ -161,7 +162,7 @@ wget https://github.com/mikefarah/yq/releases/download/3.4.1/yq_darwin_amd64 -O 
     chmod +x $(brew --prefix)/bin/yq
 ```
 
-Free up CLI navigation (use ^↑ to access other spaaces):
+Free up CLI navigation (use ^↑ to access other spaces):
 
 - System Preferences → Keyboard → Shortcuts → Mission Control
   - Uncheck "Move left a space"
@@ -192,3 +193,12 @@ Remove Notes's annoying hot corner:
 Remove annoying look up (laptops only):
 
 - System Settings → Trackpad → Look up & data detectors → Set to "Off"
+
+Install [LunarVim](https://www.lunarvim.org/docs/installation)
+
+Install [Nerd Fonts](https://github.com/ryanoasis/nerd-fonts#option-4-homebrew-fonts):
+```
+brew tap homebrew/cask-fonts
+brew install font-hack-nerd-font
+```
+- iTerm2 → ⌘, (Preferences) → Profiles → Text → Font: Hack Nerd Font Mono / Regular / 13
