@@ -34,6 +34,7 @@ For etcd version v3.5
 etcdctl get sslipio-spec          # 0.481s
 etcdctl put sslipio-spec my-value # 0.486
 etcdctl del sslipio-spec          # 0.486
+etcdctl get --prefix ""           # get me all the keys
 ```
 
 ```bash
