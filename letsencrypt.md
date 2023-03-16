@@ -128,6 +128,7 @@ exit
 ssh root@nas.nono.io
 git clone https://github.com/danb35/deploy-freenas
 chmod +x deploy-freenas/deploy_freenas.py
+ # Use the root password for nas.nono.io below
 printf "[deploy]\npassword = YourPassword\n" > deploy-freenas/deploy_config
 chmod 400 deploy-freenas/deploy_config
 bash
@@ -136,6 +137,7 @@ export NSUPDATE_SERVER="ns-he.nono.io"
 export NSUPDATE_KEY="/root/letsencrypt.key"
 .acme.sh/acme.sh --register-account -m brian.cunnie@gmail.com
 .acme.sh/acme.sh --issue \
+  --keylength 2048 \
   -d nas.nono.io \
   -d s3.nono.io \
   --server https://acme-v02.api.letsencrypt.org/directory \
