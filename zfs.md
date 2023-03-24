@@ -102,8 +102,14 @@ Let's create our disk:
 gpart create -s gpt nvd0
  # to clear everything & start over: gpart destroy -F nvd0
 gpart add -t freebsd-zfs -l zfs-cache -b 1m    -s 1536g nvd0
-zpool add tank cache nvd0p1 # add 1T device
+zpool add tank cache nvd0p1 # add 1.5T device
 gpart add -t freebsd-zfs -l zfs-slog  -b 1537g -s 32g   nvd0
 zpool add tank log nvd0p2 # add 32G device
 zpool status
+```
+
+Replacing a disk:
+
+```bash
+zpool replace tank gptid/0593521d-c5e1-11ed-bdab-ac1f6b2d1592 da6
 ```
