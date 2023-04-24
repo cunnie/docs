@@ -1,3 +1,10 @@
+
+```
+docker buildx build -t cunnie/junk        --platform linux/amd64,linux/arm64 .
+docker buildx build -t cunnie/junk --push --platform linux/amd64,linux/arm64 .
+docker system prune -a
+```
+
 ```
 docker ps
 docker run hello-world
