@@ -182,9 +182,14 @@ ls -l ~/workspace/
 rm -rf ~/workspace-orig/
 ```
 
-Fix `mailto:` links:
+Fix `mailto:` & [calendar](https://askubuntu.com/a/1203165) links:
 
 - Firefox → ⌘, → Find in Settings: "Applications" → subsearch: "mailto" → Select "Use Gmail"
+- Firefox → about:config → `dom.registerContentHandler.enabled=true`
+- Firefox → F12 → Console → paste the following:
+```js
+javascript:window.navigator.registerProtocolHandler("webcal","https://calendar.google.com/calendar/r?cid=%s","Google Calendar");
+```
 
 Remove Notes's annoying hot corner:
 
