@@ -1,4 +1,4 @@
-### Setting up `atom.nono.io`
+### Setting up `mordor.nono.io`
 
 I disable EIST (Enhanced Intel SpeedStep® Technology) because I felt it was
 throttling my download speeds from outside the server (I would get ~1400 Mbps
@@ -17,7 +17,7 @@ BIOS:
 sudo dd if=/Users/cunnie/Downloads/FreeBSD-13.0-RELEASE-amd64-bootonly.iso of=/dev/disk2 bs=1024k
 ```
 
-- hostname: **atom.nono.io**
+- hostname: **mordor.nono.io**
 - ix0 (this is the lower ethernet port)
   - IP Address: **10.0.9.10**
   - Subnet Mask: **255.255.255.0**
@@ -38,7 +38,7 @@ sudo dd if=/Users/cunnie/Downloads/FreeBSD-13.0-RELEASE-amd64-bootonly.iso of=/d
   - invite into **wheel** group
 
 ```shell
-ssh atom.nono.io
+ssh mordor.nono.io
 mkdir ~/.ssh; chmod 700 ~/.ssh
 echo ssh-ed25519 \
   AAAAC3NzaC1lZDI1NTE5AAAAIIWiAzxc4uovfaphO0QVC2w00YmzrogUpjAzvuqaQ9tD \
@@ -70,6 +70,7 @@ sudo pkg install -y \
   lsof \
   neovim \
   npm \
+  open-vm-tools-nox11 \
   py39-pip \
   python3 \
   ripgrep \
@@ -84,11 +85,12 @@ sudo pkg install -y \
 
 chpass -s /usr/local/bin/zsh
 exit
-ssh atom.nono.io
+ssh mordor.nono.io
+q # zsh "quit and do nothing"
 sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 exit
 exit
-ssh atom
+ssh mordor
 ```
 
 Set up our `~/.zshrc`
