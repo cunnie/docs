@@ -114,7 +114,7 @@ so quiet I'm not sure that I can hear them!):
 
 | Component     | Status |    Stock Fan | w/o | 1 x Noctua | 3 x Noctua |
 |---------------|--------|-------------:|----:|-----------:|-----------:|
-| CPU Temp	| Normal |          39° | 59° |        51° |        39° |
+| CPU Temp  	| Normal |          39° | 59° |        51° |        39° |
 | System Temp	| Normal |          33° | 45° |        37° |        28° |
 | Peripheral	| Normal |          42° | 53° |        51° |        41° |
 | MB_10G Temp	| Normal |          60° | 75° |        71° |        62° |
@@ -131,17 +131,11 @@ sudo -E git reset
 sudo -E git restore .gitignore
 ```
 
-Let's configure packages
-
-```shell
-sudo pkg install neovim
-```
-
 Let's copy wireguard configuration over
 
 ```shell
 sudo mkdir -p /etc/wireguard
 sudo chmod 700 /etc/wireguard
-sudo -E scp cunnie@tara.nono.io:"My\ Drive/wg/wg0-home.conf"  /etc/wireguard/wg0.conf
+sudo -E scp cunnie@morgoth.nono.io:"My\ Drive/wg/wg0-home.conf"  /etc/wireguard/wg0.conf
 sudo /usr/local/etc/rc.d/wireguard restart
 ```
