@@ -693,3 +693,46 @@ Choose "Samsung Flash Drive FIT 1100" not "UEFI: Samsung ..."
 
 Later, during the install process, choose a UEFI install. And then, to boot to
 the installed drive, choose the UEFI variant, "UEFI: ...".
+
+### Rebooting from the CLI
+
+Make sure you're in maintenance mode:
+
+```bash
+esxcli system shutdown poweroff --reason "Add new Nvidia T4 card"
+esxcli system shutdown reboot   --reason "Attempt to recognize new Nvidia T4 card"
+```
+
+### Nvidia
+
+These are notes from my Nvidia T4 installation:
+
+- Register for the free trial
+  <https://www.nvidia.com/en-us/data-center/resources/vgpu-evaluation/>
+- Log into <https://nvid.nvidia.com>, `bcunnie@vmware.com`
+  - click on "Nvidia Licensing Portal"
+  - click on [Get Started](https://docs.nvidia.com/license-system/latest/nvidia-license-system-quick-start-guide/index.html); this part was straightforward. I don't know if it was strictly necessary.
+  - click on [Software Downloads](https://ui.licensing.nvidia.com/software). Look for platform "VMware vSphere" and platform version "8.0". Click "Download". It'll download something like `/Users/cunnie/Downloads/NVIDIA-GRID-vSphere-8.0-535.54.06-535.54.03-536.25.zip`.
+  - Once you unzip that file, you'll see the drivers for ESXi (`Host_Drivers/`) and for the VMs (`Guest_Drivers/`)
+- Copy the `.zip` file onto the ESXi host and follow the [KB article](https://kb.vmware.com/s/article/2033434) instructions, e.g.:
+
+```bash
+esxcli software vib install -v $PWD/NVD-VGPU-800_535.54.06-1OEM.800.1.0.20613240_21957031.zip
+esxcli system shutdown reboot --reason "Install Nvidia vGPU drivers"
+```
+
+- Sometimes the T4 isn't recognized/available when the ESXi host is booted; try
+  rebooting the host again.
+- On the VM (client), a good way to install the drivers is to follow the VMware
+  [KB article](https://docs.vmware.com/en/VMware-vSphere/7.0/vmware-vsphere-with-tanzu/GUID-DA0FAB21-E534-4FCD-BD7E-4A3DA98D1A16.html)
+
+```bash
+sudo ./NVIDIA-Linux-x86_64-version-grid.run
+nvidia-smi
+```
+
+- When configuring a VM with vGPU, do the following on GUI: VM → VM Hardware Edit → Add New Device → Add PCI Device. You should be prompted with several "NVIDIA GRID VGPU" devices; select one, e.g. `grid_t4-1b`.
+
+_Note: In general, we're interested in the "grid" flavor of drivers._
+
+For setting up a "passthrough", watch [How to pass through a GPU in VMware ESXi 8](https://www.youtube.com/watch?v=aFXtUaFjiO4).
