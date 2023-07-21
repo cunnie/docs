@@ -723,15 +723,16 @@ esxcli system shutdown reboot --reason "Install Nvidia vGPU drivers"
 
 - Sometimes the T4 isn't recognized/available when the ESXi host is booted; try
   rebooting the host again.
-- On the VM (client), a good way to install the drivers is to follow the VMware
-  [KB article](https://docs.vmware.com/en/VMware-vSphere/7.0/vmware-vsphere-with-tanzu/GUID-DA0FAB21-E534-4FCD-BD7E-4A3DA98D1A16.html)
+- On the VM (client), a good way to install the drivers ~~is to follow the VMware
+  [KB article](https://docs.vmware.com/en/VMware-vSphere/7.0/vmware-vsphere-with-tanzu/GUID-DA0FAB21-E534-4FCD-BD7E-4A3DA98D1A16.html)~~ is to install the Debian package along with the `dkms` package, i.e.:
 
 ```bash
-sudo ./NVIDIA-Linux-x86_64-version-grid.run
+sudo apt-get install dkms
+sudo dpkg -i $HOME/Downloads/NVIDIA-GRID-vSphere-8.0-535.54.06-535.54.03-536.25/Guest_Drivers/nvidia-linux-grid-535_535.54.03_amd64.deb
 nvidia-smi
 ```
 
-- When configuring a VM with vGPU, do the following on GUI: VM → VM Hardware Edit → Add New Device → Add PCI Device. You should be prompted with several "NVIDIA GRID VGPU" devices; select one, e.g. `grid_t4-1b`.
+- When configuring a VM with vGPU, do the following on GUI: VM → VM Hardware Edit → Add New Device → Add PCI Device. You should be prompted with several "NVIDIA GRID VGPU" devices; select one, e.g. `grid_t4-1q`. Use the drivers that end in "q". The number before the "q" is the amount of RAM, e.g. `grid_t4-16q` will use all of the T4's 16 MB.
 
 _Note: In general, we're interested in the "grid" flavor of drivers._
 
