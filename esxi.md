@@ -717,7 +717,8 @@ These are notes from my Nvidia T4 installation:
 - Copy the `.zip` file onto the ESXi host and follow the [KB article](https://kb.vmware.com/s/article/2033434) instructions, e.g.:
 
 ```bash
-esxcli software vib install -v $PWD/NVD-VGPU-800_535.54.06-1OEM.800.1.0.20613240_21957031.zip
+cd /vmfs/volumes/NAS-0/ISO # wherever you copied it to, but not in homedir--too small
+esxcli software vib install -v $PWD/NVD_bootbank_NVD-VMware_ESXi_8.0.0_Driver_535.54.06-1OEM.800.1.0.20613240.vib
 esxcli system shutdown reboot --reason "Install Nvidia vGPU drivers"
 ```
 
