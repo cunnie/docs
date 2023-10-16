@@ -712,14 +712,29 @@ These are notes from my Nvidia T4 installation:
 - Log into <https://nvid.nvidia.com>, `bcunnie@vmware.com`
   - click on "Nvidia Licensing Portal"
   - click on [Get Started](https://docs.nvidia.com/license-system/latest/nvidia-license-system-quick-start-guide/index.html); this part was straightforward. I don't know if it was strictly necessary.
-  - click on [Software Downloads](https://ui.licensing.nvidia.com/software). Look for platform "VMware vSphere" and platform version "8.0". Click "Download". It'll download something like `/Users/cunnie/Downloads/NVIDIA-GRID-vSphere-8.0-535.54.06-535.54.03-536.25.zip`.
+
+- Download the software:
+  - click on [Software Downloads](https://ui.licensing.nvidia.com/software). Look for platform "VMware vSphere" and platform version "8.0". Click "Download". It'll download something like `/Users/cunnie/Downloads/NVIDIA-GRID-vSphere-8.0-535.104.06-535.104.05-537.13.zip`.
   - Once you unzip that file, you'll see the drivers for ESXi (`Host_Drivers/`) and for the VMs (`Guest_Drivers/`)
-- Copy the `.zip` file onto the ESXi host and follow the [KB article](https://kb.vmware.com/s/article/2033434) instructions, e.g.:
+  - Unzip `NVD-VGPU-800_535.104.06-1OEM.800.1.0.20613240_22326085.zip` in the `Host_Drivers/` subdirectory.
+- Copy the `.vib` file onto the ESXi host:
 
 ```bash
+scp \
+  ~/Downloads/NVIDIA-GRID-vSphere-8.0-535.104.06-535.104.05-537.13/Host_Drivers/NVD-VGPU-800_535.104.06-1OEM.800.1.0.20613240_22326085/vib20/NVD-VMware_ESXi_8.0.0_Driver/NVD_bootbank_NVD-VMware_ESXi_8.0.0_Driver_535.104.06-1OEM.800.1.0.20613240.vib \
+  esxi-2:/vmfs/volumes/NAS-0/ISO/
+```
+
+ - Follow the [KB article](https://kb.vmware.com/s/article/2033434) instructions, i.e.:
+
+```bash
+ # put the host in Maintenance Mode from the console not `esxcli`
+ # because `esxcli` won't migrate the VMs
 cd /vmfs/volumes/NAS-0/ISO # wherever you copied it to, but not in homedir--too small
-esxcli software vib install -v $PWD/NVD_bootbank_NVD-VMware_ESXi_8.0.0_Driver_535.54.06-1OEM.800.1.0.20613240.vib
+esxcli software vib install -v $PWD/NVD_bootbank_NVD-VMware_ESXi_8.0.0_Driver_535.104.06-1OEM.800.1.0.20613240.vib
 esxcli system shutdown reboot --reason "Install Nvidia vGPU drivers"
+ # after logging in after reboot
+esxcli system maintenanceMode set --enable false
 ```
 
 - Sometimes the T4 isn't recognized/available when the ESXi host is booted; try
