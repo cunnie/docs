@@ -108,8 +108,70 @@ zpool add tank log nvd0p2 # add 32G device
 zpool status
 ```
 
-Replacing a disk:
+### Replacing a disk:
+
+Replacing /dev/da1
 
 ```bash
-zpool replace tank gptid/0593521d-c5e1-11ed-bdab-ac1f6b2d1592 da6
+gpart list da1 # look for da1p2 rawuuid, i.e. "79aa5ac5-4ca5-11e4-b3bd-002590f5182a"
+zpool status tank # look for "79aa5ac5", third from top
+zpool status -g tank # grab guid third from top, i.e. 17360624840137273382
+zpool offline tank 17360624840137273382
+zpool status tank # check it's the right one
+ # replace the disk; notice that da1 → da6, da6 → da5
+zpool replace tank 17360624840137273382 da6
+zpool online tank da1
+```
+
+### Troubleshooting slow write speeds
+
+Notice that the write speed drops 15x (942 → 62 MB/s) over the course of five
+runs in a VM running on an iSCSI-backed TrueNAS datastore:
+
+```
+gobonniego.go -runs 5
+2023/12/16 04:26:45 gobonniego starting. version: 1.0.9, runs: 5, seconds: 0, threads: 4, disk space to use (MiB): 3916
+Sequential Write MB/s: 942.48
+Sequential Read MB/s: 928.90
+IOPS: 31830
+Sequential Write MB/s: 62.85
+Sequential Read MB/s: 472.22
+IOPS: 23669
+Sequential Write MB/s: 53.98
+Sequential Read MB/s: 767.50
+IOPS: 37272
+Sequential Write MB/s: 52.42
+Sequential Read MB/s: 348.10
+IOPS: 20945
+Sequential Write MB/s: 87.23
+Sequential Read MB/s: 630.18
+IOPS: 20783
+```
+
+Alert from TrueNAS: "`Device /dev/da6 is causing slow I/O on pool tank.
+2023-12-16 06:39:32 (America/Los_Angeles)`"
+
+```
+geom disk list # finds disk model & serial numbers
+bash
+for DISK in /dev/da?; do
+    smartctl -x $DISK > /tmp/${DISK##*/}.txt
+done
+```
+
+But the slowness may simply be because da6 is a 5400 RPM drive and the other
+drives are 5900 RPM. In other words, da6 might not be the culprit.
+
+Let's check out the alerts "Device: /dev/da1 [SAT], 8 Offline uncorrectable
+sectors." and "Device: /dev/da1 [SAT], 8 Currently unreadable (pending)
+sectors." These were both logged 2023-11-30 09:56:32 (America/Los_Angeles).
+
+This contradicts the output of `smartctl`, which claims there are no problems:
+
+```
+ID# ATTRIBUTE_NAME          FLAGS    VALUE WORST THRESH FAIL RAW_VALUE
+...
+197 Current_Pending_Sector  -O--C-   100   100   000    -    0
+198 Offline_Uncorrectable   ----C-   100   100   000    -    0
+199 UDMA_CRC_Error_Count    -OSRCK   200   200   000    -    0
 ```
