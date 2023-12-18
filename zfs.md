@@ -175,3 +175,24 @@ ID# ATTRIBUTE_NAME          FLAGS    VALUE WORST THRESH FAIL RAW_VALUE
 198 Offline_Uncorrectable   ----C-   100   100   000    -    0
 199 UDMA_CRC_Error_Count    -OSRCK   200   200   000    -    0
 ```
+
+The new hard drive seems to sync too slowly (`zpool status`):
+
+New drive:
+
+```
+scan: resilver in progress since Sat Dec 16 09:07:05 2023
+10.5T scanned at 0B/s, 10.3T issued at 29.2M/s, 10.5T total
+1.41T resilvered, 98.10% done, 01:59:24 to go
+```
+
+Typical Ironwolf:
+
+```
+scan: resilver in progress since Thu Mar 23 20:51:29 2023
+10.1T scanned at 79.2M/s, 9.59T issued at 75.0M/s, 10.2T total
+1.31T resilvered, 94.04% done, 02:21:48 to go
+```
+
+Let's assume da1 wasn't the problem and da6 (now da5) was. Let's replace da5
+with the old da1. And maybe order some Exos drives.
