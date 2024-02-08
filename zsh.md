@@ -22,7 +22,8 @@ fpath=($BREW_PREFIX/opt/zsh-completions $fpath)
 source $BREW_PREFIX/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 [ -f $BREW_PREFIX/opt/chruby/share/chruby/chruby.sh ] && source $BREW_PREFIX/opt/chruby/share/chruby/chruby.sh
 [ -f $BREW_PREFIX/opt/chruby/share/chruby/auto.sh ]   && source $BREW_PREFIX/opt/chruby/share/chruby/auto.sh # for .ruby-version (many)
-eval "$(nodenv init -)" # for .node-version (Ops Manager)
+[ -f $BREW_PREFIX/opt/chnode/share/chnode/chnode.sh ] && source $BREW_PREFIX/opt/chnode/share/chnode/chnode.sh
+[ -f $BREW_PREFIX/opt/chnode/share/chnode/auto.sh ]   && source $BREW_PREFIX/opt/chnode/share/chnode/auto.sh # for .ruby-version (many)
 eval "$(direnv hook zsh)"
 eval "$(fasd --init posix-alias zsh-hook)"
 alias be='bundle exec'
