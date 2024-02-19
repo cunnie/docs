@@ -23,7 +23,7 @@ HOSTNAME=$(hostname); cd ~/aa; git add .; git commit -m"from ${HOSTNAME%%.*}"; g
 rsync -avH --progress --stats $SOURCE_HOST\:workspace/ ~/workspace/
 ```
 - Set up git per [git.md](https://github.com/cunnie/docs/blob/master/git.md)
-- System Preferences
+- System Settings
   - Displays → Resolution: Scaled → choose desired resolution
   - Sharing
     - Screen Sharing
@@ -53,16 +53,16 @@ brew bundle # a second time to recover from the Oracle fail
   - log in
   - set theme
   - open gmail
-- System Preferences → Apple ID → iCloud → iCloud Drive → Options... → check:
+- System Settings → Apple ID → iCloud → iCloud Drive → Options... → check:
   Desktop & Documents Folders
 - Set up date in Menu Bar (24-hour, show seconds & Date)
-  - System Preferences → Dock & Menu Bar → Clock Menu Bar
-- System Preferences → Dock & Menu Bar → check: Automatically hide and show the Dock
-- System Preferences → Security & Privacy → FileVault → Turn On FileVault
+  - System Settings → Dock & Menu Bar → Clock Menu Bar
+- System Settings → Dock & Menu Bar → check: Automatically hide and show the Dock
+- System Settings → Security & Privacy → FileVault → Turn On FileVault
   - Allow my iCloud account...
 - Messages → Preferences → iMessage → ✅: Enable Messages in iCloud
   - → Start new conversations from +1 (650) 968-6262
-- (if on Desktop) System Preferences → Security & Privacy → General
+- (if on Desktop) System Settings → Security & Privacy → General
   - uncheck "Require password ... after sleep or screen saver"
 - on iPhone: Settings → Messages → Text Message Forwarding → _new device_ ✅
 - Photos → ⌘, (Preferences) → ✅: Include location information when sharing...
@@ -106,7 +106,7 @@ brew bundle # a second time to recover from the Oracle fail
 ```bash
 curl https://raw.githubusercontent.com/luan/tmuxfiles/master/install | bash
 ```
-- System Preferences → Users & Groups → Login Items
+- System Settings → Users & Groups → Login Items
   - Remove GPG Mail Upgrader
   - Add Flycut
 - Update IPv6 address in DNS; it has changed with reinstall
@@ -146,7 +146,7 @@ Install [smith](https://github.com/pivotal/smith/releases)
 Install HP 1536 printer:
 
 - Install the HP Printer Drivers v5.1.1 for macOS <https://support.apple.com/kb/DL1888>
-- Add printer in System Preferences. Scanner now present. Skip HP Smart. Thanks <https://discussions.apple.com/thread/252047347?answerId=254128327022#254128327022>
+- Add printer in System Settings. Scanner now present. Skip HP Smart. Thanks <https://discussions.apple.com/thread/252047347?answerId=254128327022#254128327022>
 
 Install convenient Golang utilities, `ginkgo` and `goimports`:
 
@@ -164,9 +164,13 @@ wget https://github.com/mikefarah/yq/releases/download/3.4.1/yq_darwin_amd64 -O 
 
 Free up CLI navigation (use ^↑ to access other spaces):
 
-- System Preferences → Keyboard → Shortcuts → Mission Control
+- System Settings → Keyboard → Shortcuts → Mission Control
   - Uncheck "Move left a space"
   - Uncheck "Move right a space"
+
+Free up ⬆⌘A for JetBrains's "Find Action..."
+
+- System Settings → Keyboard → Keyboard Shortcuts... → Services → Expand "Text" → Uncheck "Search man Page Index in Terminal"
 
 Create a `workspace` volume with APFS case-sensitive (for Linux kernel):
 
