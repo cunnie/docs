@@ -196,3 +196,17 @@ scan: resilver in progress since Thu Mar 23 20:51:29 2023
 
 Let's assume da1 wasn't the problem and da6 (now da5) was. Let's replace da5
 with the old da1. And maybe order some Exos drives.
+
+Fri Mar 15 09:16:54 PDT 2024
+
+I'm disabling sync in the hope that it makes everything faster. My rationale is
+that if the TrueNAS crashes, everything will need to be rebuilt, and if a
+single VM crashes, well, the writes were queued up and will ultimately go
+through regardless.
+
+```bash
+zfs list -r tank
+zfs get sync tank/vSphere # "standard"
+zfs set sync=disabled tank/vSphere
+zfs get sync tank/vSphere # "disabled"
+```
