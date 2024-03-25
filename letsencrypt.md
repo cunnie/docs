@@ -47,8 +47,6 @@ sudo certbot certonly \
     -d 78-46-204-247.sslip.io \
     -d www-78-46-204-247.sslip.io \
     -d 2a01-4f8-c17-b8f--2.sslip.io \
-  -w /www/buzzer.nono.io \
-    -d buzzer.nono.io \
   -w /www/cunnie.com \
     -d cunnie.com \
   -w /www/brian.cunnie.com \
@@ -59,6 +57,7 @@ sudo certbot certonly \
     -d blabbertabber.com
 
 cd /usr/local/etc
+ # /usr/local/etc/.gitignore is probably set to '*', if so, skip the next step
 sudo tee -a .gitignore <<EOF
 letsencrypt/accounts
 letsencrypt/archive
