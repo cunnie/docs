@@ -38,6 +38,7 @@ pkg install -y \
   lsof \
   neovim \
   npm \
+  py39-certbot \
   py39-pip \
   python3 \
   ripgrep \
