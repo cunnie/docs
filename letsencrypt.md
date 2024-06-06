@@ -40,8 +40,6 @@ sudo certbot certonly \
   -w /www/nono.io \
     -d nono.io \
     -d www.nono.io \
-    -d nono.com \
-    -d www.nono.com \
   -w /www/sslip.io/document_root \
     -d sslip.io \
     -d 78-46-204-247.sslip.io \
