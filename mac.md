@@ -203,7 +203,7 @@ Remove annoying look up (laptops only):
 
 - System Settings → Trackpad → Look up & data detectors → Set to "Off"
 
-Install [LunarVim](https://www.lunarvim.org/docs/installation)
+Install [AstroNvim](https://docs.astronvim.com/)
 
 Install [Nerd Fonts](https://github.com/ryanoasis/nerd-fonts#option-4-homebrew-fonts):
 ```
