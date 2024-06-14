@@ -16,7 +16,11 @@ plugins=(
 	kubectl
 	macos
 )
-BREW_PREFIX=$(brew --prefix)
+
+BREW_PREFIX=$(/opt/homebrew/bin/brew --prefix)
+PATH="$BREW_PREFIX/bin:$PATH"
+PATH="$BREW_PREFIX/opt/python/libexec/bin:$PATH"
+PATH="$HOME/go/bin:$PATH"
 # source "$BREW_PREFIX/opt/zsh-git-prompt/zshrc.sh" # don't use, causes yellow PS1 when repo is clean
 fpath=($BREW_PREFIX/opt/zsh-completions $fpath)
 source $BREW_PREFIX/share/zsh-autosuggestions/zsh-autosuggestions.zsh
