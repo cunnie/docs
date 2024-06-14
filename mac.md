@@ -98,11 +98,12 @@ brew bundle
   curl -L https://github.com/arcticicestudio/nord-iterm2/archive/v0.2.0.zip -o nord-iterm2.zip
   unzip nord-iterm2.zip
   ```
-  - iTerm2 → ⌘, (Preferences) → Profiles → General → Working Directory → Reuse previous session's directory
-  - iTerm2 → ⌘, (Preferences) → Profiles → Colors → Color Presets → Import... → `xml/Nord.itermcolors`
-  - iTerm2 → ⌘, (Preferences) → Profiles → Colors → Color Presets → Nord
-  - iTerm2 → ⌘, (Preferences) → Profiles → Terminal → Unlimited scrollback
-  - iTerm2 → ⌘, (Preferences) → Profiles → Text → User built-in Powerline glyphs (checked)
+  - iTerm → ⌘, (Preferences) → Profiles → General → Working Directory → Reuse previous session's directory
+  - iTerm → ⌘, (Preferences) → Profiles → Colors → uncheck Use different colors for light mode and dark mode
+  - iTerm → ⌘, (Preferences) → Profiles → Colors → Color Presets → Import... → `xml/Nord.itermcolors`
+  - iTerm → ⌘, (Preferences) → Profiles → Colors → Color Presets → Nord
+  - iTerm → ⌘, (Preferences) → Profiles → Text → User built-in Powerline glyphs (checked)
+  - iTerm → ⌘, (Preferences) → Profiles → Terminal → Unlimited scrollback
 - Set up zsh per [zsh.md](https://github.com/cunnie/docs/blob/master/zsh.md)
 - Install Luan's [tmuxfiles](https://github.com/luan/tmuxfiles/blob/master/install)
 ```bash
@@ -212,4 +213,4 @@ Install [Nerd Fonts](https://github.com/ryanoasis/nerd-fonts#option-4-homebrew-f
 brew tap homebrew/cask-fonts
 brew install font-hack-nerd-font
 ```
-- iTerm2 → ⌘, (Preferences) → Profiles → Text → Font: Hack Nerd Font Mono / Regular / 13
+- iTerm → ⌘, (Preferences) → Profiles → Text → Font: Hack Nerd Font Mono / Regular / 13
