@@ -44,9 +44,7 @@ rsync -avH --progress --stats $SOURCE_HOST\:workspace/ ~/workspace/
 ```
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 cd ~/bin
-sudo softwareupdate --install-rosetta # some formulae require rosetta
-brew bundle # allow Oracle/Virtualbox extension when asked
-brew bundle # a second time to recover from the Oracle fail
+brew bundle
 ```
 - Move Dock clutter into trash
 - Open Firefox & configure
@@ -58,27 +56,30 @@ brew bundle # a second time to recover from the Oracle fail
 - Set up date in Menu Bar (24-hour, show seconds & Date)
   - System Settings → Dock & Menu Bar → Clock Menu Bar
 - System Settings → Dock & Menu Bar → check: Automatically hide and show the Dock
-- System Settings → Security & Privacy → FileVault → Turn On FileVault
+- [if not done on initial install]: System Settings → Security & Privacy → FileVault → Turn On FileVault
   - Allow my iCloud account...
-- Messages → Preferences → iMessage → ✅: Enable Messages in iCloud
+- [if not defaulted]: Messages → Preferences → iMessage → ✅: Enable Messages in iCloud
   - → Start new conversations from +1 (650) 968-6262
-- (if on Desktop) System Settings → Security & Privacy → General
+- [if on Desktop] System Settings → Security & Privacy → General
   - uncheck "Require password ... after sleep or screen saver"
-- on iPhone: Settings → Messages → Text Message Forwarding → _new device_ ✅
-- Photos → ⌘, (Preferences) → ✅: Include location information when sharing...
+- [if not defaulted] on iPhone: Settings → Messages → Text Message Forwarding → _new device_ ✅
+- [if not defaulted] Photos → ⌘, (Preferences) → ✅: Include location information when sharing...
 - Photos → ⌘, (Preferences) → iCloud → ✅: Download Originals to this Mac
 - Set up iStat Menus
-  - No battery
-  - Disks: show throughput, too
+  - No sensors
+  - No memory
+  - No disks, not enough room on Taskbar
   - CPU: historical
 - Set up JetBrains Toolbox
   - login in via Toolbox
   - update all tools automatically
-  - generate shell scripts, set path to /usr/local/bin
+  - generate shell scripts, set path to /opt/homebrew/bin
   - Goland
   - RubyMine
 - Rectangle (approve accessibility)
+  - Choose Spectacle shortcust
   - Preferences: Launch Rectangle at login
+  - Check for updates automatically
 - FlyCut (approve accessibility)
   - ✅: Launch Flycut on login
   - iCloud Sync: ✅: Settings
@@ -89,6 +90,7 @@ brew bundle # a second time to recover from the Oracle fail
 - Zoom
   - 49 participants
   - HD video
+  - Always display participant name
 - iTerm
   - Use _nord-iterm2_ color scheme for a more pleasant terminal experience:
   ```bash
