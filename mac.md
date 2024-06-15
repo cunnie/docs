@@ -77,8 +77,9 @@ brew bundle
   - Goland
   - RubyMine
 - Rectangle (approve accessibility)
-  - Choose Spectacle shortcust
+  - Choose Spectacle shortcuts
   - Preferences: Launch Rectangle at login
+  - Preferences → ⚙ Repeated commands: cycle ½, ⅔, ⅓ on half actions
   - Check for updates automatically
 - FlyCut (approve accessibility)
   - ✅: Launch Flycut on login
@@ -105,12 +106,7 @@ brew bundle
   - iTerm → ⌘, (Preferences) → Profiles → Text → User built-in Powerline glyphs (checked)
   - iTerm → ⌘, (Preferences) → Profiles → Terminal → Unlimited scrollback
 - Set up zsh per [zsh.md](https://github.com/cunnie/docs/blob/master/zsh.md)
-- Install Luan's [tmuxfiles](https://github.com/luan/tmuxfiles/blob/master/install)
-```bash
-curl https://raw.githubusercontent.com/luan/tmuxfiles/master/install | bash
-```
 - System Settings → Users & Groups → Login Items
-  - Remove GPG Mail Upgrader
   - Add Flycut
 - Update IPv6 address in DNS; it has changed with reinstall
 - Set up git pairs:
@@ -119,37 +115,19 @@ ln -s ~/bin/env/git-authors ~/.git-authors
 ```
 - Install rubies:
 ```bash
-ruby-install 3.2
-ruby-install 3.1
-ruby-install 3.0
-ruby-install 2.7
-ruby-install 2.6
+ruby-install 3.3
 ```
 - Start Google Drive
-- Install GPG keys:
-```
-mv ~/.gnupg* /tmp/
-ln -s ~/Google\ Drive/My\ Drive/keys/gnupg $HOME/.gnupg
-git config --global user.signingkey 93B3BB2C9F7F5BA4
-git config --global commit.gpgsign true
- # the following fixes "error: gpg failed to sign the data fatal: failed to write commit object"
- # caused by ~/.gnupg being a link to a networked drive
-for SOCKET_TYPE in "" .ssh .browser .extra; do
-  printf '%%Assuan%%\nsocket=${HOME}/bin/S.gpg-agent'$SOCKET_TYPE"\n" > ~/.gnupg/S.gpg-agent$SOCKET_TYPE
-done
-```
 - if on laptop:
   - download Wireguard from the App Store
   - Set up wireguard for new laptop: [instructions](wireguard.md)
   - click "Import tunnel(s) from file"
-  - import from `~/Google Drive/My Drive/wg/wg0-mordred.conf`
-
-Install [smith](https://github.com/pivotal/smith/releases)
+  - import from `~/Google Drive/My Drive/wg/mordred.conf`
 
 Install HP 1536 printer:
 
-- Install the HP Printer Drivers v5.1.1 for macOS <https://support.apple.com/kb/DL1888>
-- Add printer in System Settings. Scanner now present. Skip HP Smart. Thanks <https://discussions.apple.com/thread/252047347?answerId=254128327022#254128327022>
+- Install the [HP Easy Start](https://support.hp.com/us-en/drivers/hp-laserjet-pro-m1536-multifunction-printer-series/model/3974278?sku=CE538A) software
+- Install Essential Software but not Easy Scan
 
 Install convenient Golang utilities, `ginkgo` and `goimports`:
 
@@ -157,19 +135,6 @@ Install convenient Golang utilities, `ginkgo` and `goimports`:
 go install golang.org/x/tools/cmd/goimports@latest
 go install github.com/onsi/ginkgo/v2/ginkgo@latest
 ```
-
-Old (v3) `yq`:
-
-```bash
-wget https://github.com/mikefarah/yq/releases/download/3.4.1/yq_darwin_amd64 -O $(brew --prefix)/bin/yq &&\
-    chmod +x $(brew --prefix)/bin/yq
-```
-
-Free up CLI navigation (use ^↑ to access other spaces):
-
-- System Settings → Keyboard → Shortcuts → Mission Control
-  - Uncheck "Move left a space"
-  - Uncheck "Move right a space"
 
 Free up ⬆⌘A for JetBrains's "Find Action..."
 
@@ -193,7 +158,16 @@ Fix `mailto:` & [calendar](https://askubuntu.com/a/1203165) links:
 
 - Firefox → ⌘, → Find in Settings: "Applications" → subsearch: "mailto" → Select "Use Gmail"
 - Firefox → about:config → `dom.registerContentHandler.enabled=true`
+- Browse to <https://calendar.google.com/calendar/u/0/r>
 - Firefox → F12 → Console → paste the following:
+- Type the following:
+
+```js
+allow pasting
+```
+
+- Paste the following:
+
 ```js
 javascript:window.navigator.registerProtocolHandler("webcal","https://calendar.google.com/calendar/r?cid=%s","Google Calendar");
 ```
@@ -209,8 +183,9 @@ Remove annoying look up (laptops only):
 Install [AstroNvim](https://docs.astronvim.com/)
 
 Install [Nerd Fonts](https://github.com/ryanoasis/nerd-fonts#option-4-homebrew-fonts):
+
 ```
-brew tap homebrew/cask-fonts
 brew install font-hack-nerd-font
 ```
+
 - iTerm → ⌘, (Preferences) → Profiles → Text → Font: Hack Nerd Font Mono / Regular / 13
