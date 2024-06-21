@@ -145,6 +145,12 @@ ruby-install 3.3
   - click "Import tunnel(s) from file"
   - import from `~/Google Drive/My Drive/wg/mordred.conf`
 
+Install Rosetta 2, a pre-requisite of HP printer software:
+
+```
+softwareupdate --install-rosetta
+```
+
 Install HP 1536 printer:
 
 - Install the [HP Easy Start](https://support.hp.com/us-en/drivers/hp-laserjet-pro-m1536-multifunction-printer-series/model/3974278?sku=CE538A) software
@@ -159,8 +165,7 @@ go install github.com/onsi/ginkgo/v2/ginkgo@latest
 
 Free up ⬆⌘A for JetBrains's "Find Action..."
 
-- System Settings → Keyboard → Keyboard Shortcuts... → Services → Expand "Text" → Uncheck "Search man Page Index in Terminal"
-
+- System Settings → Keyboard → Keyboard Shortcuts... → Services → Uncheck everything
 
 Fix `mailto:` & [calendar](https://askubuntu.com/a/1203165) links:
 
@@ -168,17 +173,18 @@ Fix `mailto:` & [calendar](https://askubuntu.com/a/1203165) links:
 - Firefox → about:config → `dom.registerContentHandler.enabled=true`
 - Browse to <https://calendar.google.com/calendar/u/0/r>
 - Firefox → F12 → Console → paste the following:
-- Type the following:
+
+```js
+javascript:window.navigator.registerProtocolHandler("webcal","https://calendar.google.com/calendar/r?cid=%s","Google Calendar");
+```
+
+Then type the following, and paste again.
 
 ```js
 allow pasting
 ```
 
-- Paste the following:
-
-```js
-javascript:window.navigator.registerProtocolHandler("webcal","https://calendar.google.com/calendar/r?cid=%s","Google Calendar");
-```
+Click "Add Application" when prompted 'Add "calendar.google.com" as an application for webcal links?'
 
 Remove Notes's annoying hot corner:
 
@@ -188,7 +194,11 @@ Remove annoying look up (laptops only):
 
 - System Settings → Trackpad → Look up & data detectors → Set to "Off"
 
-Install [AstroNvim](https://docs.astronvim.com/)
+Clear out Neovim files, then install [AstroNvim](https://docs.astronvim.com/):
+
+```sh
+rm -r ~/.config/nvim ~/.local/{share,state}/nvim ~/.cache/nvim
+```
 
 Install [Nerd Fonts](https://github.com/ryanoasis/nerd-fonts#option-4-homebrew-fonts):
 
