@@ -11,17 +11,33 @@ diskutil rename / $NEW_HOST
 - Copy important repos over
 
 ```bash
-SOURCE_HOST=tara
+SOURCE_HOST=mordred
 # if you haven't restored Downloads from backup, copy it from another machine:
 # rsync -avH --progress --stats $SOURCE_HOST\:Downloads/ ~/Downloads/
+scp $SOURCE_HOST\:.ssh/nono\* .ssh/
+scp $SOURCE_HOST\:.ssh/github\* .ssh/
+scp $SOURCE_HOST\:.ssh/authorized_keys .ssh/
+ssh-add ~/.ssh/{github,nono}
 rsync -avH $SOURCE_HOST\:bin/ ~/bin/
 rsync -avH $SOURCE_HOST\:aa/ ~/aa/
 rsync -avH $SOURCE_HOST\:docs/ ~/docs/
-rsync -avH $SOURCE_HOST\:bin-old/ ~/bin-old/
-rsync -avH $SOURCE_HOST\:docs-old/ ~/docs-old/
-HOSTNAME=$(hostname); cd ~/aa; git add .; git commit -m"from ${HOSTNAME%%.*}"; git pull -r; git push; cd ~/bin-old; git add .; git commit -m "from ${HOSTNAME%%.*}"; git pull -r; git push; cd ~/docs-old/ ; git add .; git commit -m "from ${HOSTNAME%%.*}"; git pull -r; git push; cd ~/docs; git pull; cd ~/bin; git pull; popd; popd; popd; popd; popd
+HOSTNAME=$(hostname); cd ~/aa; git add .; git commit -m"from ${HOSTNAME%%.*}"; git pull -r; git push; cd ~/docs; git pull; cd ~/bin; git pull; popd; popd; popd
+```
+
+Create & populate `~/workspace/` with APFS case-sensitive (for Linux kernel):
+
+```bash
+ # diskutil list
+sudo newfs_apfs -A -e -v "workspace" disk3
+diskutil mount workspace
+sudo chown cunnie:staff /Volumes/workspace
+ln -s /Volumes/workspace ~/workspace
+rsync -aH --stats ~/workspace-orig/ ~/workspace/
+ls -l ~/workspace/
+ # Copy `~/workspace` over:
 rsync -avH --progress --stats $SOURCE_HOST\:workspace/ ~/workspace/
 ```
+
 - Set up git per [git.md](https://github.com/cunnie/docs/blob/master/git.md)
 - System Settings
   - Displays → Resolution: Scaled → choose desired resolution
@@ -34,7 +50,7 @@ rsync -avH --progress --stats $SOURCE_HOST\:workspace/ ~/workspace/
     - Key Repeat: Fast
     - Delay Until Repeat: Short
     - ✅: Use F1, F2, etc. keys as standard function keys
-    - _or_ Touch Bar shows F1, F2, etc. Keys
+    - Keyboard shortcuts... → Mission Control → Uncheck Show Desktop F11
   - Bluetooth
     - ✅: Show Bluetooth in menu bar
     - go through each of the connected bluetooth devices:
@@ -44,6 +60,7 @@ rsync -avH --progress --stats $SOURCE_HOST\:workspace/ ~/workspace/
 ```
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 cd ~/bin
+export PATH=/opt/homebrew/bin:$PATH
 brew bundle
 ```
 - Move Dock clutter into trash
@@ -59,6 +76,7 @@ brew bundle
 - [if not done on initial install]: System Settings → Security & Privacy → FileVault → Turn On FileVault
   - Allow my iCloud account...
 - [if not defaulted]: Messages → Preferences → iMessage → ✅: Enable Messages in iCloud
+  - ✅ Send read receipts
   - → Start new conversations from +1 (650) 968-6262
 - [if on Desktop] System Settings → Security & Privacy → General
   - uncheck "Require password ... after sleep or screen saver"
@@ -66,19 +84,22 @@ brew bundle
 - [if not defaulted] Photos → ⌘, (Preferences) → ✅: Include location information when sharing...
 - Photos → ⌘, (Preferences) → iCloud → ✅: Download Originals to this Mac
 - Set up iStat Menus
+  - No notifications
   - No sensors
   - No memory
   - No disks, not enough room on Taskbar
   - CPU: historical
+  - Register
 - Set up JetBrains Toolbox
   - login in via Toolbox
   - update all tools automatically
+  - Tools installation location: /Applications
   - generate shell scripts, set path to /opt/homebrew/bin
   - Goland
   - RubyMine
 - Rectangle (approve accessibility)
   - Choose Spectacle shortcuts
-  - Preferences: Launch Rectangle at login
+  - Preferences → ⚙ Launch Rectangle at login
   - Preferences → ⚙ Repeated commands: cycle ½, ⅔, ⅓ on half actions
   - Check for updates automatically
 - FlyCut (approve accessibility)
@@ -140,19 +161,6 @@ Free up ⬆⌘A for JetBrains's "Find Action..."
 
 - System Settings → Keyboard → Keyboard Shortcuts... → Services → Expand "Text" → Uncheck "Search man Page Index in Terminal"
 
-Create a `workspace` volume with APFS case-sensitive (for Linux kernel):
-
-```bash
-mv ~/workspace{,-orig}
- # diskutil list
-sudo newfs_apfs -A -e -v "workspace" disk3
-diskutil mount workspace
-sudo chown cunnie:staff /Volumes/workspace
-ln -s /Volumes/workspace ~/workspace
-rsync -aH --stats ~/workspace-orig/ ~/workspace/
-ls -l ~/workspace/
-rm -rf ~/workspace-orig/
-```
 
 Fix `mailto:` & [calendar](https://askubuntu.com/a/1203165) links:
 
