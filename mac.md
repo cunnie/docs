@@ -21,6 +21,7 @@ ssh-add ~/.ssh/{github,nono}
 rsync -avH $SOURCE_HOST\:bin/ ~/bin/
 rsync -avH $SOURCE_HOST\:aa/ ~/aa/
 rsync -avH $SOURCE_HOST\:docs/ ~/docs/
+ln -s ~/bin/env/config ~/.ssh/config
 HOSTNAME=$(hostname); cd ~/aa; git add .; git commit -m"from ${HOSTNAME%%.*}"; git pull -r; git push; cd ~/docs; git pull; cd ~/bin; git pull; popd; popd; popd
 ```
 
@@ -113,6 +114,12 @@ brew bundle
   - 49 participants
   - HD video
   - Always display participant name
+- Install [Nerd Fonts](https://github.com/ryanoasis/nerd-fonts#option-4-homebrew-fonts):
+
+```
+brew install font-hack-nerd-font
+```
+
 - iTerm
   - Use _nord-iterm2_ color scheme for a more pleasant terminal experience:
   ```bash
@@ -125,6 +132,7 @@ brew bundle
   - iTerm → ⌘, (Preferences) → Profiles → Colors → Color Presets → Import... → `xml/Nord.itermcolors`
   - iTerm → ⌘, (Preferences) → Profiles → Colors → Color Presets → Nord
   - iTerm → ⌘, (Preferences) → Profiles → Text → User built-in Powerline glyphs (checked)
+  - iTerm → ⌘, (Preferences) → Profiles → Text → Font: Hack Nerd Font Mono / Regular / 13
   - iTerm → ⌘, (Preferences) → Profiles → Terminal → Unlimited scrollback
 - Set up zsh per [zsh.md](https://github.com/cunnie/docs/blob/master/zsh.md)
 - System Settings → Users & Groups → Login Items
@@ -135,75 +143,65 @@ brew bundle
 ln -s ~/bin/env/git-authors ~/.git-authors
 ```
 - Install rubies:
+
 ```bash
 ruby-install 3.3
 ```
+
 - Start Google Drive
 - if on laptop:
   - download Wireguard from the App Store
   - Set up wireguard for new laptop: [instructions](wireguard.md)
   - click "Import tunnel(s) from file"
   - import from `~/Google Drive/My Drive/wg/mordred.conf`
-
-Install Rosetta 2, a pre-requisite of HP printer software:
+- Install Rosetta 2, a pre-requisite of HP printer software:
 
 ```
 softwareupdate --install-rosetta
 ```
 
-Install HP 1536 printer:
-
-- Install the [HP Easy Start](https://support.hp.com/us-en/drivers/hp-laserjet-pro-m1536-multifunction-printer-series/model/3974278?sku=CE538A) software
-- Install Essential Software but not Easy Scan
-
-Install convenient Golang utilities, `ginkgo` and `goimports`:
+- Install HP 1536 printer:
+  - Install the [HP Easy Start](https://support.hp.com/us-en/drivers/hp-laserjet-pro-m1536-multifunction-printer-series/model/3974278?sku=CE538A) software
+  - Install Essential Software but not Easy Scan
+- Install convenient Golang utilities, `ginkgo` and `goimports`:
 
 ```bash
 go install golang.org/x/tools/cmd/goimports@latest
 go install github.com/onsi/ginkgo/v2/ginkgo@latest
 ```
 
-Free up ⬆⌘A for JetBrains's "Find Action..."
-
-- System Settings → Keyboard → Keyboard Shortcuts... → Services → Uncheck everything
-
-Fix `mailto:` & [calendar](https://askubuntu.com/a/1203165) links:
-
-- Firefox → ⌘, → Find in Settings: "Applications" → subsearch: "mailto" → Select "Use Gmail"
-- Firefox → about:config → `dom.registerContentHandler.enabled=true`
-- Browse to <https://calendar.google.com/calendar/u/0/r>
-- Firefox → F12 → Console → paste the following:
+- Free up ⬆⌘A for JetBrains's "Find Action..."
+  - System Settings → Keyboard → Keyboard Shortcuts... → Services → Uncheck everything
+- Fix `mailto:` & [calendar](https://askubuntu.com/a/1203165) links:
+  - Firefox → ⌘, → Find in Settings: "Applications" → subsearch: "mailto" → Select "Use Gmail"
+  - Firefox → about:config → `dom.registerContentHandler.enabled=true`
+  - Browse to <https://calendar.google.com/calendar/u/0/r>
+  - Firefox → F12 → Console → paste the following:
 
 ```js
 javascript:window.navigator.registerProtocolHandler("webcal","https://calendar.google.com/calendar/r?cid=%s","Google Calendar");
 ```
 
-Then type the following, and paste again.
+  - Then type the following, and paste again.
 
 ```js
 allow pasting
 ```
 
-Click "Add Application" when prompted 'Add "calendar.google.com" as an application for webcal links?'
-
-Remove Notes's annoying hot corner:
-
-- System Settings → Desktop & Dock → Hot Corner Shortcuts → Set the lower-right-hand one to "-"
-
-Remove annoying look up (laptops only):
-
-- System Settings → Trackpad → Look up & data detectors → Set to "Off"
-
-Clear out Neovim files, then install [AstroNvim](https://docs.astronvim.com/):
+  - Click "Add Application" when prompted 'Add "calendar.google.com" as an application for webcal links?'
+- Remove Notes's annoying hot corner:
+  - System Settings → Desktop & Dock → Hot Corner Shortcuts → Set the lower-right-hand one to "-"
+- Remove annoying look up (laptops only):
+  - System Settings → Trackpad → Look up & data detectors → Set to "Off"
+- Clear out Neovim files, then install [AstroNvim](https://docs.astronvim.com/):
 
 ```sh
-rm -r ~/.config/nvim ~/.local/{share,state}/nvim ~/.cache/nvim
+rm -fr ~/.config/nvim ~/.local/{share,state}/nvim ~/.cache/nvim
 ```
 
-Install [Nerd Fonts](https://github.com/ryanoasis/nerd-fonts#option-4-homebrew-fonts):
+- Fix AstroNvim's treesitter plugin, [gitcommit](https://github.com/gbprod/tree-sitter-gitcommit):
 
 ```
-brew install font-hack-nerd-font
+nvim
+:TSInstall gitcommit diff git_rebase
 ```
-
-- iTerm → ⌘, (Preferences) → Profiles → Text → Font: Hack Nerd Font Mono / Regular / 13
