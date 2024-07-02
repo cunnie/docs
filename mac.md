@@ -81,6 +81,7 @@ brew bundle
   - → Start new conversations from +1 (650) 968-6262
 - [if on Desktop] System Settings → Security & Privacy → General
   - uncheck "Require password ... after sleep or screen saver"
+  - Turn display off when inactive: For 1 hour
 - [if not defaulted] on iPhone: Settings → Messages → Text Message Forwarding → _new device_ ✅
 - [if not defaulted] Photos → ⌘, (Preferences) → ✅: Include location information when sharing...
 - Photos → ⌘, (Preferences) → iCloud → ✅: Download Originals to this Mac
