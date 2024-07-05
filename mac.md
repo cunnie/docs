@@ -80,8 +80,9 @@ brew bundle
   - ✅ Send read receipts
   - → Start new conversations from +1 (650) 968-6262
 - [if on Desktop] System Settings → Security & Privacy → General
-  - uncheck "Require password ... after sleep or screen saver"
-  - Turn display off when inactive: For 1 hour
+  - Start Screen Save when inactive: For 10 minutes
+  - Turn display off when inactive: For 20 minutes
+  - Require password after screen saver begins or display is turned off: After 1 hour
 - [if not defaulted] on iPhone: Settings → Messages → Text Message Forwarding → _new device_ ✅
 - [if not defaulted] Photos → ⌘, (Preferences) → ✅: Include location information when sharing...
 - Photos → ⌘, (Preferences) → iCloud → ✅: Download Originals to this Mac
