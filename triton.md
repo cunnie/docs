@@ -16,7 +16,7 @@ git ci -m"Ignore Python venv"
 Let's install Triton:
 
 ```bash
-pip install triton torch setuptools numpy matplotlib pandas
+pip install triton torch setuptools numpy matplotlib pandas ffmpeg
   Installing collected packages: filelock, triton
   Successfully installed filelock-3.15.4 triton-2.3.1
 ```
@@ -53,7 +53,7 @@ lspci | grep -i nvidia
   03:00.0 3D controller: NVIDIA Corporation TU104GL [Tesla T4] (rev a1)
 ubuntu-drivers devices
   nvidia-driver-545
-sudo ubuntu-drivers autoinstall
+sudo ubuntu-drivers install
 ```
 
 And then we get this:
