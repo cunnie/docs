@@ -72,14 +72,14 @@ brew bundle
 - System Settings → Apple ID → iCloud → iCloud Drive → Options... → check:
   Desktop & Documents Folders
 - Set up date in Menu Bar (24-hour, show seconds & Date)
-  - System Settings → Dock & Menu Bar → Clock Menu Bar
-- System Settings → Dock & Menu Bar → check: Automatically hide and show the Dock
-- [if not done on initial install]: System Settings → Security & Privacy → FileVault → Turn On FileVault
+  - System Settings → Date & Time
+- System Settings → Desktop & Dock → check: Automatically hide and show the Dock
+- [if not done on initial install]: System Settings → FileVault → Turn On FileVault
   - Allow my iCloud account...
 - [if not defaulted]: Messages → Preferences → iMessage → ✅: Enable Messages in iCloud
   - ✅ Send read receipts
   - → Start new conversations from +1 (650) 968-6262
-- [if on Desktop] System Settings → Security & Privacy → General
+- [if on Desktop] System Settings → Screen Saver → Lock Screen Settings...
   - Start Screen Save when inactive: For 10 minutes
   - Turn display off when inactive: For 20 minutes
   - Require password after screen saver begins or display is turned off: After 1 hour
@@ -99,7 +99,6 @@ brew bundle
   - Tools installation location: /Applications
   - generate shell scripts, set path to /opt/homebrew/bin
   - Goland
-  - RubyMine
 - Rectangle (approve accessibility)
   - Choose Spectacle shortcuts
   - Preferences → ⚙ Launch Rectangle at login
@@ -129,6 +128,7 @@ brew install font-hack-nerd-font
   curl -L https://github.com/arcticicestudio/nord-iterm2/archive/v0.2.0.zip -o nord-iterm2.zip
   unzip nord-iterm2.zip
   ```
+  - iTerm → ⌘, (Preferences) → General → Selection → Uncheck "Clicking on a command selects it to restrict Find and Filter"
   - iTerm → ⌘, (Preferences) → Profiles → General → Working Directory → Reuse previous session's directory
   - iTerm → ⌘, (Preferences) → Profiles → Colors → uncheck Use different colors for light mode and dark mode
   - iTerm → ⌘, (Preferences) → Profiles → Colors → Color Presets → Import... → `xml/Nord.itermcolors`
@@ -173,7 +173,7 @@ go install github.com/onsi/ginkgo/v2/ginkgo@latest
 ```
 
 - Free up ⬆⌘A for JetBrains's "Find Action..."
-  - System Settings → Keyboard → Keyboard Shortcuts... → Services → Uncheck everything
+  - System Settings → Keyboard Shortcuts → Services → Uncheck everything
 - Fix `mailto:` & [calendar](https://askubuntu.com/a/1203165) links:
   - Firefox → ⌘, → Find in Settings: "Applications" → subsearch: "mailto" → Select "Use Gmail"
   - Firefox → about:config → `dom.registerContentHandler.enabled=true`
@@ -192,7 +192,7 @@ allow pasting
 
   - Click "Add Application" when prompted 'Add "calendar.google.com" as an application for webcal links?'
 - Remove Notes's annoying hot corner:
-  - System Settings → Desktop & Dock → Hot Corner Shortcuts → Set the lower-right-hand one to "-"
+  - System Settings → Hot Corner Shortcuts → Set the lower-right-hand one to "-"
 - Remove annoying look up (laptops only):
   - System Settings → Trackpad → Look up & data detectors → Set to "Off"
 - Clear out Neovim files, then install [AstroNvim](https://docs.astronvim.com/):
