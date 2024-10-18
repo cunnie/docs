@@ -49,8 +49,9 @@ needrestart is being skipped since dpkg has failed
 ```bash
 less /var/log/apt/{history,term}.log
 sudo find / -name flash-kernel\*
-sudo nvim /var/lib/dpkg/info/flash-kernel.postinst # insert -x to trace the install
-sudo bash -x /var/lib/dpkg/info/flash-kernel.postinst configure
+sudo nvim /var/lib/dpkg/info/flash-kernel.postinst # insert -x to trace the install, also, echo the environment to stderr
+ # sudo bash -x /var/lib/dpkg/info/flash-kernel.postinst configure
+sudo /usr/share/debconf/frontend /var/lib/dpkg/info/flash-kernel.postinst configure 3.107ubuntu9~24.04.1
 sudo debconf-show flash-kernel
   # flash-kernel/linux_cmdline: quiet splash
 sudo dpkg-reconfigure flash-kernel
@@ -58,8 +59,9 @@ sudo dpkg-reconfigure flash-kernel
 sudo find / -name flash-kernel\*deb
 cp /var/cache/apt/archives/flash-kernel_3.107ubuntu9~24.04.3_riscv64.deb /tmp/junk
 sudo -i
+mkdir /tmp/junk
 cd /tmp/junk
-dpkg -e flash-kernel_3.107ubuntu9~24.04.3_riscv64.deb
+sudo dpkg -e /var/cache/apt/archives/flash-kernel_3.107ubuntu9~24.04.3_riscv64.deb
 export DEBCONF_PACKAGE=flash-kernel
 bash -x DEBIAN/postinst configure
 ```
