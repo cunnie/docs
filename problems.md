@@ -1,4 +1,41 @@
+### GCP metal-intel-192-1536-noble
+
+```
+[ 4629.294448] DMAR: DRHD: handling fault status reg 3
+[ 4629.299366] DMAR: [DMA Read NO_PASID] Request device [05:00.1] fault addr 0x1ffffffff0000 [fault reason 0x71] SM: Present bit in first-level paging entry is clear
+[ 4629.322396] DMAR: DRHD: handling fault status reg 3
+[ 4629.327309] DMAR: [DMA Read NO_PASID] Request device [05:00.1] fault addr 0x1fffffffc0000 [fault reason 0x71] SM: Present bit in first-level paging entry is clear
+[ 4629.344250] DMAR: DRHD: handling fault status reg 3
+...
+[ 4640.181137] nvme0n2: I/O Cmd(0x1) @ LBA 4295251447, 64 blocks, I/O Error (sct 0x0 / sc 0x4) 
+[ 4640.185310] DMAR: [DMA Read NO_PASID] Request device [05:00.1] fault addr 0x1ffffff718000 [fault reason 0x71] SM: Present bit in first-level paging entry is clear
+[ 4640.193770] I/O error, dev nvme0n2, sector 4295251447 op 0x1:(WRITE) flags 0x9800 phys_seg 1 prio class 0
+[ 4640.218145] XFS (nvme0n2p1): log I/O error -5
+[ 4640.222577] XFS (nvme0n2p1): Filesystem has been shut down due to log error (0x2).
+[ 4640.230234] XFS (nvme0n2p1): Please unmount the filesystem and rectify the problem(s).
+[ 4640.238549] nvme0n2p1: writeback error on inode 596964943, offset 578813952, sector 603113720
+...
+nvme0n1: I/O Cmd(0x1) @ LBA 10628000, 16 blocks, I/O Error (sct 0x0 / sc 0x4)
+...
+[ 4918.251200] Buffer I/O error on device nvme0n1p1, logical block 31010816
+[ 4918.257972] Buffer I/O error on device nvme0n1p1, logical block 31010817
+...
+[ 4940.837091] EXT4-fs (nvme0n1p1): Remounting filesystem read-only
+```
+
+Looks most like [this bug](https://lore.kernel.org/linux-iommu/20201231005323.2178523-4-baolu.lu@linux.intel.com/t/)
+I'm turning setting [iommu=off](https://docs.kernel.org/admin-guide/kernel-parameters.html) to hopefully fix.
+
+Reliably triggered by running the following:
+
+```bash
+ollama create Llama-3.1-70B -f <(echo FROM /mnt/work/Llama-3.1-70B)
+```
+
+
 ### RISC-V
+
+Solution: move custom 6.10.7 kernel out of `/boot/`
 
 ```
 Processing triggers for flash-kernel (3.107ubuntu9~24.04.3) ...
@@ -64,4 +101,5 @@ cd /tmp/junk
 sudo dpkg -e /var/cache/apt/archives/flash-kernel_3.107ubuntu9~24.04.3_riscv64.deb
 export DEBCONF_PACKAGE=flash-kernel
 bash -x DEBIAN/postinst configure
+FLASH_KERNEL_NOTRIGGER=y sudo -E flash-kernel
 ```
