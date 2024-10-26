@@ -1,4 +1,31 @@
-To configure Supermicro X10SDV-8C-TLN4f+
+### To reinstall ESXi
+
+- maintenance mode
+- remove from DVS
+- remove from inventory
+- shut down
+- stick USB in; turn on
+- F11 for boot menau
+- boot off USB
+- set root password
+- F2 to configure
+  - set IPv4 to static not DHCP
+  - set IPv6 static
+  - enable ESXi shell
+  - enable ssh
+- add esxi host to cluster; set recommended image if appropriate
+- add esxi host to DVS
+- set NTP Time configuration
+- Licensing → Assign License
+- Storage → Add software adapter
+  - Dynamic Discovery → Add: 10.9.9.80 → Rescan Storage
+- VMkernel adapters → vmk0:
+  - vMotion
+  - Provisioning
+  - Management
+- PCI Devices: toggle passthrough for NVIDIA
+
+### To configure Supermicro X10SDV-8C-TLN4f+
 
 Two BIOS Versions:
 
