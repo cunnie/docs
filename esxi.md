@@ -25,6 +25,36 @@
   - Management
 - PCI Devices: toggle passthrough for NVIDIA
 
+### Getting Rid of Fan Warnings
+
+_[This did not work]_
+
+- On ESXi: `Host hardware fan status`
+- On BMC (baseboard management controller) (most of these seem to be about FANB):
+
+```
+Lower Critical - going low - Assertion
+Lower Non-recoverable - going low - Assertion
+Lower Non-recoverable - going low - Deassertion
+Lower Critical - going low - Deassertion
+```
+
+Let's download Supermicro's
+[IPMICFG](https://www.supermicro.com/en/solutions/management-software/ipmi-utilities).
+They have an ESXi version! Unzip & copy over to ESXi. Then install. The `--no-sig-check` avoids
+the dreaded "Could not find a trusted signer: self-signed certificate" error:
+
+```bash
+esxcli software vib install --viburl file:///IPMICFG_1.35.2_build.240627_ESXi_8x.vib --no-sig-check
+```
+
+After the necessary reboot, try the following:
+
+```bash
+/opt/supermicro/ipmicfg/IPMICFG.esxi -help
+/opt/supermicro/ipmicfg/IPMICFG.esxi -fan 1 # set from "optimal" to "full"
+```
+
 ### To configure Supermicro X10SDV-8C-TLN4f+
 
 Two BIOS Versions:
