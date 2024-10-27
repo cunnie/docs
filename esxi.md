@@ -19,6 +19,7 @@
 - Licensing → Assign License
 - Storage → Add software adapter
   - Dynamic Discovery → Add: 10.9.9.80 → Rescan Storage
+- Rename local datastore `datastore1` → `SSD-1`
 - VMkernel adapters → vmk0:
   - vMotion
   - Provisioning
@@ -26,8 +27,6 @@
 - PCI Devices: toggle passthrough for NVIDIA
 
 ### Getting Rid of Fan Warnings
-
-_[This did not work]_
 
 - On ESXi: `Host hardware fan status`
 - On BMC (baseboard management controller) (most of these seem to be about FANB):
