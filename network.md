@@ -6,15 +6,9 @@
 |:---------:|-----:|----------------:|------------------------------------------:|----------------|-------------------------|
 | igc0      |  N/A | 73.189.219.4/23 | 2001:558:6045:109:892f:2df3:15e3:3184/128 | Comcast        |                         |
 | bridge0   |  0/1 |     10.9.9.1/24 |                   2601:646:0100:69f0::/64 | Main           | VM Network / nono / Management Network |
-| vlan2     |    2 |     10.9.2.1/24 |                   2601:646:0100:69f3::/64 | Guest          | guest                   |
-| vlan12    |   12 |    10.9.12.1/24 |                                       N/A | NSX Overlay    | overlay                 |
-| vlan16    |   16 |    10.9.16.1/20 |                                       N/A | BOSH           | BOSH                    |
-| vlan50    |   50 |    10.9.50.1/24 |                                       N/A | NSX Tier-0     | tier-0                  |
-| vlan250   |  250 |   10.9.250.1/24 |                   2601:646:0100:69f5::/64 | CF             | CF                      |
-| vlan251   |  251 |   10.9.251.1/24 |                   2601:646:0100:69f6::/64 | TAS            | TAS                     |
-| wg0       |  N/A |   10.9.255.1/28 |                                       N/A | Wireguard      |                         |
-| N/A       |  N/A |     10.8.0.0/16 |                                       N/A | NSX's IP Block |                         |
-| N/A       |    * |             N/A |                                       N/A | NSX Trunk      | all-VLANs               |
+| vlan2     |    2 |     10.9.2.1/24 |                   2601:646:0100:69f1::/64 | Guest          | guest                   |
+| vlan16    |   16 |    10.9.16.1/20 |                   2601:646:0100:69f2::/64 | BOSH           | BOSH                    |
+| wg0       |  N/A |   10.9.255.1/28 |                   2601:646:0100:69ff::/64 | Wireguard      |                         |
 
 Notes:
 
@@ -24,7 +18,4 @@ Notes:
   - Forged Transmits: `accept`
 - Port group names are all lowercase unless abbreviated (e.g. "Cloud Foundry" →
   "CF")
-- "overlay" and "tier-0" don't need to be defined as port groups, only as Unifi
-  VLANs: "overlay" only exists within NSX-T, and "tier-0" only exists between
-  the gateway and NSX-T
-- "BOSH" is planned, and "guest" is currently a /23
+- Watch out: Unifi will bridge the Native VLAN to VLAN 1
