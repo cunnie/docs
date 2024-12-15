@@ -93,17 +93,6 @@ brew bundle
   - No disks, not enough room on Taskbar
   - CPU: historical
   - Register
-- Set up JetBrains Toolbox
-  - login in via Toolbox
-  - update all tools automatically
-  - Tools installation location: /Applications
-  - generate shell scripts, set path to /opt/homebrew/bin
-  - Goland
-- Rectangle (approve accessibility)
-  - Choose Spectacle shortcuts
-  - Preferences → ⚙ Launch Rectangle at login
-  - Preferences → ⚙ Repeated commands: cycle ½, ⅔, ⅓ on half actions
-  - Check for updates automatically
 - FlyCut (approve accessibility)
   - ✅: Launch Flycut on login
   - iCloud Sync: ✅: Settings
@@ -115,11 +104,6 @@ brew bundle
   - 49 participants
   - HD video
   - Always display participant name
-- Install [Nerd Fonts](https://github.com/ryanoasis/nerd-fonts#option-4-homebrew-fonts):
-
-```
-brew install font-hack-nerd-font
-```
 
 - iTerm
   - Use _nord-iterm2_ color scheme for a more pleasant terminal experience:
