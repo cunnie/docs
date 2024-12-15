@@ -121,25 +121,27 @@ brew bundle
   - iTerm → ⌘, (Preferences) → Profiles → Text → Font: Hack Nerd Font Mono / Regular / 13
   - iTerm → ⌘, (Preferences) → Profiles → Terminal → Unlimited scrollback
 - Set up zsh per [zsh.md](https://github.com/cunnie/docs/blob/master/zsh.md)
-- System Settings → Users & Groups → Login Items
+- System Settings → Open at Login
   - Add Flycut
 - Update IPv6 address in DNS; it has changed with reinstall
-- Set up git pairs:
-```bash
-ln -s ~/bin/env/git-authors ~/.git-authors
-```
 - Install rubies:
 
 ```bash
+ruby-install -U
 ruby-install 3.3
 ```
 
+- WhatsApp
+  - Settings → Storage and Data → Media upload quality → HD quality
 - Start Google Drive
-- if on laptop:
+  - mirror, not stream, my files
+- Wireguard
   - download Wireguard from the App Store
   - Set up wireguard for new laptop: [instructions](wireguard.md)
   - click "Import tunnel(s) from file"
-  - import from `~/Google Drive/My Drive/wg/mordred.conf`
+  - import from `~/brian.cunnie@gmail.com\ -\ Google\ Drive/My\ Drive/wg/LosAltos-BrianCunnie.conf`
+- if on laptop:
+  - import from `~/brian.cunnie@gmail.com\ -\ Google\ Drive/My\ Drive/wg/mordred.conf`
 - Install Rosetta 2, a pre-requisite of HP printer software:
 
 ```
