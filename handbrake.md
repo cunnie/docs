@@ -53,6 +53,22 @@ EPISODE="Poirot 1 1"
 - Click "Add to Queue"
 - Click "Start Queue"
 
+#### From the CLI
+
+```bash
+handbrakecli \
+  --preset="Fast 1080p30" \
+  --subtitle="scan" \
+  --subtitle-forced \
+  --subtitle-burned \
+  --srt-file="/Volumes/movies/poirot/srt/Poirot 1 1.srt" \
+  --srt-lang="eng" \
+  --srt-codeset="UTF-8" \
+  --srt-default \
+  -i /Volumes/movies/poirot/POIROT_SERIES1_DISC1/VIDEO_TS/VTS_01_1.VOB \
+  -o /Volumes/movies/Poirot\ 1\ 1.m4v
+```
+
 ### References
 
 - <https://en.wikipedia.org/wiki/576i#PAL_speed-up>
