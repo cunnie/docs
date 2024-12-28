@@ -52,7 +52,9 @@ sudo certbot certonly \
   -w /www/brian-old.cunnie.com \
     -d brian-old.cunnie.com \
   -w /www/blabbertabber.com \
-    -d blabbertabber.com
+    -d blabbertabber.com \
+  -w /www/meet.cunnie.com \
+    -d meet.cunnie.com
 
 cd /usr/local/etc
  # /usr/local/etc/.gitignore is probably set to '*', if so, skip the next step
