@@ -33,13 +33,17 @@ meager throughput of 4 MiB/s.
 - Log in
 - Search for "Poirot"
 - Click the first episode of Season 1
-- Sort by subtitle rating
+- Sort by subtitle rating ("Kynitos")
 - Download the first English subtitle as "Poirot 1 1.srt"
 - Convert to NTSC:
 
 ```bash
-EPISODE="Poirot 1 1"
-~/bin/pal_speedup_srt.rb < ~/Downloads/"$EPISODE".srt > /Volumes/movies/poirot/srt/"$EPISODE".srt
+less /tmp/*.srt # make sure you downloaded the English version
+SEASON=1
+for EPISODE in $(seq 1 10); do
+   TITLE="Poirot ${SEASON} ${EPISODE}"
+  ~/bin/pal_speedup_srt.rb < /tmp/"$TITLE".srt > /Volumes/movies/poirot/srt/"$TITLE".srt
+done
 ```
 
 ### Configure Handbrake:
@@ -56,17 +60,24 @@ EPISODE="Poirot 1 1"
 #### From the CLI
 
 ```bash
-handbrakecli \
-  --preset="Fast 1080p30" \
-  --subtitle="scan" \
-  --subtitle-forced \
-  --subtitle-burned \
-  --srt-file="/Volumes/movies/poirot/srt/Poirot 1 1.srt" \
-  --srt-lang="eng" \
-  --srt-codeset="UTF-8" \
-  --srt-default \
-  -i /Volumes/movies/poirot/POIROT_SERIES1_DISC1/VIDEO_TS/VTS_01_1.VOB \
-  -o /Volumes/movies/Poirot\ 1\ 1.m4v
+DISC=1
+SEASON=1
+EPISODE_OFFSET=0
+for TITLE in 1 2 3 4; do
+  EPISODE=$(( TITLE + EPISODE_OFFSET ))
+  handbrakecli \
+    --preset="Fast 1080p30" \
+    --subtitle="scan" \
+    --subtitle-forced \
+    --subtitle-burned \
+    --srt-file="/Volumes/movies/poirot/srt/Poirot $SEASON $EPISODE.srt" \
+    --srt-lang="eng" \
+    --srt-codeset="UTF-8" \
+    --srt-default \
+    --title $TITLE \
+    -i /Volumes/movies/poirot/POIROT_SERIES${SEASON}_DISC${DISC}/ \
+    -o /Volumes/movies/Poirot\ $SEASON\ $EPISODE.m4v
+done
 ```
 
 ### References
