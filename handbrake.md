@@ -39,10 +39,20 @@ meager throughput of 4 MiB/s.
 
 ```bash
 less /tmp/*.srt # make sure you downloaded the English version
+chardetect /tmp/*.srt # check the encoding
 SEASON=1
 for EPISODE in $(seq 1 10); do
    TITLE="Poirot ${SEASON} ${EPISODE}"
   ~/bin/pal_speedup_srt.rb < /tmp/"$TITLE".srt > /Volumes/movies/poirot/srt/"$TITLE".srt
+done
+```
+
+Example: to convert ISO-8859-1 encoding to UTF-8
+
+```bash
+for SRT in /tmp/Poirot\ 2\ *.srt; do
+  iconv -f ISO-8859-1 -t UTF-8 "$SRT" > "$SRT-UTF-8"
+  mv  "$SRT"{-UTF-8,}
 done
 ```
 
