@@ -64,10 +64,13 @@ done
 - Subtitles
   - Tracks → Add External Subtitles Track...
   - Select /Volumes/movies/poirot/srt/Poirot 1 1.srt
+  - Check "default"
 - Click "Add to Queue"
 - Click "Start Queue"
 
 #### From the CLI
+
+For old-school SubRip (`.srt`) subtitle files:
 
 ```bash
 DISC=1
@@ -90,6 +93,28 @@ for TITLE in 1 2 3 4; do
 done
 ```
 
+For newer Advanced SubStation Alpha (`.ass`) subtitle files:
+
+
+```bash
+DISC=2
+SEASON=2
+EPISODE_OFFSET=3
+for TITLE in 1 2 3; do
+  EPISODE=$(( TITLE + EPISODE_OFFSET ))
+  handbrakecli \
+    --preset="Fast 1080p30" \
+    --subtitle="scan" \
+    --subtitle-forced \
+    --subtitle-burned \
+    --ssa-file="/Volumes/movies/poirot/srt/Poirot $SEASON $EPISODE.ass" \
+    --ssa-lang="eng" \
+    --ssa-default \
+    --title $TITLE \
+    -i /Volumes/movies/poirot/POIROT_SERIES${SEASON}_DISC${DISC}/ \
+    -o /Volumes/movies/Poirot\ $SEASON\ $EPISODE.m4v
+done
+```
 ### References
 
 - <https://en.wikipedia.org/wiki/576i#PAL_speed-up>
