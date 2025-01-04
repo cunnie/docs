@@ -20,7 +20,7 @@ rsync \
   --partial \
   --stats \
   --progress \
-  /Volumes/POIROT_SERIES1_DISC1 \
+  /Volumes/POIROT_SERIES*_DISC* \
   /Volumes/movies/poirot/
 ```
 
