@@ -95,12 +95,11 @@ done
 
 For newer Advanced SubStation Alpha (`.ass`) subtitle files:
 
-
 ```bash
-DISC=2
-SEASON=2
-EPISODE_OFFSET=3
-for TITLE in 1 2 3; do
+DISC=1
+SEASON=12
+EPISODE_OFFSET=-5
+for TITLE in 6; do
   EPISODE=$(( TITLE + EPISODE_OFFSET ))
   handbrakecli \
     --preset="Fast 1080p30" \
@@ -111,7 +110,7 @@ for TITLE in 1 2 3; do
     --ssa-lang="eng" \
     --ssa-default \
     --title $TITLE \
-    -i /Volumes/movies/poirot/POIROT_SERIES${SEASON}_DISC${DISC}/ \
+    -i /Volumes/movies/poirot/POIROT_SERIES_${SEASON}_DISC${DISC}/ \
     -o /Volumes/movies/Poirot\ $SEASON\ $EPISODE.m4v
 done
 ```
