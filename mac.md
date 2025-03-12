@@ -2,7 +2,7 @@
 
 ```bash
 git status # loads command line tools
-NEW_HOST=morgoth
+NEW_HOST=nuada
 sudo scutil --set LocalHostName $NEW_HOST
 sudo scutil --set ComputerName $NEW_HOST
 sudo scutil --set HostName $NEW_HOST
@@ -11,13 +11,15 @@ diskutil rename / $NEW_HOST
 - Copy important repos over
 
 ```bash
-SOURCE_HOST=mordred
+SOURCE_HOST=melkor
 # if you haven't restored Downloads from backup, copy it from another machine:
 # rsync -avH --progress --stats $SOURCE_HOST\:Downloads/ ~/Downloads/
+ssh github.com # to create ~/.ssh/
 scp $SOURCE_HOST\:.ssh/nono\* .ssh/
+ssh-add ~/.ssh/nono
 scp $SOURCE_HOST\:.ssh/github\* .ssh/
+ssh-add ~/.ssh/github
 scp $SOURCE_HOST\:.ssh/authorized_keys .ssh/
-ssh-add ~/.ssh/{github,nono}
 rsync -avH $SOURCE_HOST\:bin/ ~/bin/
 rsync -avH $SOURCE_HOST\:aa/ ~/aa/
 rsync -avH $SOURCE_HOST\:docs/ ~/docs/
@@ -33,7 +35,6 @@ sudo newfs_apfs -A -e -v "workspace" disk3
 diskutil mount workspace
 sudo chown cunnie:staff /Volumes/workspace
 ln -s /Volumes/workspace ~/workspace
-rsync -aH --stats ~/workspace-orig/ ~/workspace/
 ls -l ~/workspace/
  # Copy `~/workspace` over:
 rsync -avH --progress --stats $SOURCE_HOST\:workspace/ ~/workspace/
@@ -41,12 +42,15 @@ rsync -avH --progress --stats $SOURCE_HOST\:workspace/ ~/workspace/
 
 - Set up git per [git.md](https://github.com/cunnie/docs/blob/master/git.md)
 - System Settings
-  - Displays → Resolution: Scaled → choose desired resolution
+  - Turn off Apple Intelligence
+  - Displays → Resolution: Scaled → choose desired resolution ("More Space")
   - Sharing
     - Screen Sharing
     - Remote Login
   - Accessibility → Pointer Control → Mouse & Trackpad → Trackpad Options...
-    - Enable dragging → three finger drag
+    - Tap to click
+    - Use trackpad for dragging
+    - Dragging style: Three Finger Drag
   - Keyboard
     - Key Repeat: Fast
     - Delay Until Repeat: Short
