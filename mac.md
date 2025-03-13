@@ -38,6 +38,7 @@ ln -s /Volumes/workspace ~/workspace
 ls -l ~/workspace/
  # Copy `~/workspace` over:
 rsync -avH --progress --stats $SOURCE_HOST\:workspace/ ~/workspace/
+git lfs install
 ```
 
 - Set up git per [git.md](https://github.com/cunnie/docs/blob/master/git.md)
@@ -104,37 +105,17 @@ brew bundle
   - ✅: Remove duplicates
   - ✅: Move posted item to top of stack
   - Appearance → Menu item icon: Black scissors
-- Zoom
-  - 49 participants
-  - HD video
-  - Always display participant name
 
 - iTerm
-  - Use _nord-iterm2_ color scheme for a more pleasant terminal experience:
-  ```bash
-  cd ~/Downloads
-  curl -L https://github.com/arcticicestudio/nord-iterm2/archive/v0.2.0.zip -o nord-iterm2.zip
-  unzip nord-iterm2.zip
-  ```
-  - iTerm → ⌘, (Preferences) → General → Selection → Uncheck "Clicking on a command selects it to restrict Find and Filter"
+] - iTerm → ⌘, (Preferences) → General → Selection → Uncheck "Clicking on a command selects it to restrict Find and Filter"
   - iTerm → ⌘, (Preferences) → Profiles → General → Working Directory → Reuse previous session's directory
   - iTerm → ⌘, (Preferences) → Profiles → Colors → uncheck Use different colors for light mode and dark mode
-  - iTerm → ⌘, (Preferences) → Profiles → Colors → Color Presets → Import... → `xml/Nord.itermcolors`
-  - iTerm → ⌘, (Preferences) → Profiles → Colors → Color Presets → Nord
   - iTerm → ⌘, (Preferences) → Profiles → Text → User built-in Powerline glyphs (checked)
-  - iTerm → ⌘, (Preferences) → Profiles → Text → Font: Hack Nerd Font Mono / Regular / 13
   - iTerm → ⌘, (Preferences) → Profiles → Terminal → Unlimited scrollback
 - Set up zsh per [zsh.md](https://github.com/cunnie/docs/blob/master/zsh.md)
 - System Settings → Open at Login
   - Add Flycut
 - Update IPv6 address in DNS; it has changed with reinstall
-- Install rubies:
-
-```bash
-ruby-install -U
-ruby-install 3.3
-```
-
 - WhatsApp
   - Settings → Storage and Data → Media upload quality → HD quality
 - Start Google Drive
@@ -145,7 +126,7 @@ ruby-install 3.3
   - click "Import tunnel(s) from file"
   - import from `~/brian.cunnie@gmail.com\ -\ Google\ Drive/My\ Drive/wg/LosAltos-BrianCunnie.conf`
 - if on laptop:
-  - import from `~/brian.cunnie@gmail.com\ -\ Google\ Drive/My\ Drive/wg/mordred.conf`
+  - import from `~/brian.cunnie@gmail.com\ -\ Google\ Drive/My\ Drive/wg/nuada.conf`
 - Install Rosetta 2, a pre-requisite of HP printer software:
 
 ```
@@ -185,15 +166,3 @@ allow pasting
   - System Settings → Hot Corner Shortcuts → Set the lower-right-hand one to "-"
 - Remove annoying look up (laptops only):
   - System Settings → Trackpad → Look up & data detectors → Set to "Off"
-- Clear out Neovim files, then install [AstroNvim](https://docs.astronvim.com/):
-
-```sh
-rm -fr ~/.config/nvim ~/.local/{share,state}/nvim ~/.cache/nvim
-```
-
-- Fix AstroNvim's treesitter plugin, [gitcommit](https://github.com/gbprod/tree-sitter-gitcommit):
-
-```
-nvim
-:TSInstall gitcommit diff git_rebase
-```
