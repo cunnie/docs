@@ -165,4 +165,6 @@ allow pasting
 - Remove Notes's annoying hot corner:
   - System Settings → Hot Corner Shortcuts → Set the lower-right-hand one to "-"
 - Remove annoying look up (laptops only):
-  - System Settings → Trackpad → Look up & data detectors → Set to "Off"
+  - System Settings → Trackpad
+    - Force Click and haptic feedback → Set to "Off"
+    - Look up & data detectors → Set to "Off"
