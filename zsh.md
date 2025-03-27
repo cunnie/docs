@@ -1,21 +1,24 @@
 ### zsh
 
-```
+```bash
 brew install zsh-{autosuggestions,completions,git-prompt,lovers,syntax-highlighting}
 ```
+
 Install [oh-my-zsh](https://github.com/robbyrussell/oh-my-zsh)
-```
+
+```bash
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
 ```
-vim `~/.zshrc`
+
+We love [Powerlevel10k](https://github.com/romkatv/powerlevel10k):
+
 ```bash
-ZSH_THEME="agnoster" # this needs to be at the top of .zshrc
+cp -i ~/bin/env/p10k.zsh ~/.p10k.zsh
+```
 
-plugins=(
-	git
-	macos
-)
+vim `~/.zshrc`
 
+```bash
 BREW_PREFIX=$(/opt/homebrew/bin/brew --prefix)
 PATH="$BREW_PREFIX/bin:$PATH"
 PATH="$BREW_PREFIX/opt/python/libexec/bin:$PATH"
@@ -39,4 +42,9 @@ export LPASS_AGENT_TIMEOUT=604800
 export EDITOR=nvim
 export GIT_EDITOR=nvim
 ulimit -n 8192 # the default, 256, causes failures when running ops manager unit tests in parallel
+se() { pushd ~/workspace/SERC/sportsengine; grep -i "$1" *.csv; popd }
+
+# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+source "${BREW_PREFIX}/opt/powerlevel10k/share/powerlevel10k/powerlevel10k.zsh-theme"
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 ```
