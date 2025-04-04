@@ -168,3 +168,5 @@ allow pasting
   - System Settings → Trackpad
     - Force Click and haptic feedback → Set to "Off"
     - Look up & data detectors → Set to "Off"
+- Allow notifications from Chrome & Firefox
+  - System Settings → Notifications → Application Notifications
