@@ -136,6 +136,10 @@ softwareupdate --install-rosetta
 - Install HP 1536 printer:
   - Install the [HP Easy Start](https://support.hp.com/us-en/drivers/hp-laserjet-pro-m1536-multifunction-printer-series/model/3974278?sku=CE538A) software
   - Install Essential Software but not Easy Scan
+- Start VueScan -> About
+  - E-mail address  : brian.cunnie@gmail.com
+  - Serial number   : 132296539
+  - Customer number : 39673665
 - Install convenient Golang utilities, `ginkgo` and `goimports`:
 
 ```bash
