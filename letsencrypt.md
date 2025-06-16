@@ -54,7 +54,9 @@ sudo certbot certonly \
   -w /www/blabbertabber.com \
     -d blabbertabber.com \
   -w /www/meet.cunnie.com \
-    -d meet.cunnie.com
+    -d meet.cunnie.com \
+  -w /www/nip.io/document_root \
+    -d nip.io --expand
 
 cd /usr/local/etc
  # /usr/local/etc/.gitignore is probably set to '*', if so, skip the next step
