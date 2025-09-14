@@ -40,7 +40,7 @@ sudo certbot certonly \
   -w /www/nono.io \
     -d nono.io \
     -d www.nono.io \
-  -w /www/sslip.io/document_root \
+  -w /www/sslip.io/k8s/document_root_sslip.io \
     -d sslip.io \
     -d 78-46-204-247.sslip.io \
     -d www-78-46-204-247.sslip.io \
@@ -55,7 +55,7 @@ sudo certbot certonly \
     -d blabbertabber.com \
   -w /www/meet.cunnie.com \
     -d meet.cunnie.com \
-  -w /www/nip.io/document_root \
+  -w /www/sslip.io/k8s/document_root_nip.io \
     -d nip.io --expand
 
 cd /usr/local/etc
