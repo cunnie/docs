@@ -8,6 +8,8 @@ git config --global alias.st status
 git config --global url."git@github.com:".insteadOf "https://github.com/"
 git config --global pull.rebase true
 git config --global init.defaultBranch main
+git config --global core.pager delta # a GitHub-style diff
+git config --global interactive.diffFilter "delta --color-only" # a GitHub-style diff
 ```
 For systems with no defaults, turn on colors
 ```
