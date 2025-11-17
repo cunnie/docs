@@ -10,6 +10,8 @@ git config --global pull.rebase true
 git config --global init.defaultBranch main
 git config --global core.pager delta # a GitHub-style diff
 git config --global interactive.diffFilter "delta --color-only" # a GitHub-style diff
+git config --global delta.light true # avoid the "dark" delta
+git config --global core.excludesfile ~/bin/env/gitignore
 ```
 For systems with no defaults, turn on colors
 ```
