@@ -1,4 +1,4 @@
-## Setting Up a New Apple Mac
+# Setting Up a New Apple Mac
 
 ```bash
 git status # loads command line tools
@@ -8,6 +8,7 @@ sudo scutil --set ComputerName $NEW_HOST
 sudo scutil --set HostName $NEW_HOST
 diskutil rename / $NEW_HOST
 ```
+
 - Copy important repos over
 
 ```bash
@@ -63,17 +64,22 @@ git lfs install
       - Options → Connect to This Mac: When Last Connected to This Mac
   - Network → uncheck Limit IP Address Tracking
 - Install brew
-```
+
+```bash
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 cd ~/bin
 export PATH=/opt/homebrew/bin:$PATH
 brew bundle
 ```
+
 - Move Dock clutter into trash
 - Open Firefox & configure
-  - log in
+  - log in <brian.cunnie@gmail.com>
   - set theme
   - open gmail
+  - Fix `mailto:` links:
+    - Firefox → ⌘, → Find in Settings: "Applications" → subsearch: "mailto" → Select "Use Gmail"
+  - set up new profile <brian.cunnie@serc.com>, log in
 - System Settings → Apple ID → iCloud → iCloud Drive → Options... → check:
   Desktop & Documents Folders
 - Set up date in Menu Bar (24-hour, show seconds & Date)
@@ -124,13 +130,9 @@ brew bundle
 - if on laptop:
   - import from `~/brian.cunnie@gmail.com\ -\ Google\ Drive/My\ Drive/wg/nuada.conf`
 
-```
-softwareupdate --install-rosetta
-```
-
 - Install HP 1536 printer (add printer)
 - Start VueScan -> About
-  - E-mail address  : brian.cunnie@gmail.com
+  - E-mail address  : <brian.cunnie@gmail.com>
   - Serial number   : 132296539
   - Customer number : 39673665
 - Install convenient Golang utilities, `ginkgo` and `goimports`:
@@ -140,7 +142,17 @@ go install golang.org/x/tools/cmd/goimports@latest
 go install github.com/onsi/ginkgo/v2/ginkgo@latest
 ```
 
-- Fix `mailto:` links:
-  - Firefox → ⌘, → Find in Settings: "Applications" → subsearch: "mailto" → Select "Use Gmail"
 - Allow notifications from Chrome & Firefox
   - System Settings → Notifications → Application Notifications
+- VS Code
+  - sync settings; accept remote
+
+- set up autojump and autosuggestions: `nvim ~/.zshrc`
+
+```bash
+# zsh-autosuggestions setup
+source $(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+
+# autojump setup
+[ -f $(brew --prefix)/etc/profile.d/autojump.sh ] && . $(brew --prefix)/etc/profile.d/autojump.sh
+```
