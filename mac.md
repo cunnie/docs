@@ -128,9 +128,7 @@ brew bundle
 softwareupdate --install-rosetta
 ```
 
-- Install HP 1536 printer:
-  - Install the [HP Easy Start](https://support.hp.com/us-en/drivers/hp-laserjet-pro-m1536-multifunction-printer-series/model/3974278?sku=CE538A) software
-  - Install Essential Software but not Easy Scan
+- Install HP 1536 printer (add printer)
 - Start VueScan -> About
   - E-mail address  : brian.cunnie@gmail.com
   - Serial number   : 132296539
@@ -142,28 +140,7 @@ go install golang.org/x/tools/cmd/goimports@latest
 go install github.com/onsi/ginkgo/v2/ginkgo@latest
 ```
 
-- Fix `mailto:` & [calendar](https://askubuntu.com/a/1203165) links:
+- Fix `mailto:` links:
   - Firefox → ⌘, → Find in Settings: "Applications" → subsearch: "mailto" → Select "Use Gmail"
-  - Firefox → about:config → `dom.registerContentHandler.enabled=true`
-  - Browse to <https://calendar.google.com/calendar/u/0/r>
-  - Firefox → F12 → Console → paste the following:
-
-```js
-javascript:window.navigator.registerProtocolHandler("webcal","https://calendar.google.com/calendar/r?cid=%s","Google Calendar");
-```
-
-  - Then type the following, and paste again.
-
-```js
-allow pasting
-```
-
-  - Click "Add Application" when prompted 'Add "calendar.google.com" as an application for webcal links?'
-- Remove Notes's annoying hot corner:
-  - System Settings → Hot Corner Shortcuts → Set the lower-right-hand one to "-"
-- Remove annoying look up (laptops only):
-  - System Settings → Trackpad
-    - Force Click and haptic feedback → Set to "Off"
-    - Look up & data detectors → Set to "Off"
 - Allow notifications from Chrome & Firefox
   - System Settings → Notifications → Application Notifications
