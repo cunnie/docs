@@ -89,7 +89,6 @@ brew bundle
   - Turn display off when inactive: For 20 minutes
   - Require password after screen saver begins or display is turned off: After 1 hour
 - [if not defaulted] on iPhone: Settings → Messages → Text Message Forwarding → _new device_ ✅
-- [if not defaulted] Photos → ⌘, (Preferences) → ✅: Include location information when sharing...
 - Photos → ⌘, (Preferences) → iCloud → ✅: Download Originals to this Mac
 - Set up iStat Menus
   - No notifications
@@ -112,12 +111,9 @@ brew bundle
   - iTerm → ⌘, (Preferences) → Profiles → Colors → uncheck Use different colors for light mode and dark mode
   - iTerm → ⌘, (Preferences) → Profiles → Text → User built-in Powerline glyphs (checked)
   - iTerm → ⌘, (Preferences) → Profiles → Terminal → Unlimited scrollback
-- Set up zsh per [zsh.md](https://github.com/cunnie/docs/blob/master/zsh.md)
 - System Settings → Open at Login
   - Add Flycut
 - Update IPv6 address in DNS; it has changed with reinstall
-- WhatsApp
-  - Settings → Storage and Data → Media upload quality → HD quality
 - Start Google Drive
   - mirror, not stream, my files
 - Wireguard
@@ -127,7 +123,6 @@ brew bundle
   - import from `~/brian.cunnie@gmail.com\ -\ Google\ Drive/My\ Drive/wg/LosAltos-BrianCunnie.conf`
 - if on laptop:
   - import from `~/brian.cunnie@gmail.com\ -\ Google\ Drive/My\ Drive/wg/nuada.conf`
-- Install Rosetta 2, a pre-requisite of HP printer software:
 
 ```
 softwareupdate --install-rosetta
@@ -147,8 +142,6 @@ go install golang.org/x/tools/cmd/goimports@latest
 go install github.com/onsi/ginkgo/v2/ginkgo@latest
 ```
 
-- Free up ⬆⌘A for JetBrains's "Find Action..."
-  - System Settings → Keyboard Shortcuts → Services → Uncheck everything
 - Fix `mailto:` & [calendar](https://askubuntu.com/a/1203165) links:
   - Firefox → ⌘, → Find in Settings: "Applications" → subsearch: "mailto" → Select "Use Gmail"
   - Firefox → about:config → `dom.registerContentHandler.enabled=true`
