@@ -53,6 +53,7 @@ git lfs install
     - Tap to click
     - Use trackpad for dragging
     - Dragging style: Three Finger Drag
+    - Look up & data detectors: Off
   - Keyboard
     - Key Repeat: Fast
     - Delay Until Repeat: Short
@@ -146,7 +147,6 @@ go install github.com/onsi/ginkgo/v2/ginkgo@latest
   - System Settings → Notifications → Application Notifications
 - VS Code
   - sync settings; accept remote
-
 - set up autojump and autosuggestions: `nvim ~/.zshrc`
 
 ```bash
@@ -155,4 +155,17 @@ source $(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 
 # autojump setup
 [ -f $(brew --prefix)/etc/profile.d/autojump.sh ] && . $(brew --prefix)/etc/profile.d/autojump.sh
+```
+
+- Install Apple containers: <https://github.com/apple/container/releases>
+
+```bash
+container system start
+gcloud auth login
+gcloud config set project majestic-labs-ai
+gcloud auth configure-docker us-central1-docker.pkg.dev
+gcloud auth print-access-token | container registry login us-central1-docker.pkg.dev \
+  --username oauth2accesstoken \
+  --password-stdin
+container run -it --rm us-central1-docker.pkg.dev/majestic-labs-ai/images/skeleton:24.04
 ```
