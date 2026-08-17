@@ -2,7 +2,7 @@
 
 ```bash
 git status # loads command line tools
-NEW_HOST=nuada
+NEW_HOST=melkor
 sudo scutil --set LocalHostName $NEW_HOST
 sudo scutil --set ComputerName $NEW_HOST
 sudo scutil --set HostName $NEW_HOST
@@ -12,7 +12,7 @@ diskutil rename / $NEW_HOST
 - Copy important repos over
 
 ```bash
-SOURCE_HOST=melkor
+SOURCE_HOST=nuada
 # if you haven't restored Downloads from backup, copy it from another machine:
 # rsync -avH --progress --stats $SOURCE_HOST\:Downloads/ ~/Downloads/
 ssh github.com # to create ~/.ssh/
@@ -25,7 +25,7 @@ rsync -avH $SOURCE_HOST\:bin/ ~/bin/
 rsync -avH $SOURCE_HOST\:aa/ ~/aa/
 rsync -avH $SOURCE_HOST\:docs/ ~/docs/
 ln -s ~/bin/env/config ~/.ssh/config
-HOSTNAME=$(hostname); cd ~/aa; git add .; git commit -m"from ${HOSTNAME%%.*}"; git pull -r; git push; cd ~/docs; git pull; cd ~/bin; git pull; popd; popd; popd
+HOSTNAME=$(hostname); pushd ~/aa; git add .; git commit -m"from ${HOSTNAME%%.*}"; git pull -r; git push; pushd ~/docs; git pull; pushd ~/bin; git pull; popd; popd; popd
 ```
 
 Create & populate `~/workspace/` with APFS case-sensitive (for Linux kernel):
@@ -38,14 +38,18 @@ sudo chown cunnie:staff /Volumes/workspace
 ln -s /Volumes/workspace ~/workspace
 ls -l ~/workspace/
  # Copy `~/workspace` over:
-rsync -avH --progress --stats $SOURCE_HOST\:workspace/ ~/workspace/
+rsync -avzH --progress --stats $SOURCE_HOST\:workspace/ ~/workspace/
 git lfs install
 ```
 
 - Set up git per [git.md](https://github.com/cunnie/docs/blob/master/git.md)
 - System Settings
-  - Turn off Apple Intelligence
-  - Displays → Resolution: Scaled → choose desired resolution ("More Space")
+  - Mini: Mouse buttons → Secondary click → Click Left side
+  - remove Siri from taskbar
+  - Turn off Siri (Voice Siri -> scroll to bottom -> Turn Off Siri)
+  - Displays → Resolution: Scaled → choose desired resolution
+    - MacBook ("More Space")
+    - Mini (leave on "Default")
   - Sharing
     - Screen Sharing
     - Remote Login
@@ -54,13 +58,14 @@ git lfs install
     - Use trackpad for dragging
     - Dragging style: Three Finger Drag
     - Look up & data detectors: Off
-  - Keyboard
+  - Keyboard Sensitivity
     - Key Repeat: Fast
-    - Delay Until Repeat: Short
-    - ✅: Use F1, F2, etc. keys as standard function keys
-    - Keyboard shortcuts... → Mission Control → Uncheck Show Desktop F11
+    - Delay Until Repeat: Penultimate Short
+    - Function Keys: Use F1, F2, etc. keys as standard function keys
+    - Keyboard & Mouse Shortcuts: Unselect Show Desktop F11
+  - Mac Mini: disable WiFi in taskbar
   - Bluetooth
-    - ✅: Show Bluetooth in menu bar
+    - ✅: Show Bluetooth status in Control Center Menu Bar
     - go through each of the connected bluetooth devices:
       - Options → Connect to This Mac: When Last Connected to This Mac
   - Network → uncheck Limit IP Address Tracking
@@ -68,15 +73,16 @@ git lfs install
 
 ```bash
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+echo >> /Users/cunnie/.zprofile
+echo 'eval "$(/opt/homebrew/bin/brew shellenv zsh)"' >> /Users/cunnie/.zprofile
+eval "$(/opt/homebrew/bin/brew shellenv zsh)"
 cd ~/bin
-export PATH=/opt/homebrew/bin:$PATH
 brew bundle
 ```
 
 - Move Dock clutter into trash
 - Open Firefox & configure
   - log in <brian.cunnie@gmail.com>
-  - set theme
   - open gmail
   - Fix `mailto:` links:
     - Firefox → ⌘, → Find in Settings: "Applications" → subsearch: "mailto" → Select "Use Gmail"
@@ -86,16 +92,15 @@ brew bundle
 - Set up date in Menu Bar (24-hour, show seconds & Date)
   - System Settings → Date & Time
 - System Settings → Desktop & Dock → check: Automatically hide and show the Dock
-- [if not done on initial install]: System Settings → FileVault → Turn On FileVault
-  - Allow my iCloud account...
-- [if not defaulted]: Messages → Preferences → iMessage → ✅: Enable Messages in iCloud
+- Messages → Preferences → iMessage
   - ✅ Send read receipts
   - → Start new conversations from +1 (650) 968-6262
-- [if on Desktop] System Settings → Screen Saver → Lock Screen Settings...
-  - Start Screen Save when inactive: For 10 minutes
+- [if on mini] System Settings → Screen Saver → Lock Screen Settings...
+  - Start Screen Saver when inactive: For 10 minutes
   - Turn display off when inactive: For 20 minutes
+  - Require password after screen saver begins...: After 15 minutes
   - Require password after screen saver begins or display is turned off: After 1 hour
-- [if not defaulted] on iPhone: Settings → Messages → Text Message Forwarding → _new device_ ✅
+- On iPhone: Settings → Messages → Text Message Forwarding → _new device_ ✅
 - Photos → ⌘, (Preferences) → iCloud → ✅: Download Originals to this Mac
 - Set up iStat Menus
   - No notifications
@@ -111,15 +116,14 @@ brew bundle
   - ✅: Remove duplicates
   - ✅: Move posted item to top of stack
   - Appearance → Menu item icon: Black scissors
-
 - iTerm
 ] - iTerm → ⌘, (Preferences) → General → Selection → Uncheck "Clicking on a command selects it to restrict Find and Filter"
   - iTerm → ⌘, (Preferences) → Profiles → General → Working Directory → Reuse previous session's directory
   - iTerm → ⌘, (Preferences) → Profiles → Colors → uncheck Use different colors for light mode and dark mode
-  - iTerm → ⌘, (Preferences) → Profiles → Text → User built-in Powerline glyphs (checked)
   - iTerm → ⌘, (Preferences) → Profiles → Terminal → Unlimited scrollback
 - System Settings → Open at Login
   - Add Flycut
+  - Background App Activity: turn off Zoom; it's annoying
 - Update IPv6 address in DNS; it has changed with reinstall
 - Start Google Drive
   - mirror, not stream, my files
@@ -127,15 +131,11 @@ brew bundle
   - download Wireguard from the App Store
   - Set up wireguard for new laptop: [instructions](wireguard.md)
   - click "Import tunnel(s) from file"
-  - import from `~/brian.cunnie@gmail.com\ -\ Google\ Drive/My\ Drive/wg/LosAltos-BrianCunnie.conf`
+  - import from `~/My\ Drive/wg/LosAltos-BrianCunnie.conf`
 - if on laptop:
-  - import from `~/brian.cunnie@gmail.com\ -\ Google\ Drive/My\ Drive/wg/nuada.conf`
+  - import from `~/My\ Drive/wg/nuada.conf`
 
 - Install HP 1536 printer (add printer)
-- Start VueScan -> About
-  - E-mail address  : <brian.cunnie@gmail.com>
-  - Serial number   : 132296539
-  - Customer number : 39673665
 - Install convenient Golang utilities, `ginkgo` and `goimports`:
 
 ```bash
@@ -145,8 +145,6 @@ go install github.com/onsi/ginkgo/v2/ginkgo@latest
 
 - Allow notifications from Chrome & Firefox
   - System Settings → Notifications → Application Notifications
-- VS Code
-  - sync settings; accept remote
 - set up autojump and autosuggestions: `nvim ~/.zshrc`
 
 ```bash
